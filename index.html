@@ -721,6 +721,86 @@
         }
 
         /* ============================================================
+                   导入弹窗
+                   ============================================================ */
+        #importModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        #importModal.open {
+            display: flex;
+        }
+        .import-box {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 620px;
+            width: 92%;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .import-box h3 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        .import-box .sub {
+            color: var(--text2);
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+        .import-box textarea {
+            width: 100%;
+            height: 200px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            color: var(--text);
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+        .import-box textarea:focus {
+            border-color: var(--primary);
+        }
+        .import-box .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .import-box .hint {
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--text3);
+            line-height: 1.6;
+        }
+        .import-box .hint a {
+            color: var(--primary);
+            cursor: pointer;
+        }
+        .import-box .hint a:hover {
+            text-decoration: underline;
+        }
+        .import-box .source-count {
+            font-size: 13px;
+            color: var(--text2);
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: var(--bg);
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        /* ============================================================
                    Footer
                    ============================================================ */
         footer {
@@ -811,6 +891,13 @@
             #player-info .info-row .name {
                 font-size: 14px;
             }
+            .import-box {
+                padding: 16px;
+                max-width: 95%;
+            }
+            .import-box textarea {
+                height: 150px;
+            }
         }
 
         @media (max-width: 400px) {
@@ -841,6 +928,7 @@
             <select id="sourceSelect"></select>
             <input type="text" id="searchInput" placeholder="搜索片名…" />
             <button class="btn btn-primary" id="searchBtn">搜索</button>
+            <button class="btn-ghost" onclick="showImportModal()" title="导入源" style="font-size:18px;padding:0 6px;">📥</button>
             <span id="status">加载中…</span>
         </div>
     </header>
@@ -930,13 +1018,36 @@
 
     </main>
 
+    <!-- ============================================================
+    导入弹窗
+    ============================================================ -->
+    <div id="importModal">
+        <div class="import-box">
+            <h3>📥 导入源列表</h3>
+            <div class="sub">粘贴 JSON 格式的源列表，或上传 <code>.json</code> 文件</div>
+            <textarea id="importTextarea" placeholder='[\n  {\n    "key": "feifan",\n    "name": "非凡资源",\n    "api": "http://ffzy5.tv/api.php/provide/vod",\n    "type": 0,\n    "searchable": 1,\n    "filterable": 1,\n    "playerType": 1,\n    "group": "stable"\n  }\n]'></textarea>
+            <div class="source-count" id="importCount">当前源：0 个</div>
+            <div class="actions">
+                <button class="btn-primary" onclick="importSources()">✅ 导入</button>
+                <button class="btn-ghost" onclick="document.getElementById('fileInput').click()">📂 上传 JSON 文件</button>
+                <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importFromFile(event)" />
+                <button class="btn-ghost" onclick="resetSources()">↻ 恢复默认</button>
+                <button class="btn-ghost" onclick="closeImportModal()" style="margin-left:auto;">取消</button>
+            </div>
+            <div class="hint">
+                💡 <a onclick="loadExample()">加载示例</a> ｜
+                📖 格式：<code>[{"key":"唯一ID","name":"显示名称","api":"接口地址","group":"stable|normal|backup"}]</code>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== Footer ===== -->
     <footer>
         <span>☁️ Cloudflare Pages</span>
         <span>·</span>
         <a href="#" onclick="showDisclaimer();return false;">免责声明</a>
         <span>·</span>
-        <span>仅供学习交流</span>
+        <span>源由用户自行导入</span>
     </footer>
 
     <script>
@@ -947,6 +1058,7 @@
         const CONCURRENCY = 6;
         const FETCH_TIMEOUT = 15000;
         const STORAGE_KEY = 'tv_data';
+        const STORAGE_SOURCES_KEY = 'tv_sources';
 
         // ============================================================
         //  STATE
@@ -1013,6 +1125,10 @@
             pInfoName: $('pInfoName'),
             pInfoMeta: $('pInfoMeta'),
             pInfoLines: $('pInfoLines'),
+
+            importModal: $('importModal'),
+            importTextarea: $('importTextarea'),
+            importCount: $('importCount'),
         };
 
         // ============================================================
@@ -1071,6 +1187,150 @@
         }
 
         // ============================================================
+        //  SOURCES 管理（localStorage 优先）
+        // ============================================================
+        function getStoredSources() {
+            try {
+                const stored = localStorage.getItem(STORAGE_SOURCES_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed) && parsed.length) {
+                        return parsed;
+                    }
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        async function loadSources() {
+            // 优先从 localStorage 加载
+            const stored = getStoredSources();
+            if (stored) {
+                return stored;
+            }
+
+            // 没有存储，从默认 URL 加载
+            try {
+                const resp = await fetch('/sources.json');
+                const data = await resp.json();
+                if (Array.isArray(data) && data.length) {
+                    // 自动存入 localStorage 作为默认
+                    localStorage.setItem(STORAGE_SOURCES_KEY, JSON.stringify(data));
+                    return data;
+                }
+            } catch (e) {}
+
+            // 内置最小备用源
+            const fallback = [
+                { key: 'feifan', name: '非凡资源', api: 'http://ffzy5.tv/api.php/provide/vod', type: 0, searchable: 1,
+                    filterable: 1, playerType: 1, group: 'stable' },
+                { key: 'wolong', name: '卧龙资源', api: 'https://wolongzyw.com/api.php/provide/vod', type: 0, searchable: 1,
+                    filterable: 1, playerType: 1, group: 'stable' }
+            ];
+            localStorage.setItem(STORAGE_SOURCES_KEY, JSON.stringify(fallback));
+            return fallback;
+        }
+
+        function updateImportCount() {
+            const stored = getStoredSources();
+            const count = stored ? stored.length : 0;
+            dom.importCount.textContent = '当前源：' + count + ' 个';
+        }
+
+        // ============================================================
+        //  导入功能
+        // ============================================================
+        function showImportModal() {
+            dom.importModal.classList.add('open');
+            const stored = getStoredSources();
+            if (stored) {
+                dom.importTextarea.value = JSON.stringify(stored, null, 2);
+            }
+            updateImportCount();
+        }
+
+        function closeImportModal() {
+            dom.importModal.classList.remove('open');
+        }
+
+        function importSources() {
+            const raw = dom.importTextarea.value.trim();
+            if (!raw) { toast('请粘贴 JSON 内容', 'error'); return; }
+
+            try {
+                const data = JSON.parse(raw);
+                if (!Array.isArray(data) || !data.length) {
+                    throw new Error('格式错误：需要非空数组');
+                }
+                // 基本校验
+                for (const item of data) {
+                    if (!item.key || !item.name || !item.api) {
+                        throw new Error('每个源必须包含 key, name, api 字段');
+                    }
+                }
+                localStorage.setItem(STORAGE_SOURCES_KEY, JSON.stringify(data));
+                toast('✅ 导入成功，' + data.length + ' 个源', 'success');
+                closeImportModal();
+                // 刷新页面重新加载
+                location.reload();
+            } catch (e) {
+                toast('JSON 格式错误: ' + e.message, 'error');
+            }
+        }
+
+        function importFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data) || !data.length) {
+                        throw new Error('格式错误：需要非空数组');
+                    }
+                    for (const item of data) {
+                        if (!item.key || !item.name || !item.api) {
+                            throw new Error('每个源必须包含 key, name, api 字段');
+                        }
+                    }
+                    localStorage.setItem(STORAGE_SOURCES_KEY, JSON.stringify(data));
+                    toast('✅ 导入成功，' + data.length + ' 个源', 'success');
+                    closeImportModal();
+                    location.reload();
+                } catch (err) {
+                    toast('文件解析失败: ' + err.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function resetSources() {
+            if (!confirm('将恢复为默认源列表，当前自定义源将被覆盖。确定？')) return;
+            localStorage.removeItem(STORAGE_SOURCES_KEY);
+            toast('已恢复默认源，页面即将刷新', 'info');
+            setTimeout(() => location.reload(), 500);
+        }
+
+        function loadExample() {
+            const example = [
+                { key: 'feifan', name: '非凡资源', api: 'http://ffzy5.tv/api.php/provide/vod', type: 0, searchable: 1,
+                    filterable: 1, playerType: 1, group: 'stable' },
+                { key: 'wolong', name: '卧龙资源', api: 'https://wolongzyw.com/api.php/provide/vod', type: 0, searchable: 1,
+                    filterable: 1, playerType: 1, group: 'stable' },
+                { key: 'zuida', name: '最大资源', api: 'https://api.zuidapi.com/api.php/provide/vod', type: 0, searchable: 1,
+                    filterable: 1, playerType: 1, group: 'stable' },
+                { key: 'baiduyun', name: '百度云资源', api: 'https://api.apibdzy.com/api.php/provide/vod', type: 0,
+                    searchable: 1, filterable: 1, playerType: 1, group: 'stable' },
+                { key: 'baofeng', name: '暴风资源', api: 'https://bfzyapi.com/api.php/provide/vod', type: 0, searchable: 1,
+                    filterable: 1, playerType: 1, group: 'stable' }
+            ];
+            dom.importTextarea.value = JSON.stringify(example, null, 2);
+            updateImportCount();
+            toast('示例已填入，点击「导入」即可', 'info');
+        }
+
+        // ============================================================
         //  TOAST & STATUS
         // ============================================================
         function toast(msg, type = 'info') {
@@ -1122,9 +1382,9 @@
         async function init() {
             loadStorage();
 
+            // ---- 加载源列表（localStorage 优先） ----
             try {
-                const resp = await fetch('/sources.json');
-                state.sources = await resp.json();
+                state.sources = await loadSources();
                 populateSelect();
                 setStatus('就绪');
             } catch (e) {
@@ -1132,16 +1392,19 @@
                 toast('源列表加载失败: ' + e.message, 'error');
             }
 
+            // ---- 默认加载第一个源 ----
             const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
             if (first) {
                 dom.sourceSelect.value = first.key;
                 await loadBrowse(first);
             }
 
+            // ---- 设置默认页面状态 ----
             state.currentPage = 'browse';
             dom.pageBrowse.classList.add('active');
             document.querySelector('[data-page="browse"]').classList.add('active');
 
+            // ---- 事件绑定 ----
             dom.sourceSelect.addEventListener('change', () => {
                 const s = getSelectedSource();
                 if (!s) return;
@@ -1174,6 +1437,11 @@
                 });
             });
 
+            // 点击弹窗外部关闭
+            dom.importModal.addEventListener('click', (e) => {
+                if (e.target === dom.importModal) closeImportModal();
+            });
+
             document.addEventListener('keydown', handleKeydown);
 
             document.querySelector('.speed-group').addEventListener('click', (e) => {
@@ -1195,6 +1463,7 @@
                 }
             });
 
+            updateImportCount();
             setTimeout(showDisclaimer, 500);
         }
 
@@ -1212,7 +1481,7 @@
                 if (groups[g]) groups[g].push(s);
                 else groups.normal.push(s);
             });
-            const labels = { stable: '稳定', normal: '普通', backup: '备用' };
+            const labels = { stable: '🟢 稳定', normal: '🔵 普通', backup: '🟡 备用' };
             Object.keys(groups).forEach(g => {
                 if (!groups[g].length) return;
                 const og = document.createElement('optgroup');
@@ -1467,21 +1736,16 @@
         // ============================================================
         //  核心播放逻辑
         // ============================================================
-        // ---------- 隐藏所有内容卡片 ----------
         function hideAllContent() {
-            // 浏览模式
             dom.browseGrid.style.display = 'none';
             dom.categoryNav.style.display = 'none';
             dom.browseHeader.style.display = 'none';
             dom.browsePager.style.display = 'none';
-            // 搜索模式
             dom.searchGrid.style.display = 'none';
             dom.resultStats.style.display = 'none';
-            // 空状态
             if (dom.emptyState) dom.emptyState.style.display = 'none';
         }
 
-        // ---------- 恢复所有内容卡片 ----------
         function restoreAllContent() {
             dom.browseGrid.style.display = '';
             dom.categoryNav.style.display = '';
@@ -1499,7 +1763,6 @@
             setStatus('加载播放地址…', true);
             toast('加载播放地址…', 'info');
 
-            // ===== 隐藏所有卡片 =====
             hideAllContent();
 
             try {
@@ -1871,7 +2134,6 @@
             state.currentLines = [];
             state.currentEpisodes = [];
 
-            // ===== 恢复所有卡片 =====
             restoreAllContent();
         }
 
