@@ -1,1 +1,1531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>TVPlayer · 云端影视</title>
+    <script src="/hls.min.js"></script>
+    <style>
+        /* ===== CSS Variables ===== */
+        :root {
+            --bg: #0a0e17;
+            --bg2: #111827;
+            --card: rgba(255, 255, 255, 0.04);
+            --card-hover: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.06);
+            --text: #e8edf5;
+            --text2: #8895b0;
+            --text3: #55607a;
+            --primary: #6c8cff;
+            --primary-hover: #7f9cff;
+            --primary-dim: rgba(108, 140, 255, 0.15);
+            --pink: #ff7eb3;
+            --green: #2ecc71;
+            --orange: #f39c12;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --transition: 0.2s ease;
+        }
 
+        /* ===== Reset ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+            min-height: 100vh;
+            padding-bottom: 40px;
+            -webkit-font-smoothing: antialiased;
+        }
+        a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        button {
+            cursor: pointer;
+            font-family: inherit;
+            font-size: inherit;
+            border: none;
+            outline: none;
+            background: none;
+            color: inherit;
+        }
+        input,
+        select {
+            font-family: inherit;
+            font-size: inherit;
+            outline: none;
+            border: none;
+            background: none;
+            color: inherit;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--text3);
+            border-radius: 4px;
+        }
+
+        /* ===== Toast ===== */
+        #toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 360px;
+            pointer-events: none;
+        }
+        .toast {
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 13px;
+            box-shadow: var(--shadow);
+            pointer-events: auto;
+            animation: slideIn 0.3s ease;
+            backdrop-filter: blur(12px);
+        }
+        .toast.success {
+            border-left: 3px solid var(--green);
+        }
+        .toast.error {
+            border-left: 3px solid #e74c3c;
+        }
+        .toast.info {
+            border-left: 3px solid var(--primary);
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* ===== Header ===== */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 14, 23, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 16px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 12px;
+        }
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            white-space: nowrap;
+            letter-spacing: -0.5px;
+        }
+        .logo span {
+            font-weight: 300;
+            font-size: 12px;
+            -webkit-text-fill-color: var(--text2);
+            background: none;
+            margin-left: 4px;
+        }
+        .header-center {
+            display: flex;
+            gap: 4px;
+            background: var(--card);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            border: 1px solid var(--border);
+        }
+        .header-center button {
+            padding: 5px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text2);
+            transition: var(--transition);
+        }
+        .header-center button.active {
+            background: var(--primary);
+            color: #fff;
+        }
+        .header-center button:hover:not(.active) {
+            color: var(--text);
+        }
+        .header-right {
+            display: flex;
+            flex: 1;
+            min-width: 200px;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-right select {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 6px 10px;
+            font-size: 13px;
+            color: var(--text);
+            min-width: 100px;
+            max-width: 160px;
+            cursor: pointer;
+        }
+        .header-right select option {
+            background: var(--bg2);
+        }
+        .header-right input {
+            flex: 1;
+            min-width: 80px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 6px 12px;
+            font-size: 13px;
+            color: var(--text);
+            transition: var(--transition);
+        }
+        .header-right input:focus {
+            border-color: var(--primary);
+        }
+        .header-right input::placeholder {
+            color: var(--text3);
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 13px;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: scale(1.02);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text2);
+            transition: var(--transition);
+        }
+        .btn-secondary:hover {
+            background: var(--card-hover);
+            color: var(--text);
+        }
+        #status {
+            font-size: 12px;
+            color: var(--text2);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+            margin-left: auto;
+        }
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ===== Main ===== */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 16px 0;
+        }
+
+        /* ===== Player ===== */
+        #player-wrap {
+            display: none;
+            margin-bottom: 16px;
+            background: var(--bg2);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        #player-wrap.show {
+            display: block;
+        }
+        #player-wrap video {
+            width: 100%;
+            max-height: 65vh;
+            background: #000;
+            display: block;
+        }
+        .player-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 12px;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--text2);
+        }
+        .player-controls .now-playing {
+            flex: 1;
+            min-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .player-controls .speed-group {
+            display: flex;
+            gap: 4px;
+        }
+        .player-controls .speed-group button {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text2);
+            border: 1px solid transparent;
+            transition: var(--transition);
+        }
+        .player-controls .speed-group button.active {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: var(--primary-dim);
+        }
+        .player-controls .speed-group button:hover {
+            color: var(--text);
+        }
+        .player-controls .ctrl-btn {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 16px;
+            color: var(--text2);
+            transition: var(--transition);
+            line-height: 1;
+        }
+        .player-controls .ctrl-btn:hover {
+            color: var(--text);
+            background: var(--card);
+        }
+        .player-controls .ctrl-btn.close-btn {
+            color: var(--text3);
+        }
+        .player-controls .ctrl-btn.close-btn:hover {
+            color: #e74c3c;
+        }
+        .player-controls input[type="text"] {
+            flex: 1;
+            min-width: 120px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            color: var(--text2);
+        }
+        .player-controls input[type="text"]:focus {
+            border-color: var(--primary);
+        }
+
+        /* ===== Content ===== */
+        .content-section {
+            display: block;
+        }
+        .content-section.hidden {
+            display: none;
+        }
+
+        /* ===== Empty State ===== */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px 60px;
+            color: var(--text2);
+            line-height: 2;
+        }
+        .empty-state .icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 12px;
+        }
+        .empty-state b {
+            color: var(--text);
+        }
+
+        /* ===== Results Grid ===== */
+        #results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        .result-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .result-card:hover {
+            background: var(--card-hover);
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+        .result-card .title {
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .result-card .meta {
+            font-size: 12px;
+            color: var(--text2);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 8px;
+            margin-top: 4px;
+        }
+        .result-card .badge {
+            font-size: 11px;
+            padding: 1px 8px;
+            border-radius: 10px;
+            background: var(--primary-dim);
+            color: var(--primary);
+            border: 1px solid rgba(108, 140, 255, 0.2);
+        }
+        .result-card .badge.source {
+            background: rgba(255, 126, 179, 0.12);
+            color: var(--pink);
+            border-color: rgba(255, 126, 179, 0.2);
+        }
+
+        /* ===== Browse ===== */
+        .browse-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .browse-toolbar .page-info {
+            font-size: 13px;
+            color: var(--text2);
+        }
+        .cats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+        .cat {
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text2);
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .cat:hover {
+            border-color: var(--text3);
+            color: var(--text);
+        }
+        .cat.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+        .cat.kid {
+            font-size: 12px;
+            padding: 3px 10px;
+            opacity: 0.7;
+        }
+
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+        }
+        .movie-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .movie-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+        .movie-card img {
+            width: 100%;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            display: block;
+            background: var(--bg2);
+        }
+        .movie-card .name {
+            padding: 8px 10px 2px;
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .movie-card .remark {
+            padding: 0 10px 8px;
+            font-size: 12px;
+            color: var(--text2);
+        }
+        .pager {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--text2);
+        }
+
+        /* ===== Detail ===== */
+        #detail {
+            display: none;
+            margin-top: 16px;
+        }
+        #detail.show {
+            display: block;
+        }
+        .detail-head {
+            display: flex;
+            gap: 16px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+        .detail-head .poster {
+            width: 110px;
+            height: 154px;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            flex-shrink: 0;
+        }
+        .detail-head .info {
+            flex: 1;
+            min-width: 0;
+        }
+        .detail-head .info h2 {
+            font-size: 20px;
+            margin-bottom: 6px;
+        }
+        .detail-head .info .detail-meta {
+            font-size: 13px;
+            color: var(--text2);
+            line-height: 1.8;
+        }
+        .detail-head .info .desc {
+            font-size: 13px;
+            color: var(--text2);
+            line-height: 1.6;
+            margin-top: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .detail-head .info .actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+        }
+        .detail-head .info .actions button {
+            padding: 4px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            border: 1px solid var(--border);
+            color: var(--text2);
+            transition: var(--transition);
+        }
+        .detail-head .info .actions button:hover {
+            background: var(--card);
+            color: var(--text);
+        }
+        .detail-head .info .actions button.favorited {
+            color: var(--pink);
+            border-color: var(--pink);
+        }
+
+        .section-label {
+            font-size: 14px;
+            color: var(--text2);
+            margin: 14px 0 8px;
+        }
+        .line-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .line-tab {
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text2);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .line-tab:hover {
+            border-color: var(--text3);
+        }
+        .line-tab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+        .episodes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .ep {
+            padding: 5px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text2);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .ep:hover {
+            border-color: var(--text3);
+            color: var(--text);
+        }
+        .ep.active {
+            background: var(--green);
+            border-color: var(--green);
+            color: #fff;
+        }
+
+        /* ===== Footer ===== */
+        footer {
+            text-align: center;
+            padding: 30px 16px 10px;
+            font-size: 12px;
+            color: var(--text3);
+            border-top: 1px solid var(--border);
+            margin-top: 30px;
+        }
+        footer a {
+            color: var(--text2);
+            transition: var(--transition);
+        }
+        footer a:hover {
+            color: var(--text);
+        }
+        footer span {
+            margin: 0 6px;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 640px) {
+            header {
+                padding: 8px 12px;
+                gap: 6px;
+            }
+            .logo {
+                font-size: 17px;
+            }
+            .header-center button {
+                padding: 4px 10px;
+                font-size: 12px;
+            }
+            .header-right select {
+                min-width: 70px;
+                max-width: 100px;
+                font-size: 12px;
+                padding: 4px 6px;
+            }
+            .header-right input {
+                min-width: 50px;
+                font-size: 12px;
+                padding: 4px 8px;
+            }
+            .btn-primary {
+                padding: 4px 10px;
+                font-size: 12px;
+            }
+            #status {
+                max-width: 100px;
+                font-size: 11px;
+            }
+            #results {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 8px;
+            }
+            .movie-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 8px;
+            }
+            .detail-head {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .detail-head .poster {
+                width: 130px;
+                height: 182px;
+            }
+            .detail-head .info .actions {
+                justify-content: center;
+            }
+            .player-controls {
+                font-size: 12px;
+                padding: 8px 10px;
+                gap: 6px;
+            }
+            .player-controls .speed-group button {
+                padding: 1px 6px;
+                font-size: 11px;
+            }
+            #toast-container {
+                top: 70px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+            .empty-state {
+                padding: 50px 16px 40px;
+                font-size: 14px;
+            }
+            .empty-state .icon {
+                font-size: 36px;
+            }
+        }
+        @media (max-width: 400px) {
+            #results {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            }
+            .movie-grid {
+                grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+            }
+            .header-right select {
+                min-width: 60px;
+                max-width: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== Toast Container ===== -->
+    <div id="toast-container"></div>
+
+    <!-- ===== Header ===== -->
+    <header>
+        <div class="logo">✦ TVPlayer <span>Cloud</span></div>
+        <div class="header-center">
+            <button id="modeSearch" class="active" onclick="switchMode('search')">🔍 搜索</button>
+            <button id="modeBrowse" onclick="switchMode('browse')">📂 浏览</button>
+        </div>
+        <div class="header-right">
+            <select id="sourceSelect"><option value="__all__">全部源</option></select>
+            <input type="text" id="searchInput" placeholder="片名…" />
+            <button class="btn-primary" id="searchBtn" onclick="doSearch()">搜索</button>
+            <span id="status">加载中…</span>
+        </div>
+    </header>
+
+    <!-- ===== Main ===== -->
+    <main>
+
+        <!-- Player -->
+        <div id="player-wrap">
+            <video id="player" controls preload="metadata" playsinline></video>
+            <div class="player-controls">
+                <span class="now-playing" id="nowPlaying">—</span>
+                <div class="speed-group" id="speedGroup">
+                    <button data-speed="0.5">0.5×</button>
+                    <button data-speed="0.75">0.75×</button>
+                    <button data-speed="1.0" class="active">1×</button>
+                    <button data-speed="1.25">1.25×</button>
+                    <button data-speed="1.5">1.5×</button>
+                    <button data-speed="2.0">2×</button>
+                </div>
+                <button class="ctrl-btn" onclick="togglePIP()" title="画中画">📺</button>
+                <button class="ctrl-btn" onclick="toggleFullscreen()" title="全屏">⛶</button>
+                <input type="text" id="m3u8Link" readonly onclick="this.select()" placeholder="播放地址" />
+                <button class="btn-secondary" style="padding:2px 10px;font-size:12px;" onclick="copyLink()">复制</button>
+                <button class="ctrl-btn close-btn" onclick="closePlayer()" title="收起">✕</button>
+            </div>
+        </div>
+
+        <!-- Search Mode -->
+        <div id="searchMode" class="content-section">
+            <div class="empty-state" id="emptyState">
+                <span class="icon">🎬</span>
+                输入片名开始搜索<br />
+                试试 <b>完美世界</b> · <b>时光代理人</b> · <b>庆余年</b><br />
+                或切换到 <b>📂 浏览</b> 模式逛逛
+            </div>
+            <div id="results"></div>
+        </div>
+
+        <!-- Browse Mode -->
+        <div id="browseMode" class="content-section hidden">
+            <div class="browse-toolbar">
+                <button class="btn-primary" onclick="loadCategories()">📂 载入分类</button>
+                <button class="btn-secondary" onclick="pagePrev()">←</button>
+                <span class="page-info" id="pageInfo">第 1 页</span>
+                <button class="btn-secondary" onclick="pageNext()">→</button>
+            </div>
+            <div class="cats" id="cats"></div>
+            <div class="movie-grid" id="browseGrid">
+                <div class="empty-state" style="grid-column:1/-1;padding:40px 0;">
+                    <span class="icon">📂</span> 选择一个源，点击「载入分类」
+                </div>
+            </div>
+            <div class="pager">
+                <button class="btn-secondary" onclick="pagePrev()">← 上一页</button>
+                <span id="pageInfo2">第 1 页</span>
+                <button class="btn-secondary" onclick="pageNext()">下一页 →</button>
+            </div>
+        </div>
+
+        <!-- Detail -->
+        <div id="detail">
+            <div class="detail-head">
+                <img class="poster" id="dPoster" src="" alt="海报" />
+                <div class="info">
+                    <h2 id="dName"></h2>
+                    <div class="detail-meta" id="dMeta"></div>
+                    <div class="desc" id="dDesc"></div>
+                    <div class="actions">
+                        <button id="favBtn" onclick="toggleFavorite()">⭐ 收藏</button>
+                    </div>
+                </div>
+            </div>
+            <div class="section-label">📡 线路</div>
+            <div class="line-tabs" id="lineTabs"></div>
+            <div class="section-label">📺 剧集</div>
+            <div class="episodes" id="episodes"></div>
+        </div>
+
+    </main>
+
+    <!-- ===== Footer ===== -->
+    <footer>
+        <span>☁️ 部署于 Cloudflare Pages</span>
+        <span>·</span>
+        <a href="#" onclick="showDisclaimer();return false;">免责声明</a>
+        <span>·</span>
+        <span>仅供技术学习交流</span>
+    </footer>
+
+    <script>
+        // ============================================================
+        //  CONFIG
+        // ============================================================
+        const PROXY = (url) => '/api/proxy?url=' + encodeURIComponent(url);
+        const CONCURRENCY = 8;
+        const FETCH_TIMEOUT = 8000;
+        const STORAGE_KEY = 'tvplayer_data';
+
+        // ============================================================
+        //  STATE
+        // ============================================================
+        let SOURCES = [];
+        let currentMode = 'search';
+        let currentSource = null;
+        let currentCategory = null;
+        let currentPage = 1;
+        let totalPages = 1;
+        let searchSeq = 0;
+        let currentDetail = null; // { vod, source }
+        let currentEpisodes = [];
+        let currentLineIndex = 0;
+        let hls = null;
+        let favorites = [];
+        let history = [];
+
+        // ============================================================
+        //  STORAGE
+        // ============================================================
+        function loadStorage() {
+            try {
+                const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                favorites = data.favorites || [];
+                history = data.history || [];
+            } catch { favorites = [];
+                history = []; }
+        }
+
+        function saveStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ favorites, history }));
+        }
+
+        function isFavorited(vodId, sourceKey) {
+            return favorites.some(f => f.vodId === vodId && f.sourceKey === sourceKey);
+        }
+
+        function toggleFavorite() {
+            if (!currentDetail) return;
+            const { vod, source } = currentDetail;
+            const key = source.key;
+            const id = vod.vod_id;
+            const idx = favorites.findIndex(f => f.vodId === id && f.sourceKey === key);
+            if (idx > -1) {
+                favorites.splice(idx, 1);
+                toast('已取消收藏', 'info');
+            } else {
+                favorites.push({ vodId: id, sourceKey: key, name: vod.vod_name, poster: vod.vod_pic });
+                toast('⭐ 已收藏', 'success');
+            }
+            saveStorage();
+            updateFavButton();
+        }
+
+        function updateFavButton() {
+            const btn = document.getElementById('favBtn');
+            if (!currentDetail) return;
+            const fav = isFavorited(currentDetail.vod.vod_id, currentDetail.source.key);
+            btn.textContent = fav ? '⭐ 已收藏' : '☆ 收藏';
+            btn.classList.toggle('favorited', fav);
+        }
+
+        function addHistory(vod, source, episode) {
+            const entry = {
+                vodId: vod.vod_id,
+                sourceKey: source.key,
+                name: vod.vod_name,
+                poster: vod.vod_pic,
+                episode: episode || '',
+                time: Date.now()
+            };
+            history = history.filter(h => !(h.vodId === entry.vodId && h.sourceKey === entry.sourceKey));
+            history.unshift(entry);
+            if (history.length > 100) history.pop();
+            saveStorage();
+        }
+
+        // ============================================================
+        //  TOAST
+        // ============================================================
+        function toast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            el.className = 'toast ' + type;
+            el.textContent = msg;
+            container.appendChild(el);
+            setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(40px)';
+                el.style.transition = '0.3s ease';
+                setTimeout(() => el.remove(), 300);
+            }, 2800);
+        }
+
+        // ============================================================
+        //  STATUS
+        // ============================================================
+        function setStatus(msg, loading = false) {
+            const el = document.getElementById('status');
+            el.innerHTML = loading ? '<span class="spinner"></span> ' + msg : msg;
+        }
+
+        // ============================================================
+        //  API
+        // ============================================================
+        async function fetchProxy(url, timeout = FETCH_TIMEOUT) {
+            const ctl = new AbortController();
+            const timer = setTimeout(() => ctl.abort(), timeout);
+            try {
+                const resp = await fetch(PROXY(url), { signal: ctl.signal });
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err.msg || 'HTTP ' + resp.status);
+                }
+                return resp.json();
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        function esc(s) {
+            if (s == null) return '';
+            const d = document.createElement('div');
+            d.textContent = String(s);
+            return d.innerHTML;
+        }
+
+        // ============================================================
+        //  INIT
+        // ============================================================
+        async function init() {
+            loadStorage();
+            try {
+                const resp = await fetch('/sources.json');
+                SOURCES = await resp.json();
+                populateSourceSelect();
+                setStatus(SOURCES.length + ' 个源就绪');
+                toast('加载完成，' + SOURCES.length + ' 个源', 'success');
+            } catch (e) {
+                setStatus('源列表加载失败');
+                toast('源列表加载失败: ' + e.message, 'error');
+            }
+
+            // 键盘快捷键
+            document.addEventListener('keydown', handleKeydown);
+            // 搜索输入回车
+            document.getElementById('searchInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') doSearch();
+            });
+            // 源切换时自动刷新浏览
+            document.getElementById('sourceSelect').addEventListener('change', () => {
+                if (currentMode === 'browse') loadCategories();
+            });
+
+            // 显示免责声明
+            setTimeout(showDisclaimer, 600);
+        }
+
+        function populateSourceSelect() {
+            const sel = document.getElementById('sourceSelect');
+            sel.innerHTML = '<option value="__all__">全部源 (' + SOURCES.length + ')</option>';
+            const groups = { stable: [], normal: [], backup: [] };
+            SOURCES.forEach(s => {
+                const g = s.group || 'normal';
+                if (groups[g]) groups[g].push(s);
+                else groups.normal.push(s);
+            });
+            const labels = { stable: '🟢 稳定', normal: '🔵 普通', backup: '🟡 备用' };
+            Object.keys(groups).forEach(g => {
+                if (!groups[g].length) return;
+                const og = document.createElement('optgroup');
+                og.label = labels[g] || g;
+                groups[g].forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.key;
+                    opt.textContent = s.name;
+                    og.appendChild(opt);
+                });
+                sel.appendChild(og);
+            });
+        }
+
+        // ============================================================
+        //  MODE SWITCH
+        // ============================================================
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('modeSearch').classList.toggle('active', mode === 'search');
+            document.getElementById('modeBrowse').classList.toggle('active', mode === 'browse');
+            document.getElementById('searchMode').classList.toggle('hidden', mode !== 'search');
+            document.getElementById('browseMode').classList.toggle('hidden', mode !== 'browse');
+            document.getElementById('detail').classList.remove('show');
+            if (mode === 'browse' && !currentSource) {
+                const sel = document.getElementById('sourceSelect');
+                const first = SOURCES.find(s => s.group === 'stable') || SOURCES[0];
+                if (first) { sel.value = first.key;
+                    loadCategories(); }
+            }
+        }
+
+        // ============================================================
+        //  SEARCH
+        // ============================================================
+        async function doSearch() {
+            const kw = document.getElementById('searchInput').value.trim();
+            if (!kw) { toast('请输入片名', 'error'); return; }
+
+            const sel = document.getElementById('sourceSelect');
+            const targets = sel.value === '__all__' ?
+                SOURCES :
+                SOURCES.filter(s => s.key === sel.value);
+            if (!targets.length) { toast('请选择有效源', 'error'); return; }
+
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('detail').classList.remove('show');
+            switchMode('search');
+
+            const resultsEl = document.getElementById('results');
+            resultsEl.innerHTML = '';
+            const mySeq = ++searchSeq;
+            const results = [];
+            const pool = targets.slice();
+            let done = 0;
+
+            function renderResults() {
+                const frag = document.createDocumentFragment();
+                results.forEach(({ v, s }) => {
+                    const card = document.createElement('div');
+                    card.className = 'result-card';
+                    const isFav = isFavorited(v.vod_id, s.key);
+                    card.innerHTML = `
+                <div class="title">${esc(v.vod_name)} ${isFav ? '⭐' : ''}</div>
+                <div class="meta">
+                  <span class="badge">${esc(v.type_name || '影视')}</span>
+                  <span class="badge source">${esc(s.name)}</span>
+                  ${v.vod_remarks ? `<span>${esc(v.vod_remarks)}</span>` : ''}
+                </div>
+              `;
+                    card.onclick = () => showDetail(v, s);
+                    frag.appendChild(card);
+                });
+                resultsEl.innerHTML = '';
+                resultsEl.appendChild(frag);
+            }
+
+            async function worker() {
+                while (pool.length && mySeq === searchSeq) {
+                    const s = pool.shift();
+                    try {
+                        const url = s.api + '?ac=detail&wd=' + encodeURIComponent(kw);
+                        const data = await fetchProxy(url);
+                        (data.list || []).forEach(v => {
+                            if (v && v.vod_id && v.vod_name) {
+                                // 去重
+                                if (!results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
+                                    results.push({ v, s });
+                                }
+                            }
+                        });
+                    } catch (e) { /* skip */ }
+                    done++;
+                    setStatus('搜索中 ' + done + '/' + targets.length + ' · 找到 ' + results.length + ' 条', true);
+                    renderResults();
+                }
+            }
+
+            const workers = Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker);
+            await Promise.all(workers);
+            if (mySeq !== searchSeq) return;
+            setStatus('完成 ' + targets.length + ' 个源，找到 ' + results.length + ' 条');
+            renderResults();
+            if (!results.length) toast('未找到结果，试试其他关键词或切换源', 'error');
+        }
+
+        // ============================================================
+        //  BROWSE
+        // ============================================================
+        function getSelectedSource() {
+            const key = document.getElementById('sourceSelect').value;
+            return SOURCES.find(s => s.key === key) || null;
+        }
+
+        async function loadCategories() {
+            const s = getSelectedSource();
+            if (!s) { toast('请选择源', 'error'); return; }
+            currentSource = s;
+            currentCategory = null;
+            currentPage = 1;
+
+            const catsEl = document.getElementById('cats');
+            catsEl.innerHTML = '<span style="color:var(--text3);padding:4px 0;">加载分类…</span>';
+            const grid = document.getElementById('browseGrid');
+            grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:30px 0;"><span class="spinner"></span> 加载中…</div>';
+
+            // 先加载最新列表
+            await loadBrowsePage();
+
+            try {
+                const data = await fetchProxy(s.api + '?ac=list');
+                const classes = data.class || [];
+                if (!classes.length) {
+                    catsEl.innerHTML = '<span style="color:var(--text3);font-size:13px;">该源无分类数据</span>';
+                    return;
+                }
+                renderCategories(classes);
+                setStatus('分类已载入: ' + s.name);
+            } catch (e) {
+                catsEl.innerHTML = '<span style="color:var(--text3);font-size:13px;">分类加载失败</span>';
+            }
+        }
+
+        function renderCategories(classes) {
+            const top = classes.filter(c => String(c.type_pid) === '0');
+            const kids = classes.filter(c => String(c.type_pid) !== '0');
+            const el = document.getElementById('cats');
+            el.innerHTML = '';
+
+            const allBtn = document.createElement('div');
+            allBtn.className = 'cat active';
+            allBtn.textContent = '⚡ 最新';
+            allBtn.onclick = () => {
+                document.querySelectorAll('.cat').forEach(c => c.classList.remove('active'));
+                allBtn.classList.add('active');
+                currentCategory = null;
+                currentPage = 1;
+                loadBrowsePage();
+            };
+            el.appendChild(allBtn);
+
+            top.forEach(c => {
+                const btn = document.createElement('div');
+                btn.className = 'cat';
+                btn.textContent = c.type_name;
+                btn.onclick = () => selectCategory(c.type_id, c.type_name, btn);
+                el.appendChild(btn);
+                kids.filter(k => String(k.type_pid) === String(c.type_id)).forEach(k => {
+                    const kb = document.createElement('div');
+                    kb.className = 'cat kid';
+                    kb.textContent = '└ ' + k.type_name;
+                    kb.onclick = () => selectCategory(k.type_id, k.type_name, kb);
+                    el.appendChild(kb);
+                });
+            });
+        }
+
+        function selectCategory(typeId, name, btn) {
+            document.querySelectorAll('.cat').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            currentCategory = typeId;
+            currentPage = 1;
+            loadBrowsePage(name);
+        }
+
+        async function loadBrowsePage(name) {
+            if (!currentSource) return;
+            const s = currentSource;
+            const url = currentCategory ?
+                `${s.api}?ac=videolist&t=${currentCategory}&pg=${currentPage}` :
+                `${s.api}?ac=videolist&pg=${currentPage}`;
+
+            const grid = document.getElementById('browseGrid');
+            grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:30px 0;"><span class="spinner"></span> 加载中…</div>';
+
+            try {
+                const data = await fetchProxy(url);
+                const list = data.list || [];
+                totalPages = Math.max(1, parseInt(data.pagecount) || 1);
+                document.getElementById('pageInfo').textContent = `第 ${currentPage}/${totalPages} 页`;
+                document.getElementById('pageInfo2').textContent = `第 ${currentPage}/${totalPages} 页`;
+
+                grid.innerHTML = '';
+                if (!list.length) {
+                    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:30px 0;">📭 暂无内容</div>';
+                    return;
+                }
+
+                const frag = document.createDocumentFragment();
+                list.forEach(v => {
+                    const card = document.createElement('div');
+                    card.className = 'movie-card';
+                    const poster = v.vod_pic || '';
+                    card.innerHTML = `
+                <img loading="lazy" src="${esc(poster)}" 
+                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22390%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23111827%22/%3E%3C/svg%3E'" />
+                <div class="name">${esc(v.vod_name)}</div>
+                <div class="remark">${esc(v.vod_remarks || '')}</div>
+              `;
+                    card.onclick = () => showDetail(v, s);
+                    frag.appendChild(card);
+                });
+                grid.appendChild(frag);
+                setStatus(`「${name || '最新'}」${list.length} 条 · 第 ${currentPage} 页`);
+            } catch (e) {
+                grid.innerHTML =
+                `<div class="empty-state" style="grid-column:1/-1;padding:30px 0;">❌ 加载失败: ${esc(e.message)}</div>`;
+                toast('加载失败: ' + e.message, 'error');
+            }
+        }
+
+        function pagePrev() { if (currentPage > 1) { currentPage--;
+                loadBrowsePage(); } }
+
+        function pageNext() { if (currentPage < totalPages) { currentPage++;
+                loadBrowsePage(); } }
+
+        // ============================================================
+        //  DETAIL
+        // ============================================================
+        async function showDetail(v, s) {
+            setStatus('加载详情…', true);
+            document.getElementById('detail').classList.add('show');
+            document.getElementById('dName').textContent = v.vod_name;
+            document.getElementById('dPoster').src = v.vod_pic ||
+                'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="220" height="308"%3E%3Crect width="100%25" height="100%25" fill="%23111827"/%3E%3Ctext x="50%25" y="50%25" fill="%2355607a" font-size="14" text-anchor="middle"%3E暂无海报%3C/text%3E%3C/svg%3E';
+            document.getElementById('dMeta').textContent =
+                [v.type_name, v.vod_year, v.vod_area, '主演: ' + (v.vod_actor || '-'), '导演: ' + (v.vod_director || '-')]
+                .filter(Boolean).join(' | ');
+            document.getElementById('dDesc').textContent = (v.vod_content || '').replace(/<[^>]+>/g, '').slice(0, 200);
+
+            currentDetail = { vod: v, source: s };
+            updateFavButton();
+
+            // 获取完整详情
+            let detail = v;
+            try {
+                const data = await fetchProxy(s.api + '?ac=detail&ids=' + v.vod_id);
+                if (data.list && data.list.length) detail = data.list[0];
+            } catch (e) { /* 用缓存 */ }
+
+            // 解析线路
+            const froms = (detail.vod_play_from || '').split('$$$').filter(Boolean);
+            const urls = (detail.vod_play_url || '').split('$$$').filter(Boolean);
+            const lines = froms.map((f, i) => ({ name: f, url: urls[i] || '' }))
+                .filter(l => l.url.trim());
+
+            // 排序：m3u8 优先
+            lines.sort((a, b) => {
+                const aOk = a.url.includes('.m3u8') ? 0 : 1;
+                const bOk = b.url.includes('.m3u8') ? 0 : 1;
+                return aOk - bOk;
+            });
+
+            const tabsEl = document.getElementById('lineTabs');
+            const epsEl = document.getElementById('episodes');
+            tabsEl.innerHTML = '';
+            epsEl.innerHTML = '';
+
+            if (!lines.length) {
+                epsEl.innerHTML = '<span style="color:var(--text3);">该源暂无可用播放线路</span>';
+                setStatus('详情加载完成（无线路）');
+                return;
+            }
+
+            currentEpisodes = lines;
+            lines.forEach((l, i) => {
+                const tab = document.createElement('div');
+                tab.className = 'line-tab' + (i === 0 ? ' active' : '');
+                tab.textContent = l.name;
+                tab.onclick = () => {
+                    tabsEl.querySelectorAll('.line-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentLineIndex = i;
+                    renderEpisodes(lines[i].url);
+                };
+                tabsEl.appendChild(tab);
+            });
+
+            renderEpisodes(lines[0].url);
+            setStatus('详情加载完成 · ' + lines.length + ' 条线路');
+        }
+
+        function renderEpisodes(url) {
+            const epsEl = document.getElementById('episodes');
+            epsEl.innerHTML = '';
+            const parts = url.split('#').filter(p => p.includes('$'));
+            if (!parts.length) {
+                epsEl.innerHTML = '<span style="color:var(--text3);">该线路无可选集</span>';
+                return;
+            }
+            const frag = document.createDocumentFragment();
+            parts.forEach((p, idx) => {
+                const i = p.indexOf('$');
+                const name = p.slice(0, i).trim() || ('第' + (idx + 1) + '集');
+                const addr = p.slice(i + 1);
+                const ep = document.createElement('div');
+                ep.className = 'ep';
+                ep.textContent = name;
+                ep.onclick = () => {
+                    epsEl.querySelectorAll('.ep').forEach(e => e.classList.remove('active'));
+                    ep.classList.add('active');
+                    play(addr, name);
+                    if (currentDetail) {
+                        addHistory(currentDetail.vod, currentDetail.source, name);
+                    }
+                };
+                frag.appendChild(ep);
+            });
+            epsEl.appendChild(frag);
+        }
+
+        // ============================================================
+        //  PLAYER
+        // ============================================================
+        function play(m3u8, name) {
+            const video = document.getElementById('player');
+            const wrap = document.getElementById('player-wrap');
+            wrap.classList.add('show');
+            document.getElementById('m3u8Link').value = m3u8;
+            document.getElementById('nowPlaying').textContent = name || '正在播放';
+
+            if (hls) { hls.destroy();
+                hls = null; }
+            video.removeAttribute('src');
+            video.load();
+
+            if (window.Hls && Hls.isSupported()) {
+                hls = new Hls({ enableWorker: true });
+                hls.loadSource(m3u8);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+                hls.on(Hls.Events.ERROR, (e, data) => {
+                    if (data.fatal) toast('播放错误，可复制链接用外部播放器', 'error');
+                });
+                toast('开始播放', 'success');
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = m3u8;
+                video.play().catch(() => {});
+            } else {
+                toast('当前浏览器不支持 HLS 播放', 'error');
+            }
+            scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function closePlayer() {
+            document.getElementById('player-wrap').classList.remove('show');
+            if (hls) { hls.destroy();
+                hls = null; }
+            document.getElementById('player').removeAttribute('src');
+            document.getElementById('player').load();
+        }
+
+        function copyLink() {
+            const input = document.getElementById('m3u8Link');
+            input.select();
+            navigator.clipboard?.writeText(input.value).then(() => toast('已复制链接', 'success'))
+                .catch(() => toast('请手动复制', 'info'));
+        }
+
+        function togglePIP() {
+            const video = document.getElementById('player');
+            if (document.pictureInPictureElement) {
+                document.exitPictureInPicture();
+            } else if (document.pictureInPictureEnabled) {
+                video.requestPictureInPicture().catch(() => {});
+            }
+        }
+
+        function toggleFullscreen() {
+            const wrap = document.getElementById('player-wrap');
+            if (!document.fullscreenElement) {
+                wrap.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // ============================================================
+        //  SPEED CONTROL
+        // ============================================================
+        document.getElementById('speedGroup').addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn || !btn.dataset.speed) return;
+            const speed = parseFloat(btn.dataset.speed);
+            const video = document.getElementById('player');
+            video.playbackRate = speed;
+            document.querySelectorAll('#speedGroup button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            toast(speed + '× 倍速', 'info');
+        });
+
+        // ============================================================
+        //  KEYBOARD SHORTCUTS
+        // ============================================================
+        function handleKeydown(e) {
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+
+            const video = document.getElementById('player');
+            const wrap = document.getElementById('player-wrap');
+            if (wrap.classList.contains('show') && video) {
+                switch (e.key) {
+                    case ' ':
+                        e.preventDefault();
+                        video.paused ? video.play() : video.pause();
+                        break;
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        video.currentTime += 10;
+                        break;
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        video.currentTime -= 10;
+                        break;
+                    case 'f':
+                    case 'F':
+                        toggleFullscreen();
+                        break;
+                    case 'p':
+                    case 'P':
+                        togglePIP();
+                        break;
+                    case 'Escape':
+                        if (document.fullscreenElement) document.exitFullscreen();
+                        break;
+                }
+            }
+            // Ctrl+F 聚焦搜索
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+                document.getElementById('searchInput').select();
+            }
+        }
+
+        // ============================================================
+        //  DISCLAIMER
+        // ============================================================
+        let disclaimerShown = false;
+
+        function showDisclaimer() {
+            if (disclaimerShown) return;
+            disclaimerShown = true;
+            alert(
+                '📺 TVPlayer · 免责声明\n\n' +
+                '1. 本工具为纯前端空壳播放器，不包含、不存储任何音视频内容。\n' +
+                '2. 所有播放资源均来自第三方公开采集接口，由用户自行配置。\n' +
+                '3. 仅供技术学习交流使用，请于 24 小时内删除缓存内容。\n' +
+                '4. 尊重版权，支持正版影视平台。\n' +
+                '5. 使用本工具产生的一切法律风险由使用者自行承担。\n\n' +
+                '继续使用即表示您同意上述条款。'
+            );
+        }
+
+        // ============================================================
+        //  BOOT
+        // ============================================================
+        init();
+    </script>
+</body>
+</html>
