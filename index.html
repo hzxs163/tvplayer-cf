@@ -266,7 +266,7 @@
         }
 
         /* ============================================================
-                   播放器（独立组件）
+                   播放器
                    ============================================================ */
         #player-section {
             display: none;
@@ -284,6 +284,13 @@
             max-height: 58vh;
             background: #000;
             display: block;
+        }
+        #player-iframe {
+            width: 100%;
+            height: 58vh;
+            border: none;
+            display: none;
+            background: #000;
         }
 
         .player-controls {
@@ -874,10 +881,11 @@
     <main>
 
         <!-- ==========================================================
-        播放器（独立组件，不依赖任何页面）
+        播放器
         ========================================================== -->
         <div id="player-section">
             <video id="player" controls preload="metadata" playsinline></video>
+            <iframe id="player-iframe" allowfullscreen></iframe>
             <div class="player-controls">
                 <span class="title" id="nowPlaying">—</span>
                 <div class="speed-group">
@@ -973,7 +981,7 @@
         // ============================================================
         const PROXY = (url) => '/api/proxy?url=' + encodeURIComponent(url);
         const CONCURRENCY = 6;
-        const FETCH_TIMEOUT = 10000;
+        const FETCH_TIMEOUT = 15000;
         const STORAGE_KEY = 'tv_data';
 
         // ============================================================
@@ -1035,6 +1043,7 @@
 
             playerSection: $('player-section'),
             player: $('player'),
+            playerIframe: $('player-iframe'),
             nowPlaying: $('nowPlaying'),
             m3u8Link: $('m3u8Link'),
         };
@@ -1493,7 +1502,6 @@
             state.detailLines = [];
             state.detailLineIndex = 0;
 
-            // 切换到详情页
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             dom.pageDetail.classList.add('active');
 
@@ -1513,14 +1521,12 @@
             dom.dDesc.textContent = (vod.vod_content || '').replace(/<[^>]+>/g, '').slice(0, 200);
             updateFavBtn();
 
-            // 获取完整详情
             let detail = vod;
             try {
                 const data = await fetchProxy(source.api + '?ac=detail&ids=' + vod.vod_id);
                 if (data.list && data.list.length) detail = data.list[0];
             } catch (e) { /* use cached */ }
 
-            // 解析线路 - 兼容多种格式
             let froms = [],
                 urls = [];
             const playFrom = detail.vod_play_from || '';
@@ -1531,7 +1537,6 @@
                 urls = playUrl.split('$$$').filter(Boolean);
             }
 
-            // 尝试其他常见格式
             if (!froms.length) {
                 const keys = Object.keys(detail).filter(k => k.startsWith('vod_play_from'));
                 for (const k of keys) {
@@ -1548,7 +1553,6 @@
             const lines = froms.map((f, i) => ({ name: f, url: urls[i] || '' }))
                 .filter(l => l.url.trim());
 
-            // m3u8 优先
             lines.sort((a, b) => (a.url.includes('.m3u8') ? 0 : 1) - (b.url.includes('.m3u8') ? 0 : 1));
 
             state.detailLines = lines;
@@ -1579,25 +1583,67 @@
             setStatus('详情加载完成 · ' + lines.length + ' 条线路');
         }
 
+        // ============================================================
+        //  渲染剧集（支持多种格式）
+        // ============================================================
         function renderEpisodes(url) {
             const el = dom.episodes;
             el.innerHTML = '';
+
+            // 如果地址是相对路径，先补全（但保留原样用于显示）
+            let fullUrl = url;
+            if (url.startsWith('/')) {
+                const source = state.detailSource;
+                if (source) {
+                    const base = source.api.replace(/\/api\.php.*$/, '');
+                    fullUrl = base + url;
+                }
+            }
+
+            // 按 # 分割剧集
             const parts = url.split('#').filter(p => p.includes('$'));
-            if (!parts.length) {
-                el.innerHTML = '<span style="color:var(--text3);">该线路无可选集</span>';
+
+            if (!parts.length && fullUrl.trim()) {
+                // 单集模式：直接显示一个播放按钮
+                const ep = document.createElement('div');
+                ep.className = 'ep';
+                ep.textContent = '▶ 播放';
+                ep.onclick = () => {
+                    document.querySelectorAll('.ep').forEach(e => e.classList.remove('active'));
+                    ep.classList.add('active');
+                    // 万能播放器会自动识别地址类型
+                    play(fullUrl, '播放');
+                    if (state.detailVod && state.detailSource) {
+                        addHistory(state.detailVod, state.detailSource, '播放');
+                    }
+                };
+                el.appendChild(ep);
                 return;
             }
+
+            // 多集模式
             const frag = document.createDocumentFragment();
             parts.forEach((p, idx) => {
                 const i = p.indexOf('$');
                 const name = p.slice(0, i).trim() || ('第' + (idx + 1) + '集');
-                const addr = p.slice(i + 1);
+                let addr = p.slice(i + 1);
+
+                // 补全相对路径
+                if (addr.startsWith('/')) {
+                    const source = state.detailSource;
+                    if (source) {
+                        const base = source.api.replace(/\/api\.php.*$/, '');
+                        addr = base + addr;
+                    }
+                }
+
                 const ep = document.createElement('div');
                 ep.className = 'ep';
                 ep.textContent = name;
                 ep.onclick = () => {
                     document.querySelectorAll('.ep').forEach(e => e.classList.remove('active'));
                     ep.classList.add('active');
+                    // 万能播放器自动识别
                     play(addr, name);
                     if (state.detailVod && state.detailSource) {
                         addHistory(state.detailVod, state.detailSource, name);
@@ -1618,9 +1664,130 @@
         }
 
         // ============================================================
-        //  PLAYER（独立函数，与页面完全解耦）
-        // ============================================================
+        //  ============================================================
+        //  万能播放器 — 自动识别所有地址类型
+        //  ============================================================
+        //  ============================================================
+
         function play(url, title) {
+            if (!url || !url.trim()) {
+                toast('播放地址为空', 'error');
+                return;
+            }
+
+            url = url.trim();
+
+            // ---- 1. 处理相对路径 ----
+            if (url.startsWith('/')) {
+                const source = state.detailSource;
+                if (source) {
+                    const base = source.api.replace(/\/api\.php.*$/, '');
+                    url = base + url;
+                }
+            }
+
+            // ---- 2. 判断是否为 HTML 播放页 ----
+            const isHtml = url.includes('.html') ||
+                url.includes('/play/') ||
+                (!url.includes('.m3u8') && !url.includes('.mp4') && !url.includes('.ts') && !url.includes('.flv') && !url
+                    .includes('.mkv'));
+
+            if (isHtml || url.includes('?')) {
+                extractM3u8FromHtml(url, title);
+                return;
+            }
+
+            // ---- 3. 直接播放 ----
+            startPlayer(url, title || '正在播放');
+        }
+
+        // ============================================================
+        //  从 HTML 播放页提取 m3u8
+        // ============================================================
+        async function extractM3u8FromHtml(pageUrl, title) {
+            toast('正在解析播放地址…', 'info');
+            setStatus('解析中…', true);
+
+            try {
+                if (pageUrl.startsWith('/')) {
+                    const source = state.detailSource;
+                    if (source) {
+                        const base = source.api.replace(/\/api\.php.*$/, '');
+                        pageUrl = base + pageUrl;
+                    }
+                }
+
+                const resp = await fetchProxy(pageUrl);
+                const html = typeof resp === 'string' ? resp : JSON.stringify(resp);
+
+                // 多重正则匹配
+                const patterns = [
+                    /["'](https?:[^"']+\.m3u8[^"']*)["']/,
+                    /["'](\/[^"']+\.m3u8[^"']*)["']/,
+                    /var\s+url\s*=\s*["']([^"']+\.m3u8[^"']*)["']/,
+                    /url\s*[:=]\s*["']([^"']+\.m3u8[^"']*)["']/i,
+                    /src\s*[:=]\s*["']([^"']+\.m3u8[^"']*)["']/i,
+                    /(https?:[^\s"']+\.m3u8[^\s"']*)/,
+                    /(\/[^\s"']+\.m3u8[^\s"']*)/,
+                ];
+
+                let m3u8Url = null;
+                for (const pattern of patterns) {
+                    const match = html.match(pattern);
+                    if (match) {
+                        m3u8Url = match[1];
+                        break;
+                    }
+                }
+
+                if (m3u8Url) {
+                    if (m3u8Url.startsWith('/')) {
+                        const base = new URL(pageUrl).origin;
+                        m3u8Url = base + m3u8Url;
+                    }
+                    if (!m3u8Url.startsWith('http://') && !m3u8Url.startsWith('https://')) {
+                        const base = pageUrl.replace(/\/[^/]*$/, '/');
+                        m3u8Url = base + m3u8Url;
+                    }
+                    toast('✅ 解析成功', 'success');
+                    setStatus('就绪');
+                    startPlayer(m3u8Url, title || '解析播放');
+                } else {
+                    toast('未能提取 m3u8，尝试嵌入页面', 'info');
+                    startPlayerInIframe(pageUrl, title);
+                }
+            } catch (e) {
+                toast('解析失败: ' + e.message, 'error');
+                setStatus('解析失败');
+                startPlayerInIframe(pageUrl, title);
+            }
+        }
+
+        // ============================================================
+        //  iframe 备选播放
+        // ============================================================
+        function startPlayerInIframe(url, title) {
+            dom.playerSection.classList.add('open');
+            dom.nowPlaying.textContent = title || '嵌入播放';
+            dom.m3u8Link.value = url;
+
+            dom.player.style.display = 'none';
+            dom.playerIframe.style.display = 'block';
+            dom.playerIframe.src = url;
+
+            toast('已切换到嵌入式播放', 'info');
+            dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ============================================================
+        //  核心播放引擎
+        // ============================================================
+        function startPlayer(url, title) {
+            // 关闭 iframe
+            dom.playerIframe.style.display = 'none';
+            dom.playerIframe.src = '';
+            dom.player.style.display = 'block';
+
             dom.playerSection.classList.add('open');
             dom.nowPlaying.textContent = title || '正在播放';
             dom.m3u8Link.value = url;
@@ -1634,26 +1801,44 @@
             video.removeAttribute('src');
             video.load();
 
-            if (window.Hls && Hls.isSupported()) {
-                const hls = new Hls({ enableWorker: true });
-                window.hls = hls;
-                hls.loadSource(url);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-                hls.on(Hls.Events.ERROR, (e, data) => {
-                    if (data.fatal) toast('播放错误，可复制链接用外部播放器', 'error');
-                });
-                toast('▶ 开始播放', 'success');
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = url;
-                video.play().catch(() => {});
-            } else {
-                toast('当前浏览器不支持 HLS 播放', 'error');
+            // ---- m3u8 播放 ----
+            if (url.includes('.m3u8') || url.includes('.m3u8?')) {
+                if (window.Hls && Hls.isSupported()) {
+                    const hls = new Hls({ enableWorker: true });
+                    window.hls = hls;
+                    hls.loadSource(url);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+                    hls.on(Hls.Events.ERROR, (e, data) => {
+                        if (data.fatal) {
+                            toast('HLS 播放失败，尝试嵌入', 'error');
+                            startPlayerInIframe(url, title);
+                        }
+                    });
+                    toast('▶ 开始播放', 'success');
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = url;
+                    video.play().catch(() => {});
+                } else {
+                    startPlayerInIframe(url, title);
+                }
+                dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                return;
             }
 
+            // ---- 普通视频直链 ----
+            video.src = url;
+            video.play().catch(() => {
+                toast('无法直接播放，尝试嵌入', 'error');
+                startPlayerInIframe(url, title);
+            });
+            toast('▶ 开始播放', 'success');
             dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
+        // ============================================================
+        //  播放器控制
+        // ============================================================
         function closePlayer() {
             dom.playerSection.classList.remove('open');
             if (window.hls) {
@@ -1662,6 +1847,9 @@
             }
             dom.player.removeAttribute('src');
             dom.player.load();
+            dom.player.style.display = 'block';
+            dom.playerIframe.style.display = 'none';
+            dom.playerIframe.src = '';
         }
 
         function copyLink() {
