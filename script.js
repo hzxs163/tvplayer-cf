@@ -70,6 +70,7 @@ const dom = {
     lineSelect: $('lineSelect'),
     episodesPanel: $('episodes-panel'),
     episodesList: $('episodes-list'),
+    playerControls: $('playerControls'),
 
     importModal: $('importModal'),
     importTextarea: $('importTextarea'),
@@ -342,9 +343,11 @@ function importFromFile(event) {
 
 function loadExample() {
     const example = [
-        { key: 'fan', name: '**资源', api: 'http://***.tv/api.php/provide/vod', type: 0, searchable: 1,
+        { key: 'feifan', name: '非凡资源', api: 'http://ffzy5.tv/api.php/provide/vod', type: 0, searchable: 1,
             filterable: 1, playerType: 1, group: 'stable' },
-        { key: 'zui', name: '**资源', api: 'https://api.***api.com/api.php/provide/vod', type: 0, searchable: 1,
+        { key: 'wolong', name: '卧龙资源', api: 'https://wolongzyw.com/api.php/provide/vod', type: 0, searchable: 1,
+            filterable: 1, playerType: 1, group: 'stable' },
+        { key: 'zuida', name: '最大资源', api: 'https://api.zuidapi.com/api.php/provide/vod', type: 0, searchable: 1,
             filterable: 1, playerType: 1, group: 'stable' }
     ];
     dom.importTextarea.value = JSON.stringify(example, null, 2);
@@ -972,6 +975,7 @@ function normalizeUrl(url) {
 function showPlayer() {
     state.isPlaying = true;
     dom.playerSection.classList.add('open');
+    dom.playerControls.classList.add('open');
     dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -1180,6 +1184,7 @@ async function extractM3u8FromHtml(pageUrl, title) {
 // ============================================================
 function startPlayerInIframe(url, title) {
     dom.playerSection.classList.add('open');
+    dom.playerControls.classList.add('open');
     dom.nowPlaying.textContent = title || '嵌入播放';
     dom.m3u8Link.value = url;
 
@@ -1197,6 +1202,7 @@ function startPlayerInIframe(url, title) {
 function closePlayer() {
     state.isPlaying = false;
     dom.playerSection.classList.remove('open');
+    dom.playerControls.classList.remove('open');
     dom.episodesPanel.classList.remove('open');
 
     if (state.hlsInstance) {
