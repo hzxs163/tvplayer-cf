@@ -6,7 +6,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "stable"
   },
   {
     "key": "wolong",
@@ -15,7 +16,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "stable"
   },
   {
     "key": "zuida",
@@ -24,7 +26,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "stable"
   },
   {
     "key": "baiduyun",
@@ -33,7 +36,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "stable"
   },
   {
     "key": "baofeng",
@@ -42,7 +46,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "stable"
   },
   {
     "key": "jisu",
@@ -51,7 +56,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "stable"
   },
   {
     "key": "tianya",
@@ -60,7 +66,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "stable"
   },
   {
     "key": "wujin",
@@ -69,7 +76,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "stable"
   },
   {
     "key": "modu",
@@ -78,7 +86,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "stable"
   },
   {
     "key": "sanliuling",
@@ -87,7 +96,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "dytt",
@@ -96,7 +106,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "stable"
   },
   {
     "key": "ruyi",
@@ -105,7 +116,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "wangwang",
@@ -114,7 +126,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "hongniu",
@@ -123,7 +136,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "stable"
   },
   {
     "key": "guangsu",
@@ -132,7 +146,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "stable"
   },
   {
     "key": "ikun",
@@ -141,7 +156,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "stable"
   },
   {
     "key": "youku",
@@ -150,7 +166,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "huya",
@@ -159,7 +176,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "xinlang",
@@ -168,7 +186,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "lezi",
@@ -177,7 +196,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "haihua",
@@ -186,7 +206,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "jiangyu",
@@ -195,7 +216,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "aidan",
@@ -204,7 +226,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "moduzy",
@@ -213,7 +236,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "feifanapi",
@@ -222,7 +246,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "feifancj",
@@ -231,7 +256,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "feifancj2",
@@ -240,7 +266,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "feifan1",
@@ -249,7 +276,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "wolong2",
@@ -258,7 +286,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "baofeng2",
@@ -267,7 +296,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "wujin2",
@@ -276,7 +306,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "tianyazy",
@@ -285,7 +316,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "guangsu2",
@@ -294,7 +326,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "xinlang2",
@@ -303,7 +336,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "yilingba2",
@@ -312,7 +346,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "lezi2",
@@ -321,7 +356,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "uku88",
@@ -330,7 +366,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "wujincc",
@@ -339,7 +376,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "yaya",
@@ -348,7 +386,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "wolongcc",
@@ -357,7 +396,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "wujinnet",
@@ -366,7 +406,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "wangwangapi",
@@ -375,7 +416,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "zuidame",
@@ -384,7 +426,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "yinghua",
@@ -393,7 +436,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "bubugao",
@@ -402,7 +446,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "niuniu",
@@ -411,7 +456,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "suoni",
@@ -420,7 +466,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "maotai",
@@ -429,7 +476,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "dbzy",
@@ -438,7 +486,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "subo",
@@ -447,7 +496,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "jinying",
@@ -456,16 +506,18 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "shandian",
-    "name": "閃電资源",
+    "name": "闪电资源",
     "api": "https://sdzyapi.com/api.php/provide/vod",
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "piaoling",
@@ -474,7 +526,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "modudongman",
@@ -483,7 +536,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "hongniu3",
@@ -492,7 +546,8 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
   },
   {
     "key": "suonisd",
@@ -501,6 +556,227 @@
     "type": 0,
     "searchable": 1,
     "filterable": 1,
-    "playerType": 1
+    "playerType": 1,
+    "group": "normal"
+  },
+  {
+    "key": "leba",
+    "name": "乐播资源",
+    "api": "https://lbapi9.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "ck",
+    "name": "CK",
+    "api": "https://www.ckzy1.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "jkun",
+    "name": "jkun",
+    "api": "https://jkunzyapi.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "155",
+    "name": "155",
+    "api": "https://155api.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "lsb",
+    "name": "lsb",
+    "api": "https://apilsbzy1.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "hsck",
+    "name": "黄色仓库",
+    "api": "https://hsckzy.vip/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "yutu",
+    "name": "玉兔",
+    "api": "https://yutuzy10.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "msnii",
+    "name": "美少女资源站",
+    "api": "https://www.msnii.com/api/json.php",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "xrbsp",
+    "name": "淫水机资源站",
+    "api": "https://www.xrbsp.com/api/json.php",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "gdlsp",
+    "name": "香奶儿资源站",
+    "api": "https://www.gdlsp.com/api/json.php",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "kxgav",
+    "name": "白嫖资源站",
+    "api": "https://www.kxgav.com/api/json.php",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "pgxdy",
+    "name": "黄AV资源站",
+    "api": "https://www.pgxdy.com/api/json.php",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "baiwan",
+    "name": "百万资源",
+    "api": "https://api.bwzyz.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "madou",
+    "name": "91麻豆",
+    "api": "https://91md.me/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "aosika",
+    "name": "奥斯卡资源",
+    "api": "https://aosikazy.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "naixiang",
+    "name": "奶香香",
+    "api": "https://Naixxzy.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "senlin",
+    "name": "森林资源",
+    "api": "https://slapibf.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "fanhao",
+    "name": "番号资源",
+    "api": "http://fhapi9.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "jingpin",
+    "name": "精品资源",
+    "api": "https://www.jingpinx.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "shayu",
+    "name": "鲨鱼资源",
+    "api": "https://shayuapi.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "xiaoji",
+    "name": "小鸡资源",
+    "api": "https://api.xiaojizy.live/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
+  },
+  {
+    "key": "xibao",
+    "name": "细胞采集",
+    "api": "https://www.xxibaozyw.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "premium"
   }
 ]
