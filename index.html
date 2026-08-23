@@ -294,6 +294,48 @@
             background: #000;
         }
 
+        /* ===== 加载遮罩 ===== */
+        #player-loading {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
+            background: #0a0c12;
+            color: var(--text2);
+            z-index: 5;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        #player-loading.show {
+            display: flex;
+        }
+        #player-loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #player-loading .spinner {
+            width: 36px;
+            height: 36px;
+            border-width: 3px;
+        }
+        #player-loading .label {
+            font-size: 14px;
+            color: var(--text3);
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== 隐藏视频默认控件占位 ===== */
+        #player-section video {
+            background: #0a0c12;
+            min-height: 200px;
+        }
+        #player::-webkit-media-controls-start-playback-button {
+            display: none !important;
+        }
+
         .player-controls {
             display: flex;
             flex-wrap: wrap;
@@ -940,6 +982,12 @@
         播放器
         ========================================================== -->
         <div id="player-section">
+            <!-- 加载遮罩 -->
+            <div id="player-loading" class="show">
+                <span class="spinner"></span>
+                <span class="label">加载中…</span>
+            </div>
+
             <video id="player" controls preload="metadata" playsinline></video>
             <iframe id="player-iframe" allowfullscreen></iframe>
 
@@ -1128,6 +1176,8 @@
             importModal: $('importModal'),
             importTextarea: $('importTextarea'),
             importCount: $('importCount'),
+
+            playerLoading: $('player-loading'),
         };
 
         // ============================================================
@@ -1387,6 +1437,22 @@
         }
 
         // ============================================================
+        //  PLAYER LOADING 控制
+        // ============================================================
+        function showPlayerLoading() {
+            dom.playerLoading.classList.remove('hidden');
+            dom.playerLoading.classList.add('show');
+        }
+
+        function hidePlayerLoading() {
+            dom.playerLoading.classList.add('hidden');
+            // 等过渡动画结束后移除 show
+            setTimeout(() => {
+                dom.playerLoading.classList.remove('show');
+            }, 400);
+        }
+
+        // ============================================================
         //  INIT
         // ============================================================
         async function init() {
@@ -1483,6 +1549,18 @@
                         panel.style.display = 'none';
                     }
                 }
+            });
+
+            // 视频加载完成后隐藏 loading 遮罩
+            dom.player.addEventListener('loadedmetadata', () => {
+                hidePlayerLoading();
+            });
+            dom.player.addEventListener('canplay', () => {
+                hidePlayerLoading();
+            });
+            // 如果加载失败，也隐藏遮罩
+            dom.player.addEventListener('error', () => {
+                hidePlayerLoading();
             });
 
             updateImportCount();
@@ -1800,6 +1878,9 @@
 
             hideAllContent();
 
+            // 显示加载遮罩
+            showPlayerLoading();
+
             try {
                 const data = await fetchProxy(source.api + '?ac=detail&ids=' + vod.vod_id);
                 const detail = data.list?.[0] || vod;
@@ -1835,6 +1916,7 @@
                 if (!lines.length) {
                     toast('该源无可用播放地址', 'error');
                     setStatus('无播放地址');
+                    hidePlayerLoading();
                     restoreAllContent();
                     return;
                 }
@@ -1865,6 +1947,7 @@
             } catch (e) {
                 toast('获取播放地址失败: ' + e.message, 'error');
                 setStatus('加载失败');
+                hidePlayerLoading();
                 restoreAllContent();
             }
         }
@@ -2168,6 +2251,9 @@
 
             state.currentLines = [];
             state.currentEpisodes = [];
+
+            // 隐藏加载遮罩
+            hidePlayerLoading();
 
             restoreAllContent();
         }
