@@ -996,11 +996,9 @@ function renderPlayerLines(lines) {
 //  选集面板
 // ============================================================
 function toggleEpisodesPanel() {
-    const panel = dom.episodesPanel;
-    if (panel.style.display === 'block') {
-        panel.style.display = 'none';
-    } else {
-        panel.style.display = 'block';
+    const panel = document.getElementById('episodes-panel');
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open')) {
         if (!state.currentEpisodes.length && state.currentLines.length) {
             const url = state.currentLines[state.currentLineIndex]?.url || '';
             const eps = parseEpisodes(url);
