@@ -925,11 +925,11 @@
             <button data-page="search">搜索</button>
         </div>
         <div class="controls">
-            <select id="sourceSelect"></select>
-            <input type="text" id="searchInput" placeholder="搜索片名…" />
-            <button class="btn btn-primary" id="searchBtn">搜索</button>
+            <select id="sourceSelect"><option value="">📥 请导入源</option></select>
+            <input type="text" id="searchInput" placeholder="搜索片名…" disabled />
+            <button class="btn btn-primary" id="searchBtn" disabled>搜索</button>
             <button class="btn-ghost" onclick="showImportModal()" title="导入源" style="font-size:18px;padding:0 6px;">📥</button>
-            <span id="status">加载中…</span>
+            <span id="status">📥 请导入源</span>
         </div>
     </header>
 
@@ -1031,7 +1031,6 @@
                 <button class="btn-primary" onclick="importSources()">✅ 导入</button>
                 <button class="btn-ghost" onclick="document.getElementById('fileInput').click()">📂 上传 JSON 文件</button>
                 <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importFromFile(event)" />
-                <button class="btn-ghost" onclick="resetSources()">↻ 恢复默认</button>
                 <button class="btn-ghost" onclick="closeImportModal()" style="margin-left:auto;">取消</button>
             </div>
             <div class="hint">
@@ -1187,7 +1186,7 @@
         }
 
         // ============================================================
-        //  SOURCES 管理（localStorage 优先）
+        //  SOURCES 管理（纯用户导入，无默认源）
         // ============================================================
         function getStoredSources() {
             try {
@@ -1203,38 +1202,23 @@
         }
 
         async function loadSources() {
-            // 优先从 localStorage 加载
+            // 只从 localStorage 加载，不提供任何默认源
             const stored = getStoredSources();
             if (stored) {
                 return stored;
             }
-
-            // 没有存储，从默认 URL 加载
-            try {
-                const resp = await fetch('/sources.json');
-                const data = await resp.json();
-                if (Array.isArray(data) && data.length) {
-                    // 自动存入 localStorage 作为默认
-                    localStorage.setItem(STORAGE_SOURCES_KEY, JSON.stringify(data));
-                    return data;
-                }
-            } catch (e) {}
-
-            // 内置最小备用源
-            const fallback = [
-                { key: 'feifan', name: '非凡资源', api: 'http://ffzy5.tv/api.php/provide/vod', type: 0, searchable: 1,
-                    filterable: 1, playerType: 1, group: 'stable' },
-                { key: 'wolong', name: '卧龙资源', api: 'https://wolongzyw.com/api.php/provide/vod', type: 0, searchable: 1,
-                    filterable: 1, playerType: 1, group: 'stable' }
-            ];
-            localStorage.setItem(STORAGE_SOURCES_KEY, JSON.stringify(fallback));
-            return fallback;
+            // 没有任何源，返回空数组
+            return [];
         }
 
         function updateImportCount() {
             const stored = getStoredSources();
             const count = stored ? stored.length : 0;
             dom.importCount.textContent = '当前源：' + count + ' 个';
+        }
+
+        function hasSources() {
+            return state.sources && state.sources.length > 0;
         }
 
         // ============================================================
@@ -1262,7 +1246,6 @@
                 if (!Array.isArray(data) || !data.length) {
                     throw new Error('格式错误：需要非空数组');
                 }
-                // 基本校验
                 for (const item of data) {
                     if (!item.key || !item.name || !item.api) {
                         throw new Error('每个源必须包含 key, name, api 字段');
@@ -1271,7 +1254,6 @@
                 localStorage.setItem(STORAGE_SOURCES_KEY, JSON.stringify(data));
                 toast('✅ 导入成功，' + data.length + ' 个源', 'success');
                 closeImportModal();
-                // 刷新页面重新加载
                 location.reload();
             } catch (e) {
                 toast('JSON 格式错误: ' + e.message, 'error');
@@ -1303,13 +1285,6 @@
             };
             reader.readAsText(file);
             event.target.value = '';
-        }
-
-        function resetSources() {
-            if (!confirm('将恢复为默认源列表，当前自定义源将被覆盖。确定？')) return;
-            localStorage.removeItem(STORAGE_SOURCES_KEY);
-            toast('已恢复默认源，页面即将刷新', 'info');
-            setTimeout(() => location.reload(), 500);
         }
 
         function loadExample() {
@@ -1377,29 +1352,83 @@
         }
 
         // ============================================================
+        //  ENABLE/DISABLE CONTROLS
+        // ============================================================
+        function setControlsEnabled(enabled) {
+            dom.searchInput.disabled = !enabled;
+            dom.searchBtn.disabled = !enabled;
+            if (!enabled) {
+                dom.searchInput.placeholder = '请先导入源';
+            } else {
+                dom.searchInput.placeholder = '搜索片名…';
+            }
+        }
+
+        // ============================================================
+        //  RENDER EMPTY STATE
+        // ============================================================
+        function renderEmptyState() {
+            const grid = dom.browseGrid;
+            grid.innerHTML = `
+                <div class="empty-grid" style="grid-column:1/-1;padding:80px 20px;text-align:center;">
+                    <div style="font-size:56px;margin-bottom:16px;">📥</div>
+                    <div style="font-size:20px;font-weight:700;margin-bottom:8px;color:var(--text);">还没有影视源</div>
+                    <div style="color:var(--text2);margin-bottom:16px;font-size:15px;">点击右上角「📥」按钮，导入你的源列表</div>
+                    <button class="btn-primary" onclick="showImportModal()" style="font-size:15px;padding:8px 24px;">📥 导入源</button>
+                    <div style="margin-top:12px;font-size:13px;color:var(--text3);">
+                        或 <a onclick="loadExample()" style="color:var(--primary);cursor:pointer;">加载示例源</a> 快速体验
+                    </div>
+                </div>
+            `;
+            dom.categoryNav.innerHTML = '';
+            dom.browseTitle.textContent = '📥 请导入源';
+            dom.browseBadge.textContent = '';
+            dom.browseInfo.textContent = '';
+            dom.pageInfo.textContent = '-';
+            dom.pageInfo2.textContent = '-';
+            dom.sourceSelect.innerHTML = '<option value="">📥 请导入源</option>';
+            dom.sourceSelect.disabled = true;
+            setStatus('📥 请导入源');
+            setControlsEnabled(false);
+        }
+
+        // ============================================================
         //  INIT
         // ============================================================
         async function init() {
             loadStorage();
 
-            // ---- 加载源列表（localStorage 优先） ----
             try {
                 state.sources = await loadSources();
-                populateSelect();
-                setStatus('就绪');
             } catch (e) {
-                setStatus('源列表加载失败');
-                toast('源列表加载失败: ' + e.message, 'error');
+                state.sources = [];
             }
 
-            // ---- 默认加载第一个源 ----
+            // 如果没有源，显示空状态
+            if (!hasSources()) {
+                renderEmptyState();
+                updateImportCount();
+                setTimeout(showDisclaimer, 500);
+                // 仍然绑定必要事件
+                dom.importModal.addEventListener('click', (e) => {
+                    if (e.target === dom.importModal) closeImportModal();
+                });
+                document.addEventListener('keydown', handleKeydown);
+                return;
+            }
+
+            // ---- 有源，正常初始化 ----
+            populateSelect();
+            setControlsEnabled(true);
+            setStatus('就绪');
+
             const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
             if (first) {
                 dom.sourceSelect.value = first.key;
+                dom.sourceSelect.disabled = false;
                 await loadBrowse(first);
             }
 
-            // ---- 设置默认页面状态 ----
             state.currentPage = 'browse';
             dom.pageBrowse.classList.add('active');
             document.querySelector('[data-page="browse"]').classList.add('active');
@@ -1437,7 +1466,6 @@
                 });
             });
 
-            // 点击弹窗外部关闭
             dom.importModal.addEventListener('click', (e) => {
                 if (e.target === dom.importModal) closeImportModal();
             });
@@ -1475,6 +1503,14 @@
         function populateSelect() {
             const sel = dom.sourceSelect;
             sel.innerHTML = '';
+            sel.disabled = false;
+
+            if (!state.sources || !state.sources.length) {
+                sel.innerHTML = '<option value="">📥 请导入源</option>';
+                sel.disabled = true;
+                return;
+            }
+
             const groups = { stable: [], normal: [], backup: [] };
             state.sources.forEach(s => {
                 const g = s.group || 'normal';
@@ -1645,6 +1681,11 @@
         //  SEARCH
         // ============================================================
         async function doSearch() {
+            if (!hasSources()) {
+                toast('请先导入源', 'error');
+                return;
+            }
+
             const q = dom.searchInput.value.trim();
             if (!q) { toast('请输入片名', 'error'); return; }
 
