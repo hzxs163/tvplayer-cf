@@ -1796,7 +1796,7 @@
             state.currentSource = source;
 
             setStatus('加载播放地址…', true);
-            toast('加载播放地址…', 'info');
+            // toast('加载播放地址…', 'info');
 
             hideAllContent();
 
@@ -2050,7 +2050,7 @@
                             startPlayerInIframe(url, title);
                         }
                     });
-                    toast('▶ 开始播放', 'success');
+                    // toast('▶ 开始播放', 'success');
                 } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                     video.src = url;
                     video.play().catch(() => {});
@@ -2065,7 +2065,7 @@
                 toast('无法直接播放，尝试嵌入', 'error');
                 startPlayerInIframe(url, title);
             });
-            toast('▶ 开始播放', 'success');
+            // toast('▶ 开始播放', 'success');
         }
 
         // ============================================================
