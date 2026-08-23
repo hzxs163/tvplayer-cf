@@ -251,37 +251,31 @@ main {
 }
 
 /* ============================================================
-           播放器（固定宽高比 + 绝对定位铺满，永不缩小 + 自适应比例）
+           播放器（方案一优化版：容器固定高度 + video 填满，切换不缩小）
            ============================================================ */
 #player-section {
     display: none;
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    max-height: 70vh;
+    height: 58vh;
+    min-height: 300px;
     background: #000;
     border-radius: var(--radius);
     overflow: hidden;
     border: 1px solid var(--border);
+    position: relative;
 }
 #player-section.open {
     display: block;
 }
 #player-section video {
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
     background: #0a0c12;
+    display: block;
     object-fit: contain;
 }
 #player-iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
-    height: 100%;
+    height: 58vh;
     border: none;
     display: none;
     background: #000;
@@ -290,10 +284,7 @@ main {
 /* ===== 加载遮罩 ===== */
 #player-loading {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     display: none;
     align-items: center;
     justify-content: center;
@@ -301,7 +292,7 @@ main {
     gap: 12px;
     background: #0a0c12;
     color: var(--text2);
-    z-index: 10;
+    z-index: 5;
     pointer-events: none;
     transition: opacity 0.4s ease;
 }
@@ -338,8 +329,6 @@ main {
     border-top: 1px solid var(--border);
     font-size: 13px;
     color: var(--text2);
-    position: relative;
-    z-index: 20;
 }
 .player-controls .title {
     flex: 1;
@@ -406,7 +395,7 @@ main {
     overflow-y: auto;
     min-width: 180px;
     max-width: 260px;
-    z-index: 999;
+    z-index: 20;
     border: 1px solid var(--border);
     backdrop-filter: blur(8px);
 }
