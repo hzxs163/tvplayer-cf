@@ -32,6 +32,7 @@ const state = {
     isPlaying: false,
     isLoading: false,
     editingKey: null,
+    hlsInstance: null,
 };
 
 // ============================================================
@@ -1034,7 +1035,7 @@ function renderEpisodesPanel(episodes) {
 }
 
 // ============================================================
-//  核心播放引擎
+//  核心播放引擎（方案一：JS 不重置 video）
 // ============================================================
 function startPlayer(url, title) {
     if (!url || !url.trim()) {
@@ -1061,14 +1062,14 @@ function startPlayer(url, title) {
     dom.playerIframe.src = '';
     dom.player.style.display = 'block';
 
-    if (window.hls) {
-        window.hls.destroy();
-        window.hls = null;
+    // === 方案一核心：切换时只销毁 HLS，不重置 video 尺寸 ===
+    if (state.hlsInstance) {
+        state.hlsInstance.destroy();
+        state.hlsInstance = null;
     }
 
     const video = dom.player;
-    video.removeAttribute('src');
-    video.load();
+    // 不调用 removeAttribute('src')，不调用 load()
 
     const isHtml = url.includes('.html') ||
         url.includes('/play/') ||
@@ -1083,7 +1084,7 @@ function startPlayer(url, title) {
     if (url.includes('.m3u8') || url.includes('.m3u8?')) {
         if (window.Hls && Hls.isSupported()) {
             const hls = new Hls({ enableWorker: true });
-            window.hls = hls;
+            state.hlsInstance = hls;
             hls.loadSource(url);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
@@ -1193,9 +1194,9 @@ function closePlayer() {
     dom.playerSection.classList.remove('open');
     dom.episodesPanel.style.display = 'none';
 
-    if (window.hls) {
-        window.hls.destroy();
-        window.hls = null;
+    if (state.hlsInstance) {
+        state.hlsInstance.destroy();
+        state.hlsInstance = null;
     }
     dom.player.removeAttribute('src');
     dom.player.load();
