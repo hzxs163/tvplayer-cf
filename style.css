@@ -344,7 +344,7 @@ main {
     color: var(--text2);
 }
 .player-controls.open {
-    display: flex;
+    display: flex !important;
 }
 .player-controls .title {
     flex: 1;
