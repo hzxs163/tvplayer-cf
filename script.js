@@ -521,13 +521,18 @@ async function init() {
 
     dom.pageBrowse.classList.add('active');
 
-    dom.sourceSelect.addEventListener('change', () => {
-        const s = getSelectedSource();
-        if (!s) return;
+    dom.sourceSelect.addEventListener('change', function() {
+        const key = this.value;
+        if (!key) return;
+        const s = state.sources.find(src => src.key === key);
+        if (!s) {
+            toast('未找到该源', 'error');
+            return;
+        }
         if (state.isPlaying) closePlayer();
         state.isLoading = false;
-        dom.pageBrowse.classList.add('active');
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        dom.pageBrowse.classList.add('active');
         loadBrowse(s);
     });
 
