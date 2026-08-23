@@ -1035,7 +1035,7 @@ function renderEpisodesPanel(episodes) {
 }
 
 // ============================================================
-//  核心播放引擎（方案一：JS 不重置 video）
+//  核心播放引擎（方案一优化版：防塌陷）
 // ============================================================
 function startPlayer(url, title) {
     if (!url || !url.trim()) {
@@ -1062,14 +1062,18 @@ function startPlayer(url, title) {
     dom.playerIframe.src = '';
     dom.player.style.display = 'block';
 
-    // === 方案一核心：切换时只销毁 HLS，不重置 video 尺寸 ===
+    // === 切换前：记住当前高度，防止塌陷 ===
+    const video = dom.player;
+    const currentHeight = video.offsetHeight;
+    if (currentHeight > 50) {
+        video.style.minHeight = currentHeight + 'px';
+    }
+
+    // === 销毁旧 HLS 实例 ===
     if (state.hlsInstance) {
         state.hlsInstance.destroy();
         state.hlsInstance = null;
     }
-
-    const video = dom.player;
-    // 不调用 removeAttribute('src')，不调用 load()
 
     const isHtml = url.includes('.html') ||
         url.includes('/play/') ||
@@ -1087,8 +1091,15 @@ function startPlayer(url, title) {
             state.hlsInstance = hls;
             hls.loadSource(url);
             hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+
+            // 加载完成后清除占位高度
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                video.style.minHeight = '';
+                video.play().catch(() => {});
+            });
+
             hls.on(Hls.Events.ERROR, (e, data) => {
+                video.style.minHeight = '';
                 if (data.fatal) {
                     toast('HLS 播放失败，尝试嵌入', 'error');
                     startPlayerInIframe(url, title);
