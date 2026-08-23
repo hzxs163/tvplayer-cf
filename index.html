@@ -6,9 +6,7 @@
     <title>TVPlayer · 云端影视</title>
     <script src="/hls.min.js"></script>
     <style>
-        /* ============================================================
-                   爱奇艺风格 · 从零重构
-                   ============================================================ */
+
         * {
             margin: 0;
             padding: 0;
@@ -231,6 +229,17 @@
         .btn-ghost:hover {
             color: var(--text);
             border-color: var(--border);
+        }
+        .btn-danger {
+            color: #e74c3c;
+        }
+        .btn-danger:hover {
+            color: #ff6b6b;
+        }
+        .btn-sm {
+            padding: 1px 8px;
+            font-size: 12px;
+            border-radius: 4px;
         }
 
         #status {
@@ -782,9 +791,9 @@
             background: var(--card-bg);
             border-radius: 12px;
             padding: 24px;
-            max-width: 620px;
-            width: 92%;
-            max-height: 85vh;
+            max-width: 700px;
+            width: 94%;
+            max-height: 90vh;
             overflow-y: auto;
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
@@ -800,7 +809,7 @@
         }
         .import-box textarea {
             width: 100%;
-            height: 200px;
+            height: 120px;
             background: var(--bg);
             border: 1px solid var(--border);
             border-radius: 6px;
@@ -840,6 +849,79 @@
             background: var(--bg);
             border-radius: 4px;
             display: inline-block;
+        }
+
+        /* 已有源列表 */
+        .source-list {
+            margin-top: 14px;
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+        .source-list .group-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text2);
+            margin: 8px 0 4px;
+            padding: 2px 0;
+        }
+        .source-list .group-label:first-child {
+            margin-top: 0;
+        }
+        .source-list .source-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .source-list .source-item:hover {
+            background: var(--card-bg);
+        }
+        .source-list .source-item .s-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text);
+        }
+        .source-list .source-item .s-key {
+            font-size: 11px;
+            color: var(--text3);
+            margin-right: 6px;
+        }
+        .source-list .source-item .s-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .source-list .source-item .s-actions button {
+            padding: 1px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+        .source-list .source-item .s-actions .edit-btn {
+            color: var(--primary);
+        }
+        .source-list .source-item .s-actions .edit-btn:hover {
+            background: var(--primary-dim);
+        }
+        .source-list .source-item .s-actions .del-btn {
+            color: #e74c3c;
+        }
+        .source-list .source-item .s-actions .del-btn:hover {
+            background: rgba(231, 76, 60, 0.15);
+        }
+        .source-list .empty-hint {
+            color: var(--text3);
+            font-size: 13px;
+            padding: 8px 0;
+            text-align: center;
         }
 
         /* ============================================================
@@ -938,7 +1020,18 @@
                 max-width: 95%;
             }
             .import-box textarea {
-                height: 150px;
+                height: 100px;
+            }
+            .source-list {
+                max-height: 160px;
+            }
+            .source-list .source-item {
+                font-size: 12px;
+                padding: 3px 4px;
+                flex-wrap: wrap;
+            }
+            .source-list .source-item .s-name {
+                min-width: 60px;
             }
         }
 
@@ -1067,23 +1160,31 @@
     </main>
 
     <!-- ============================================================
-    导入弹窗
+    导入弹窗（含已有源列表）
     ============================================================ -->
     <div id="importModal">
         <div class="import-box">
-            <h3>📥 导入源列表</h3>
-            <div class="sub">粘贴 JSON 格式的源列表，或上传 <code>.json</code> 文件</div>
-            <textarea id="importTextarea" placeholder='[\n  {\n    "key": "feifan",\n    "name": "**资源",\n    "api": "http://***.tv/api.php/provide/vod",\n    "type": 0,\n    "searchable": 1,\n    "filterable": 1,\n    "playerType": 1,\n    "group": "stable"\n  }\n]'></textarea>
-            <div class="source-count" id="importCount">当前源：0 个</div>
-            <div class="actions">
-                <button class="btn-primary" onclick="importSources()">✅ 导入</button>
-                <button class="btn-ghost" onclick="document.getElementById('fileInput').click()">📂 上传 JSON 文件</button>
-                <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importFromFile(event)" />
-                <button class="btn-ghost" onclick="closeImportModal()" style="margin-left:auto;">取消</button>
-            </div>
-            <div class="hint">
-                💡 <a onclick="loadExample()">加载示例</a> ｜
-                📖 格式：<code>[{"key":"唯一ID","name":"显示名称","api":"接口地址","group":"stable|normal|backup"}]</code>
+            <h3>📥 源管理</h3>
+            <div class="sub">粘贴 JSON 格式的源列表导入，或管理已有源</div>
+
+            <!-- 已有源列表 -->
+            <div class="source-list" id="sourceList"></div>
+
+            <!-- 导入区域 -->
+            <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+                <div style="font-size:13px;color:var(--text2);margin-bottom:6px;">📝 导入 / 编辑源（JSON 格式）</div>
+                <textarea id="importTextarea" placeholder='[\n  {\n    "key": "唯一ID",\n    "name": "显示名称",\n    "api": "接口地址",\n    "type": 0,\n    "searchable": 1,\n    "filterable": 1,\n    "playerType": 1,\n    "group": "stable"\n  }\n]'></textarea>
+                <div class="source-count" id="importCount">当前源：0 个</div>
+                <div class="actions">
+                    <button class="btn-primary" onclick="importSources()">✅ 导入 / 更新</button>
+                    <button class="btn-ghost" onclick="document.getElementById('fileInput').click()">📂 上传 JSON 文件</button>
+                    <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importFromFile(event)" />
+                    <button class="btn-ghost" onclick="closeImportModal()" style="margin-left:auto;">关闭</button>
+                </div>
+                <div class="hint">
+                    💡 <a onclick="loadExample()">加载示例</a> ｜
+                    📖 格式：<code>[{"key":"唯一ID","name":"显示名称","api":"接口地址","group":"stable|normal|backup"}]</code>
+                </div>
             </div>
         </div>
     </div>
@@ -1131,6 +1232,8 @@
             currentPage: 'browse',
             isPlaying: false,
             isLoading: false,
+            // 编辑状态
+            editingKey: null,
         };
 
         // ============================================================
@@ -1176,6 +1279,7 @@
             importModal: $('importModal'),
             importTextarea: $('importTextarea'),
             importCount: $('importCount'),
+            sourceList: $('sourceList'),
 
             playerLoading: $('player-loading'),
         };
@@ -1236,7 +1340,7 @@
         }
 
         // ============================================================
-        //  SOURCES 管理（纯用户导入，无默认源）
+        //  SOURCES 管理
         // ============================================================
         function getStoredSources() {
             try {
@@ -1251,20 +1355,16 @@
             return null;
         }
 
+        function setStoredSources(sources) {
+            localStorage.setItem(STORAGE_SOURCES_KEY, JSON.stringify(sources));
+        }
+
         async function loadSources() {
-            // 只从 localStorage 加载，不提供任何默认源
             const stored = getStoredSources();
             if (stored) {
                 return stored;
             }
-            // 没有任何源，返回空数组
             return [];
-        }
-
-        function updateImportCount() {
-            const stored = getStoredSources();
-            const count = stored ? stored.length : 0;
-            dom.importCount.textContent = '当前源：' + count + ' 个';
         }
 
         function hasSources() {
@@ -1272,19 +1372,118 @@
         }
 
         // ============================================================
-        //  导入功能
+        //  源列表渲染（弹窗内）
+        // ============================================================
+        function renderSourceList() {
+            const container = dom.sourceList;
+            const sources = getStoredSources() || [];
+
+            if (!sources.length) {
+                container.innerHTML = '<div class="empty-hint">📭 暂无源，请导入</div>';
+                dom.importCount.textContent = '当前源：0 个';
+                return;
+            }
+
+            const groups = { stable: [], normal: [], backup: [] };
+            sources.forEach(s => {
+                const g = s.group || 'normal';
+                if (groups[g]) groups[g].push(s);
+                else groups.normal.push(s);
+            });
+            const labels = { stable: '🟢 稳定', normal: '🔵 普通', backup: '🟡 备用' };
+
+            let html = '';
+            Object.keys(groups).forEach(g => {
+                if (!groups[g].length) return;
+                html += `<div class="group-label">${labels[g] || g}</div>`;
+                groups[g].forEach(s => {
+                    const isEditing = state.editingKey === s.key;
+                    html += `
+                        <div class="source-item" style="${isEditing ? 'background:var(--primary-dim);' : ''}">
+                            <span class="s-name">${esc(s.name)} <span class="s-key">(${esc(s.key)})</span></span>
+                            <div class="s-actions">
+                                <button class="edit-btn btn-sm" onclick="editSource('${esc(s.key)}')">✏️</button>
+                                <button class="del-btn btn-sm" onclick="deleteSource('${esc(s.key)}')">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+
+            container.innerHTML = html;
+            dom.importCount.textContent = `当前源：${sources.length} 个`;
+        }
+
+        // ============================================================
+        //  编辑源
+        // ============================================================
+        function editSource(key) {
+            const sources = getStoredSources() || [];
+            const item = sources.find(s => s.key === key);
+            if (!item) {
+                toast('未找到该源', 'error');
+                return;
+            }
+            state.editingKey = key;
+            dom.importTextarea.value = JSON.stringify(item, null, 2);
+            renderSourceList();
+            dom.importTextarea.focus();
+            toast('已加载到编辑区，修改后点击「导入 / 更新」保存', 'info');
+        }
+
+        // ============================================================
+        //  删除源
+        // ============================================================
+        function deleteSource(key) {
+            if (!confirm(`确定要删除源 "${key}" 吗？`)) return;
+            const sources = getStoredSources() || [];
+            const filtered = sources.filter(s => s.key !== key);
+            if (filtered.length === sources.length) {
+                toast('未找到该源', 'error');
+                return;
+            }
+            setStoredSources(filtered);
+            state.sources = filtered;
+            // 如果当前正在编辑该源，清空编辑状态
+            if (state.editingKey === key) {
+                state.editingKey = null;
+                dom.importTextarea.value = '';
+            }
+            renderSourceList();
+            populateSelect();
+            if (!filtered.length) {
+                renderEmptyState();
+            } else {
+                // 刷新当前浏览
+                const first = filtered.find(s => s.group === 'stable') || filtered[0];
+                if (first) {
+                    dom.sourceSelect.value = first.key;
+                    loadBrowse(first);
+                }
+            }
+            toast('✅ 已删除', 'success');
+        }
+
+        // ============================================================
+        //  导入功能（支持新增和更新）
         // ============================================================
         function showImportModal() {
             dom.importModal.classList.add('open');
             const stored = getStoredSources();
-            if (stored) {
-                dom.importTextarea.value = JSON.stringify(stored, null, 2);
+            if (stored && !dom.importTextarea.value) {
+                // 如果编辑区为空，显示已有源列表
             }
-            updateImportCount();
+            renderSourceList();
+            // 如果当前有编辑状态，不覆盖 textarea
+            if (!state.editingKey) {
+                dom.importTextarea.value = '';
+            }
         }
 
         function closeImportModal() {
             dom.importModal.classList.remove('open');
+            state.editingKey = null;
+            dom.importTextarea.value = '';
         }
 
         function importSources() {
@@ -1301,9 +1500,30 @@
                         throw new Error('每个源必须包含 key, name, api 字段');
                     }
                 }
-                localStorage.setItem(STORAGE_SOURCES_KEY, JSON.stringify(data));
-                toast('✅ 导入成功，' + data.length + ' 个源', 'success');
+
+                // 如果是单条（编辑模式），直接替换
+                let currentSources = getStoredSources() || [];
+                if (state.editingKey) {
+                    // 找到并替换
+                    const idx = currentSources.findIndex(s => s.key === state.editingKey);
+                    if (idx > -1) {
+                        currentSources[idx] = data[0];
+                    } else {
+                        currentSources.push(data[0]);
+                    }
+                    state.editingKey = null;
+                    setStoredSources(currentSources);
+                    toast('✅ 更新成功', 'success');
+                } else {
+                    // 批量导入：合并或覆盖？
+                    // 简单做法：覆盖全部
+                    setStoredSources(data);
+                    toast('✅ 导入成功，' + data.length + ' 个源', 'success');
+                }
+
+                state.sources = getStoredSources() || [];
                 closeImportModal();
+                // 刷新页面
                 location.reload();
             } catch (e) {
                 toast('JSON 格式错误: ' + e.message, 'error');
@@ -1325,7 +1545,8 @@
                             throw new Error('每个源必须包含 key, name, api 字段');
                         }
                     }
-                    localStorage.setItem(STORAGE_SOURCES_KEY, JSON.stringify(data));
+                    setStoredSources(data);
+                    state.sources = data;
                     toast('✅ 导入成功，' + data.length + ' 个源', 'success');
                     closeImportModal();
                     location.reload();
@@ -1339,14 +1560,17 @@
 
         function loadExample() {
             const example = [
-                { key: 'feifan', name: '**资源', api: 'http://***.tv/api.php/provide/vod', type: 0, searchable: 1,
+                { key: 'feifan', name: '非凡资源', api: 'http://ffzy5.tv/api.php/provide/vod', type: 0, searchable: 1,
                     filterable: 1, playerType: 1, group: 'stable' },
-                { key: 'baofeng', name: '**资源', api: 'https://***.com/api.php/provide/vod', type: 0, searchable: 1,
+                { key: 'wolong', name: '卧龙资源', api: 'https://wolongzyw.com/api.php/provide/vod', type: 0, searchable: 1,
+                    filterable: 1, playerType: 1, group: 'stable' },
+                { key: 'zuida', name: '最大资源', api: 'https://api.zuidapi.com/api.php/provide/vod', type: 0, searchable: 1,
                     filterable: 1, playerType: 1, group: 'stable' }
             ];
             dom.importTextarea.value = JSON.stringify(example, null, 2);
-            updateImportCount();
-            toast('示例已填入，点击「导入」即可', 'info');
+            state.editingKey = null;
+            renderSourceList();
+            toast('示例已填入，点击「导入 / 更新」即可', 'info');
         }
 
         // ============================================================
@@ -1370,6 +1594,13 @@
             dom.status.innerHTML = loading ? '<span class="spinner"></span> ' + msg : msg;
         }
 
+        function esc(s) {
+            if (s == null) return '';
+            const d = document.createElement('div');
+            d.textContent = String(s);
+            return d.innerHTML;
+        }
+
         // ============================================================
         //  API
         // ============================================================
@@ -1386,13 +1617,6 @@
             } finally {
                 clearTimeout(timer);
             }
-        }
-
-        function esc(s) {
-            if (s == null) return '';
-            const d = document.createElement('div');
-            d.textContent = String(s);
-            return d.innerHTML;
         }
 
         // ============================================================
@@ -1430,9 +1654,9 @@
             dom.browseInfo.textContent = '';
             dom.pageInfo.textContent = '-';
             dom.pageInfo2.textContent = '-';
-            dom.sourceSelect.innerHTML = '<option value="">📥 请导入源</option>';
+            dom.sourceSelect.innerHTML = '<option value="">请导入源</option>';
             dom.sourceSelect.disabled = true;
-            setStatus('📥 请导入源');
+            setStatus('请导入源');
             setControlsEnabled(false);
         }
 
@@ -1446,7 +1670,6 @@
 
         function hidePlayerLoading() {
             dom.playerLoading.classList.add('hidden');
-            // 等过渡动画结束后移除 show
             setTimeout(() => {
                 dom.playerLoading.classList.remove('show');
             }, 400);
@@ -1467,9 +1690,7 @@
             // 如果没有源，显示空状态
             if (!hasSources()) {
                 renderEmptyState();
-                updateImportCount();
                 setTimeout(showDisclaimer, 500);
-                // 仍然绑定必要事件
                 dom.importModal.addEventListener('click', (e) => {
                     if (e.target === dom.importModal) closeImportModal();
                 });
@@ -1551,19 +1772,16 @@
                 }
             });
 
-            // 视频加载完成后隐藏 loading 遮罩
             dom.player.addEventListener('loadedmetadata', () => {
                 hidePlayerLoading();
             });
             dom.player.addEventListener('canplay', () => {
                 hidePlayerLoading();
             });
-            // 如果加载失败，也隐藏遮罩
             dom.player.addEventListener('error', () => {
                 hidePlayerLoading();
             });
 
-            updateImportCount();
             setTimeout(showDisclaimer, 500);
         }
 
@@ -1578,7 +1796,7 @@
             sel.disabled = false;
 
             if (!state.sources || !state.sources.length) {
-                sel.innerHTML = '<option value="">📥 请导入源</option>';
+                sel.innerHTML = '<option value="">请导入源</option>';
                 sel.disabled = true;
                 return;
             }
@@ -1874,11 +2092,8 @@
             state.currentSource = source;
 
             setStatus('加载播放地址…', true);
-            // toast('加载播放地址…', 'info');
 
             hideAllContent();
-
-            // 显示加载遮罩
             showPlayerLoading();
 
             try {
@@ -2133,7 +2348,6 @@
                             startPlayerInIframe(url, title);
                         }
                     });
-                    // toast('▶ 开始播放', 'success');
                 } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                     video.src = url;
                     video.play().catch(() => {});
@@ -2148,14 +2362,12 @@
                 toast('无法直接播放，尝试嵌入', 'error');
                 startPlayerInIframe(url, title);
             });
-            // toast('▶ 开始播放', 'success');
         }
 
         // ============================================================
         //  从 HTML 提取 m3u8
         // ============================================================
         async function extractM3u8FromHtml(pageUrl, title) {
-            // toast('正在解析播放地址…', 'info');
             setStatus('解析中…', true);
 
             try {
@@ -2252,9 +2464,7 @@
             state.currentLines = [];
             state.currentEpisodes = [];
 
-            // 隐藏加载遮罩
             hidePlayerLoading();
-
             restoreAllContent();
         }
 
