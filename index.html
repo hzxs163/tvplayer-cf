@@ -137,32 +137,14 @@
             color: var(--text);
             white-space: nowrap;
             letter-spacing: -0.3px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .logo:hover {
+            color: var(--primary);
         }
         .logo span {
             color: var(--primary);
-        }
-
-        .nav-tabs {
-            display: flex;
-            gap: 2px;
-            background: var(--bg);
-            border-radius: 6px;
-            padding: 2px;
-        }
-        .nav-tabs button {
-            padding: 4px 16px;
-            border-radius: 4px;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text2);
-            transition: 0.2s;
-        }
-        .nav-tabs button.active {
-            background: var(--primary);
-            color: #fff;
-        }
-        .nav-tabs button:hover:not(.active) {
-            color: var(--text);
         }
 
         .controls {
@@ -897,10 +879,6 @@
             .logo {
                 font-size: 17px;
             }
-            .nav-tabs button {
-                padding: 3px 12px;
-                font-size: 12px;
-            }
             .controls select {
                 min-width: 60px;
                 max-width: 80px;
@@ -995,15 +973,11 @@
 
     <!-- ===== Header ===== -->
     <header>
-        <div class="logo">🎬 TV<span>Player</span></div>
-        <div class="nav-tabs">
-            <button class="active" data-page="browse">浏览</button>
-            <button data-page="search">搜索</button>
-        </div>
+        <div class="logo" onclick="switchToBrowse()">🎬 TV<span>Player</span></div>
         <div class="controls">
             <select id="sourceSelect"><option value="">请导入源</option></select>
             <input type="text" id="searchInput" placeholder="搜索片名…" disabled />
-            <button class="btn btn-primary" id="searchBtn" disabled>搜索</button>
+            <button class="btn btn-primary" id="searchBtn" disabled onclick="doSearch()">搜索</button>
             <button class="btn-ghost" onclick="showImportModal()" title="导入源" style="font-size:18px;padding:0 6px;">📥</button>
             <span id="status">请导入源</span>
         </div>
@@ -1129,6 +1103,7 @@
         const FETCH_TIMEOUT = 15000;
         const STORAGE_KEY = 'tv_data';
         const STORAGE_SOURCES_KEY = 'tv_sources';
+        const STORAGE_DISCLAIMER_KEY = 'tv_disclaimer_agreed';
 
         // ============================================================
         //  STATE
@@ -1151,7 +1126,6 @@
             currentUrl: '',
             favorites: [],
             history: [],
-            currentPage: 'browse',
             isPlaying: false,
             isLoading: false,
             editingKey: null,
@@ -1580,6 +1554,16 @@
         }
 
         // ============================================================
+        //  切换到浏览模式（点击 Logo 触发）
+        // ============================================================
+        function switchToBrowse() {
+            if (state.isPlaying) closePlayer();
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            dom.pageBrowse.classList.add('active');
+            if (state.source) loadBrowse(state.source);
+        }
+
+        // ============================================================
         //  线路切换
         // ============================================================
         function switchPlayerLine(index) {
@@ -1630,41 +1614,21 @@
                 await loadBrowse(first);
             }
 
-            state.currentPage = 'browse';
             dom.pageBrowse.classList.add('active');
-            document.querySelector('[data-page="browse"]').classList.add('active');
 
             dom.sourceSelect.addEventListener('change', () => {
                 const s = getSelectedSource();
                 if (!s) return;
                 if (state.isPlaying) closePlayer();
-                state.currentPage = 'browse';
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 dom.pageBrowse.classList.add('active');
-                document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
-                document.querySelector('[data-page="browse"]').classList.add('active');
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 loadBrowse(s);
             });
 
-            dom.searchBtn.addEventListener('click', doSearch);
-            dom.searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
-
-            document.querySelectorAll('.nav-tabs button').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const page = btn.dataset.page;
-                    document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    if (state.isPlaying) closePlayer();
-                    state.currentPage = page;
-                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                    if (page === 'browse') {
-                        dom.pageBrowse.classList.add('active');
-                    } else if (page === 'search') {
-                        dom.pageSearch.classList.add('active');
-                        dom.searchInput.focus();
-                    }
-                });
+            dom.searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') doSearch();
             });
+            dom.searchBtn.addEventListener('click', doSearch);
 
             dom.importModal.addEventListener('click', (e) => {
                 if (e.target === dom.importModal) closeImportModal();
@@ -1675,7 +1639,8 @@
             document.addEventListener('click', (e) => {
                 const panel = dom.episodesPanel;
                 if (panel.style.display === 'block') {
-                    if (!panel.contains(e.target) && !e.target.closest('.ctrl-btn')) {
+                    if (!panel.contains(e.target) && !e.target.closest('.ctrl-btn') && !e.target.closest(
+                            '.close-btn')) {
                         panel.style.display = 'none';
                     }
                 }
@@ -1894,9 +1859,7 @@
                 state.sources.filter(s => s.key === sel.value);
             if (!targets.length) { toast('请选择有效源', 'error'); return; }
 
-            document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
-            document.querySelector('[data-page="search"]').classList.add('active');
-            state.currentPage = 'search';
+            // 切换到搜索页
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             dom.pageSearch.classList.add('active');
 
@@ -2378,7 +2341,6 @@
 
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
-                document.querySelector('[data-page="search"]').click();
                 dom.searchInput.focus();
                 dom.searchInput.select();
             }
@@ -2390,17 +2352,26 @@
         let disclaimerShown = false;
 
         function showDisclaimer() {
+            // 检查是否已经同意过
+            const agreed = localStorage.getItem(STORAGE_DISCLAIMER_KEY);
+            if (agreed === 'true') return;
+
             if (disclaimerShown) return;
             disclaimerShown = true;
-            alert(
+
+            const result = confirm(
                 '📺 TVPlayer · 免责声明\n\n' +
                 '1. 本工具为纯前端空壳播放器，不包含、不存储任何音视频内容。\n' +
                 '2. 所有播放资源均来自第三方公开采集接口，由用户自行配置。\n' +
                 '3. 仅供技术学习交流使用，请于 24 小时内删除缓存内容。\n' +
                 '4. 尊重版权，支持正版影视平台。\n' +
                 '5. 使用本工具产生的一切法律风险由使用者自行承担。\n\n' +
-                '继续使用即表示您同意上述条款。'
+                '点击「确定」表示您同意上述条款。'
             );
+
+            if (result) {
+                localStorage.setItem(STORAGE_DISCLAIMER_KEY, 'true');
+            }
         }
 
         // ============================================================
