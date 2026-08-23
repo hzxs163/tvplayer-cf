@@ -363,7 +363,7 @@
             border-color: var(--primary);
         }
 
-        /* ===== 选集面板（悬浮在播放器右下角） ===== */
+        /* ===== 选集面板 ===== */
         #episodes-panel {
             display: none;
             position: absolute;
@@ -436,7 +436,7 @@
             padding: 4px 0;
         }
 
-        /* 播放器下方的信息栏 */
+        /* 播放器信息栏 */
         #player-info {
             display: none;
             padding: 10px 14px;
@@ -855,7 +855,7 @@
             <video id="player" controls preload="metadata" playsinline></video>
             <iframe id="player-iframe" allowfullscreen></iframe>
 
-            <!-- 选集面板（悬浮在右下角） -->
+            <!-- 选集面板 -->
             <div id="episodes-panel">
                 <div class="panel-header">
                     <span>📺 选集</span>
@@ -875,7 +875,7 @@
                     <button data-speed="2">2</button>
                 </div>
                 <button class="ctrl-btn" onclick="toggleEpisodesPanel()" title="选集">📺</button>
-                <button class="ctrl-btn" onclick="togglePIP()" title="画中画">📺</button>
+                <button class="ctrl-btn" onclick="togglePIP()" title="画中画">⛶</button>
                 <button class="ctrl-btn" onclick="toggleFullscreen()" title="全屏">⛶</button>
                 <input class="link-input" id="m3u8Link" readonly onclick="this.select()" placeholder="m3u8 地址" />
                 <button class="btn-ghost" onclick="copyLink()" style="font-size:12px;padding:2px 8px;">复制</button>
@@ -961,7 +961,6 @@
             movies: [],
             searchResults: [],
             searchSeq: 0,
-            // 播放相关
             currentVod: null,
             currentSource: null,
             currentLines: [],
@@ -972,6 +971,7 @@
             history: [],
             currentPage: 'browse',
             isPlaying: false,
+            isLoading: false,
         };
 
         // ============================================================
@@ -1115,7 +1115,7 @@
         }
 
         // ============================================================
-        //  INIT
+        //  INIT — 只加载一次，不重复
         // ============================================================
         async function init() {
             loadStorage();
@@ -1130,14 +1130,19 @@
                 toast('源列表加载失败: ' + e.message, 'error');
             }
 
+            // ---- 默认加载第一个源（只加载一次） ----
             const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
             if (first) {
                 dom.sourceSelect.value = first.key;
                 await loadBrowse(first);
             }
 
+            // ---- 设置默认页面状态（不触发额外加载） ----
+            state.currentPage = 'browse';
+            dom.pageBrowse.classList.add('active');
+            document.querySelector('[data-page="browse"]').classList.add('active');
+
             // ---- 事件绑定 ----
-            // 源切换：如果在播放中，自动关闭播放器并返回浏览
             dom.sourceSelect.addEventListener('change', () => {
                 const s = getSelectedSource();
                 if (!s) return;
@@ -1147,30 +1152,40 @@
                     closePlayer();
                 }
 
-                // 如果在搜索页，切到浏览
-                if (state.currentPage === 'search') {
-                    document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
-                    document.querySelector('[data-page="browse"]').classList.add('active');
-                }
+                // 切到浏览模式（不触发额外加载）
+                state.currentPage = 'browse';
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                dom.pageBrowse.classList.add('active');
+                document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+                document.querySelector('[data-page="browse"]').classList.add('active');
 
-                switchPage('browse');
+                // 只加载一次
                 loadBrowse(s);
             });
 
             dom.searchBtn.addEventListener('click', doSearch);
             dom.searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
 
-            // 导航切换
+            // 导航切换（不触发额外加载）
             document.querySelectorAll('.nav-tabs button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const page = btn.dataset.page;
                     document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                    // 如果播放器开着，关掉
+
                     if (state.isPlaying) {
                         closePlayer();
                     }
-                    switchPage(page);
+
+                    // 切换到对应页面，不自动加载
+                    state.currentPage = page;
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    if (page === 'browse') {
+                        dom.pageBrowse.classList.add('active');
+                    } else if (page === 'search') {
+                        dom.pageSearch.classList.add('active');
+                        dom.searchInput.focus();
+                    }
                 });
             });
 
@@ -1198,7 +1213,8 @@
                 }
             });
 
-            switchPage('browse');
+            // 免责声明
+            setTimeout(showDisclaimer, 500);
         }
 
         function getSelectedSource() {
@@ -1231,14 +1247,13 @@
         }
 
         // ============================================================
-        //  PAGE SWITCH
+        //  PAGE SWITCH（不再自动加载）
         // ============================================================
         function switchPage(page) {
             state.currentPage = page;
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             if (page === 'browse') {
                 dom.pageBrowse.classList.add('active');
-                if (state.source) loadBrowse(state.source);
             } else if (page === 'search') {
                 dom.pageSearch.classList.add('active');
                 dom.searchInput.focus();
@@ -1249,7 +1264,8 @@
         //  BROWSE
         // ============================================================
         async function loadBrowse(source) {
-            if (!source) return;
+            if (!source || state.isLoading) return;
+            state.isLoading = true;
             state.source = source;
             state.category = null;
             state.page = 1;
@@ -1267,6 +1283,7 @@
                 dom.categoryNav.innerHTML = '';
             }
             setStatus(source.name + ' · 就绪');
+            state.isLoading = false;
         }
 
         async function loadMovies() {
@@ -1401,9 +1418,12 @@
                 state.sources.filter(s => s.key === sel.value);
             if (!targets.length) { toast('请选择有效源', 'error'); return; }
 
+            // 切换到搜索页
             document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
             document.querySelector('[data-page="search"]').classList.add('active');
-            switchPage('search');
+            state.currentPage = 'search';
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            dom.pageSearch.classList.add('active');
 
             dom.emptyState.style.display = 'none';
             dom.resultStats.style.display = 'block';
@@ -1479,7 +1499,7 @@
         }
 
         // ============================================================
-        //  核心播放逻辑（点击卡片直接播放，爱奇艺风格）
+        //  核心播放逻辑
         // ============================================================
         async function playMovie(vod, source) {
             state.currentVod = vod;
@@ -1492,7 +1512,6 @@
                 const data = await fetchProxy(source.api + '?ac=detail&ids=' + vod.vod_id);
                 const detail = data.list?.[0] || vod;
 
-                // 解析线路
                 let froms = [],
                     urls = [];
                 const playFrom = detail.vod_play_from || '';
@@ -1519,7 +1538,6 @@
                 const lines = froms.map((f, i) => ({ name: f, url: urls[i] || '' }))
                     .filter(l => l.url.trim());
 
-                // m3u8 优先
                 lines.sort((a, b) => (a.url.includes('.m3u8') ? 0 : 1) - (b.url.includes('.m3u8') ? 0 : 1));
 
                 if (!lines.length) {
@@ -1531,10 +1549,8 @@
                 state.currentLines = lines;
                 state.currentLineIndex = 0;
 
-                // 显示播放器
                 showPlayer(vod, detail);
 
-                // 解析第一线路的第一集
                 const firstUrl = lines[0].url;
                 const episodes = parseEpisodes(firstUrl);
 
@@ -1550,7 +1566,6 @@
                     renderEpisodesPanel([]);
                 }
 
-                // 渲染线路切换
                 renderPlayerLines(lines);
 
                 setStatus('播放中');
@@ -1587,15 +1602,13 @@
         }
 
         // ============================================================
-        //  显示播放器（爱奇艺风格）
+        //  显示播放器
         // ============================================================
         function showPlayer(vod, detail) {
             state.isPlaying = true;
 
-            // 展开播放器
             dom.playerSection.classList.add('open');
 
-            // 更新信息栏
             const score = vod.vod_score ? `豆瓣评分 ${vod.vod_score}` : '';
             dom.pInfoName.textContent = vod.vod_name;
             dom.pInfoMeta.textContent = [
@@ -1607,7 +1620,6 @@
 
             dom.playerInfo.classList.add('open');
 
-            // 滚动到播放器
             dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
@@ -1651,7 +1663,6 @@
                 panel.style.display = 'none';
             } else {
                 panel.style.display = 'block';
-                // 如果当前没有剧集，尝试从当前线路解析
                 if (!state.currentEpisodes.length && state.currentLines.length) {
                     const url = state.currentLines[state.currentLineIndex]?.url || '';
                     const eps = parseEpisodes(url);
@@ -1671,15 +1682,14 @@
             episodes.forEach((ep, idx) => {
                 const el = document.createElement('span');
                 el.className = 'ep';
-                if (idx === 0 && state.currentEpisodes.length) {
-                    // 不自动标记激活，由点击时标记
+                if (idx === 0) {
+                    // 不自动标记激活
                 }
                 el.textContent = ep.name;
                 el.onclick = () => {
                     document.querySelectorAll('#episodes-list .ep').forEach(e => e.classList.remove('active'));
                     el.classList.add('active');
                     startPlayer(ep.url, (state.currentVod?.vod_name || '') + ' ' + ep.name);
-                    // 自动关闭面板
                     dom.episodesPanel.style.display = 'none';
                     if (state.currentVod && state.currentSource) {
                         addHistory(state.currentVod, state.currentSource, ep.name);
@@ -1700,7 +1710,6 @@
 
             url = url.trim();
 
-            // ---- 处理相对路径 ----
             if (url.startsWith('/')) {
                 const source = state.currentSource;
                 if (source) {
@@ -1711,11 +1720,9 @@
 
             state.currentUrl = url;
 
-            // ---- 更新 UI ----
             dom.nowPlaying.textContent = title || '正在播放';
             dom.m3u8Link.value = url;
 
-            // 关闭 iframe
             dom.playerIframe.style.display = 'none';
             dom.playerIframe.src = '';
             dom.player.style.display = 'block';
@@ -1729,7 +1736,6 @@
             video.removeAttribute('src');
             video.load();
 
-            // ---- 判断是否为 HTML 播放页 ----
             const isHtml = url.includes('.html') ||
                 url.includes('/play/') ||
                 (!url.includes('.m3u8') && !url.includes('.mp4') && !url.includes('.ts') && !url.includes('.flv') && !url
@@ -1740,7 +1746,6 @@
                 return;
             }
 
-            // ---- m3u8 播放 ----
             if (url.includes('.m3u8') || url.includes('.m3u8?')) {
                 if (window.Hls && Hls.isSupported()) {
                     const hls = new Hls({ enableWorker: true });
@@ -1764,7 +1769,6 @@
                 return;
             }
 
-            // ---- 普通视频直链 ----
             video.src = url;
             video.play().catch(() => {
                 toast('无法直接播放，尝试嵌入', 'error');
@@ -1774,7 +1778,7 @@
         }
 
         // ============================================================
-        //  从 HTML 播放页提取 m3u8
+        //  从 HTML 提取 m3u8
         // ============================================================
         async function extractM3u8FromHtml(pageUrl, title) {
             toast('正在解析播放地址…', 'info');
@@ -1835,7 +1839,7 @@
         }
 
         // ============================================================
-        //  iframe 备选播放
+        //  iframe 备选
         // ============================================================
         function startPlayerInIframe(url, title) {
             dom.playerSection.classList.add('open');
@@ -1942,14 +1946,6 @@
                 dom.searchInput.focus();
                 dom.searchInput.select();
             }
-
-            if (e.key === 'Escape' && state.currentPage === 'detail') {
-                backFromDetail();
-            }
-        }
-
-        function backFromDetail() {
-            // 保留兼容
         }
 
         // ============================================================
