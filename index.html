@@ -28,7 +28,7 @@
     <main>
 
         <!-- ==========================================================
-        播放器
+        播放器（只包含视频）
         ========================================================== -->
         <div id="player-section">
             <!-- 加载遮罩 -->
@@ -36,21 +36,23 @@
                 <span class="spinner"></span>
                 <span class="label">加载中…</span>
             </div>
-
             <video id="player" controls preload="metadata" playsinline></video>
             <iframe id="player-iframe" allowfullscreen></iframe>
-
-            <div class="player-controls">
-                <span class="title" id="nowPlaying">—</span>
-                <select id="lineSelect" onchange="switchPlayerLine(this.value)"></select>
-                <button class="ctrl-btn" onclick="toggleEpisodesPanel()" title="选集">📺</button>
-                <input class="link-input" id="m3u8Link" readonly onclick="this.select()" placeholder="m3u8 地址" />
-                <button class="ctrl-btn close-btn" onclick="closePlayer()" title="收起">✕</button>
-            </div>
         </div>
 
         <!-- ==========================================================
-        选集面板（在播放器外部，控制栏下方）
+        播放器控制栏（在视频下方）
+        ========================================================== -->
+        <div class="player-controls" id="playerControls">
+            <span class="title" id="nowPlaying">—</span>
+            <select id="lineSelect" onchange="switchPlayerLine(this.value)"></select>
+            <button class="ctrl-btn" onclick="toggleEpisodesPanel()" title="选集">📺</button>
+            <input class="link-input" id="m3u8Link" readonly onclick="this.select()" placeholder="m3u8 地址" />
+            <button class="ctrl-btn close-btn" onclick="closePlayer()" title="收起">✕</button>
+        </div>
+
+        <!-- ==========================================================
+        选集面板（在控制栏下方）
         ========================================================== -->
         <div id="episodes-panel">
             <div class="panel-header">
