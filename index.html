@@ -6,67 +6,58 @@
     <title>TVPlayer · 云端影视</title>
     <script src="/hls.min.js"></script>
     <style>
-        /* ============================================================
-                   CSS Variables & Reset
-                   ============================================================ */
-        :root {
-            --bg: #090a0f;
-            --panel: #12141a;
-            --hover: #1a1d26;
-            --border: #232631;
-            --text: #ededee;
-            --text2: #898e9e;
-            --text3: #515669;
-            --primary: #4b7bec;
-            --primary-dim: rgba(75, 123, 236, 0.12);
-            --green: #2ed573;
-            --radius: 10px;
-            --radius-sm: 6px;
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            --transition: 0.2s ease;
-        }
-
+        /* ===== 爱奇艺风格 ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        :root {
+            --bg: #0b0d12;
+            --header: #131720;
+            --card: #1a1f2b;
+            --card-hover: #232a38;
+            --border: #2a3040;
+            --text: #f0f2f5;
+            --text2: #8a92a8;
+            --text3: #4c5568;
+            --primary: #ff6a00;
+            --primary-dim: rgba(255, 106, 0, 0.15);
+            --gold: #ffb400;
+            --green: #2ed573;
+            --radius: 8px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+        }
         body {
             background: var(--bg);
             color: var(--text);
             font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
             min-height: 100vh;
-            padding-bottom: 20px;
             -webkit-font-smoothing: antialiased;
         }
-
         button {
             cursor: pointer;
-            font-family: inherit;
-            font-size: inherit;
             border: none;
             outline: none;
             background: none;
             color: inherit;
+            font: inherit;
         }
         input,
         select {
-            font-family: inherit;
-            font-size: inherit;
+            font: inherit;
             outline: none;
             border: none;
             background: none;
             color: inherit;
+        }
+        img {
+            display: block;
         }
         a {
             color: var(--primary);
             text-decoration: none;
         }
-        img {
-            display: block;
-        }
-
         ::-webkit-scrollbar {
             width: 4px;
             height: 4px;
@@ -79,14 +70,12 @@
             border-radius: 4px;
         }
 
-        /* ============================================================
-                   Toast
-                   ============================================================ */
+        /* ===== Toast ===== */
         #toast-container {
             position: fixed;
             top: 72px;
             right: 16px;
-            z-index: 9999;
+            z-index: 999;
             display: flex;
             flex-direction: column;
             gap: 6px;
@@ -95,8 +84,8 @@
         }
         .toast {
             padding: 10px 16px;
-            border-radius: var(--radius-sm);
-            background: var(--panel);
+            border-radius: 6px;
+            background: var(--header);
             border: 1px solid var(--border);
             color: var(--text2);
             font-size: 13px;
@@ -127,14 +116,12 @@
             }
         }
 
-        /* ============================================================
-                   Header
-                   ============================================================ */
+        /* ===== Header ===== */
         header {
             position: sticky;
             top: 0;
             z-index: 100;
-            background: var(--bg);
+            background: var(--header);
             border-bottom: 1px solid var(--border);
             padding: 8px 16px;
             display: flex;
@@ -143,90 +130,88 @@
             gap: 6px 12px;
         }
         .logo {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--text);
-            letter-spacing: -0.3px;
             white-space: nowrap;
         }
         .logo span {
-            font-weight: 400;
-            color: var(--text3);
-            font-size: 13px;
+            color: var(--primary);
         }
 
-        .mode-group {
+        .nav-tabs {
             display: flex;
-            gap: 0;
-            background: var(--panel);
-            border-radius: var(--radius-sm);
+            gap: 2px;
+            background: var(--bg);
+            border-radius: 6px;
             padding: 2px;
-            border: 1px solid var(--border);
         }
-        .mode-group button {
-            padding: 4px 14px;
+        .nav-tabs button {
+            padding: 4px 16px;
             border-radius: 4px;
             font-size: 13px;
             font-weight: 500;
             color: var(--text2);
-            transition: var(--transition);
+            transition: 0.2s;
         }
-        .mode-group button.active {
+        .nav-tabs button.active {
             background: var(--primary);
             color: #fff;
         }
-        .mode-group button:hover:not(.active) {
+        .nav-tabs button:hover:not(.active) {
             color: var(--text);
         }
 
-        .header-right {
+        .controls {
             display: flex;
             flex: 1;
-            min-width: 180px;
+            min-width: 160px;
             align-items: center;
             gap: 6px;
         }
-        .header-right select {
-            background: var(--panel);
+        .controls select {
+            background: var(--bg);
             border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
+            border-radius: 6px;
             padding: 4px 8px;
             font-size: 13px;
             color: var(--text);
-            min-width: 80px;
-            max-width: 140px;
+            min-width: 70px;
+            max-width: 120px;
             cursor: pointer;
         }
-        .header-right select option {
-            background: var(--panel);
+        .controls select option {
+            background: var(--header);
         }
-        .header-right input {
+        .controls input {
             flex: 1;
-            min-width: 60px;
-            background: var(--panel);
+            min-width: 50px;
+            background: var(--bg);
             border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
+            border-radius: 6px;
             padding: 4px 10px;
             font-size: 13px;
             color: var(--text);
-            transition: var(--transition);
+            transition: 0.2s;
         }
-        .header-right input:focus {
+        .controls input:focus {
             border-color: var(--primary);
         }
-        .header-right input::placeholder {
+        .controls input::placeholder {
             color: var(--text3);
         }
 
+        .btn {
+            padding: 4px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
         .btn-primary {
             background: var(--primary);
             color: #fff;
-            padding: 4px 14px;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 13px;
-            transition: var(--transition);
-            white-space: nowrap;
         }
         .btn-primary:hover {
             opacity: 0.85;
@@ -235,14 +220,10 @@
             opacity: 0.4;
             cursor: not-allowed;
         }
-
         .btn-ghost {
-            padding: 4px 12px;
-            border-radius: var(--radius-sm);
-            font-size: 13px;
             color: var(--text2);
             border: 1px solid transparent;
-            transition: var(--transition);
+            padding: 3px 10px;
         }
         .btn-ghost:hover {
             color: var(--text);
@@ -255,7 +236,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 140px;
+            max-width: 120px;
             margin-left: auto;
         }
         .spinner {
@@ -274,25 +255,21 @@
             }
         }
 
-        /* ============================================================
-                   Main
-                   ============================================================ */
+        /* ===== Main ===== */
         main {
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 14px 16px 0;
+            padding: 12px 16px 0;
         }
 
-        /* ============================================================
-                   Player
-                   ============================================================ */
+        /* ===== 播放器 ===== */
         #player-wrap {
             display: none;
             margin-bottom: 14px;
-            background: var(--panel);
+            background: #000;
             border-radius: var(--radius);
-            border: 1px solid var(--border);
             overflow: hidden;
+            border: 1px solid var(--border);
         }
         #player-wrap.open {
             display: block;
@@ -303,14 +280,13 @@
             background: #000;
             display: block;
         }
-
         .player-bar {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             gap: 6px 12px;
             padding: 8px 14px;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.85);
             border-top: 1px solid var(--border);
             font-size: 13px;
             color: var(--text2);
@@ -322,6 +298,7 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             color: var(--text);
+            font-size: 14px;
         }
         .player-bar .speed-group {
             display: flex;
@@ -333,7 +310,7 @@
             font-size: 12px;
             color: var(--text3);
             border: 1px solid transparent;
-            transition: var(--transition);
+            transition: 0.2s;
         }
         .player-bar .speed-group button.active {
             color: var(--primary);
@@ -345,18 +322,15 @@
         }
         .player-bar .ctrl {
             padding: 2px 6px;
-            font-size: 16px;
+            font-size: 18px;
             color: var(--text3);
             border-radius: 4px;
-            transition: var(--transition);
+            transition: 0.2s;
             line-height: 1.4;
         }
         .player-bar .ctrl:hover {
             color: var(--text);
-            background: var(--hover);
-        }
-        .player-bar .ctrl.close {
-            color: var(--text3);
+            background: var(--card);
         }
         .player-bar .ctrl.close:hover {
             color: #e74c3c;
@@ -375,9 +349,7 @@
             border-color: var(--primary);
         }
 
-        /* ============================================================
-                   Content Area
-                   ============================================================ */
+        /* ===== 视图 ===== */
         .view {
             display: none;
             animation: fadeIn 0.25s ease;
@@ -396,14 +368,188 @@
             }
         }
 
-        /* ============================================================
-                   Empty State
-                   ============================================================ */
+        /* ===== 分类导航（爱奇艺风格水平滚动） ===== */
+        .category-nav {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            padding: 4px 0 12px;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .category-nav::-webkit-scrollbar {
+            display: none;
+        }
+        .category-nav .cat {
+            flex-shrink: 0;
+            padding: 4px 18px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--text2);
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+            border: 1px solid transparent;
+        }
+        .category-nav .cat:hover {
+            color: var(--text);
+        }
+        .category-nav .cat.active {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: var(--primary-dim);
+        }
+        .category-nav .cat.kid {
+            font-size: 12px;
+            padding: 4px 12px;
+            opacity: 0.7;
+        }
+
+        /* ===== 内容头部 ===== */
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .content-header .title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .content-header .title .badge {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--text3);
+            margin-left: 8px;
+        }
+        .content-header .actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .content-header .actions .info {
+            font-size: 13px;
+            color: var(--text3);
+        }
+
+        /* ===== 影片网格（爱奇艺卡片风格） ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: 0.25s ease;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 30px rgba(255, 106, 0, 0.12);
+        }
+        .card .poster-wrap {
+            position: relative;
+            aspect-ratio: 2/3;
+            overflow: hidden;
+            background: var(--bg);
+        }
+        .card .poster-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: 0.3s;
+        }
+        .card:hover .poster-wrap img {
+            transform: scale(1.03);
+        }
+        .card .poster-wrap .play-btn {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: 0.3s;
+            font-size: 40px;
+            color: #fff;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+        }
+        .card:hover .poster-wrap .play-btn {
+            opacity: 1;
+        }
+        .card .poster-wrap .badge-top {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .card .poster-wrap .badge-top.score {
+            background: var(--gold);
+            color: #1a1a2e;
+        }
+
+        .card .info {
+            padding: 8px 10px 10px;
+        }
+        .card .info .name {
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .card .info .name .star {
+            color: var(--gold);
+            margin-left: 2px;
+        }
+        .card .info .meta {
+            font-size: 12px;
+            color: var(--text2);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 8px;
+            margin-top: 4px;
+            align-items: center;
+        }
+        .card .info .meta .tag {
+            font-size: 11px;
+            padding: 0 8px;
+            border-radius: 10px;
+            background: var(--primary-dim);
+            color: var(--primary);
+        }
+        .card .info .meta .tag.source {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text3);
+        }
+        .card .info .meta .score {
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        /* ===== 空状态 ===== */
         .empty {
             text-align: center;
             padding: 60px 20px 50px;
             color: var(--text2);
             line-height: 2;
+            grid-column: 1 / -1;
         }
         .empty .icon {
             font-size: 40px;
@@ -413,184 +559,46 @@
         .empty b {
             color: var(--text);
         }
-        .empty .hint {
-            font-size: 13px;
-            color: var(--text3);
-        }
 
-        /* ============================================================
-                   Search Results
-                   ============================================================ */
-        .result-stats {
-            font-size: 13px;
-            color: var(--text3);
-            margin-bottom: 12px;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-            gap: 10px;
-        }
-
-        .card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 12px 14px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .card:hover {
-            background: var(--hover);
-            border-color: var(--text3);
-            transform: translateY(-1px);
-        }
-        .card .title {
-            font-size: 14px;
-            font-weight: 600;
-            line-height: 1.4;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .card .title .fav-star {
-            color: var(--primary);
-            margin-left: 2px;
-        }
-        .card .meta {
-            font-size: 12px;
-            color: var(--text2);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px 8px;
-            margin-top: 4px;
-        }
-        .card .tag {
-            font-size: 11px;
-            padding: 0 8px;
-            border-radius: 10px;
-            background: var(--primary-dim);
-            color: var(--primary);
-        }
-        .card .tag.source {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text3);
-        }
-
-        /* ============================================================
-                   Browse
-                   ============================================================ */
-        .browse-top {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px 14px;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .browse-top .info {
-            font-size: 13px;
-            color: var(--text3);
-        }
-
-        .cats {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-bottom: 14px;
-        }
-        .cat {
-            padding: 4px 14px;
-            border-radius: 16px;
-            font-size: 13px;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            color: var(--text2);
-            cursor: pointer;
-            transition: var(--transition);
-            white-space: nowrap;
-        }
-        .cat:hover {
-            border-color: var(--text3);
-            color: var(--text);
-        }
-        .cat.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: #fff;
-        }
-        .cat.kid {
-            font-size: 12px;
-            padding: 2px 10px;
-            opacity: 0.7;
-        }
-
-        .movie-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 10px;
-        }
-        .movie {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .movie:hover {
-            transform: translateY(-2px);
-            border-color: var(--text3);
-        }
-        .movie img {
-            width: 100%;
-            aspect-ratio: 2/3;
-            object-fit: cover;
-            background: var(--bg);
-        }
-        .movie .name {
-            padding: 6px 8px 2px;
-            font-size: 13px;
-            font-weight: 500;
-            line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .movie .remark {
-            padding: 0 8px 8px;
-            font-size: 12px;
-            color: var(--text2);
-        }
-
+        /* ===== 分页 ===== */
         .pager {
             display: flex;
             gap: 10px;
             align-items: center;
             justify-content: center;
-            margin-top: 14px;
+            margin-top: 18px;
             font-size: 13px;
             color: var(--text3);
         }
 
-        /* ============================================================
-                   Detail View
-                   ============================================================ */
+        /* ===== 详情页 ===== */
+        .detail-back {
+            margin-bottom: 12px;
+        }
+        .detail-back button {
+            font-size: 13px;
+            color: var(--text3);
+            padding: 4px 0;
+            transition: 0.2s;
+        }
+        .detail-back button:hover {
+            color: var(--text);
+        }
+
         .detail-head {
             display: flex;
-            gap: 16px;
-            background: var(--panel);
+            gap: 20px;
+            background: var(--card);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 16px;
-            margin-bottom: 14px;
+            padding: 20px;
+            margin-bottom: 16px;
         }
         .detail-head .poster {
-            width: 100px;
-            height: 140px;
+            width: 140px;
+            height: 196px;
             object-fit: cover;
-            border-radius: var(--radius-sm);
+            border-radius: var(--radius);
             background: var(--bg);
             flex-shrink: 0;
         }
@@ -602,69 +610,81 @@
             gap: 4px;
         }
         .detail-head .info h2 {
-            font-size: 18px;
+            font-size: 22px;
+            font-weight: 700;
         }
         .detail-head .info .meta {
-            font-size: 13px;
+            font-size: 14px;
             color: var(--text2);
-            line-height: 1.7;
+            line-height: 1.8;
+        }
+        .detail-head .info .meta .score {
+            color: var(--gold);
+            font-weight: 600;
         }
         .detail-head .info .desc {
-            font-size: 13px;
+            font-size: 14px;
             color: var(--text2);
             line-height: 1.6;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            margin-top: 4px;
         }
         .detail-head .info .actions {
-            margin-top: 6px;
+            margin-top: 8px;
             display: flex;
-            gap: 6px;
+            gap: 8px;
             flex-wrap: wrap;
         }
         .detail-head .info .actions button {
-            padding: 3px 14px;
-            border-radius: var(--radius-sm);
-            font-size: 13px;
+            padding: 5px 18px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
             border: 1px solid var(--border);
             color: var(--text2);
-            transition: var(--transition);
+            transition: 0.2s;
         }
         .detail-head .info .actions button:hover {
-            background: var(--hover);
+            background: var(--card-hover);
             color: var(--text);
         }
         .detail-head .info .actions button.fav {
             color: var(--primary);
             border-color: var(--primary);
         }
+        .detail-head .info .actions button.fav:hover {
+            background: var(--primary-dim);
+        }
 
         .section-label {
-            font-size: 13px;
-            color: var(--text3);
-            margin: 12px 0 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text2);
+            margin: 14px 0 8px;
         }
 
         .line-tabs {
             display: flex;
             flex-wrap: wrap;
-            gap: 4px;
-            margin-bottom: 8px;
+            gap: 6px;
+            margin-bottom: 10px;
         }
         .line-tab {
-            padding: 4px 14px;
-            border-radius: 16px;
+            padding: 5px 16px;
+            border-radius: 20px;
             font-size: 13px;
-            background: var(--panel);
+            background: var(--card);
             border: 1px solid var(--border);
             color: var(--text2);
             cursor: pointer;
-            transition: var(--transition);
+            transition: 0.2s;
         }
         .line-tab:hover {
             border-color: var(--text3);
+            color: var(--text);
         }
         .line-tab.active {
             background: var(--primary);
@@ -675,44 +695,31 @@
         .episodes {
             display: flex;
             flex-wrap: wrap;
-            gap: 4px;
+            gap: 6px;
         }
         .ep {
-            padding: 4px 14px;
-            border-radius: var(--radius-sm);
+            padding: 5px 16px;
+            border-radius: var(--radius);
             font-size: 13px;
-            background: var(--panel);
+            background: var(--card);
             border: 1px solid var(--border);
             color: var(--text2);
             cursor: pointer;
-            transition: var(--transition);
+            transition: 0.2s;
+            min-width: 44px;
+            text-align: center;
         }
         .ep:hover {
             border-color: var(--text3);
             color: var(--text);
         }
         .ep.active {
-            background: var(--green);
-            border-color: var(--green);
+            background: var(--primary);
+            border-color: var(--primary);
             color: #fff;
         }
 
-        .detail-back {
-            margin-bottom: 12px;
-        }
-        .detail-back button {
-            font-size: 13px;
-            color: var(--text3);
-            padding: 4px 0;
-            transition: var(--transition);
-        }
-        .detail-back button:hover {
-            color: var(--text);
-        }
-
-        /* ============================================================
-                   Footer
-                   ============================================================ */
+        /* ===== Footer ===== */
         footer {
             text-align: center;
             padding: 24px 16px 6px;
@@ -723,7 +730,7 @@
         }
         footer a {
             color: var(--text3);
-            transition: var(--transition);
+            transition: 0.2s;
         }
         footer a:hover {
             color: var(--text2);
@@ -732,36 +739,31 @@
             margin: 0 4px;
         }
 
-        /* ============================================================
-                   Responsive
-                   ============================================================ */
-        @media (max-width: 640px) {
+        /* ===== 响应式 ===== */
+        @media (max-width: 768px) {
             header {
                 padding: 6px 10px;
                 gap: 4px 8px;
             }
             .logo {
-                font-size: 16px;
+                font-size: 17px;
             }
-            .logo span {
-                font-size: 11px;
-            }
-            .mode-group button {
-                padding: 3px 10px;
+            .nav-tabs button {
+                padding: 3px 12px;
                 font-size: 12px;
             }
-            .header-right select {
+            .controls select {
                 min-width: 60px;
                 max-width: 80px;
                 font-size: 12px;
                 padding: 3px 6px;
             }
-            .header-right input {
+            .controls input {
                 min-width: 40px;
                 font-size: 12px;
                 padding: 3px 6px;
             }
-            .btn-primary {
+            .btn {
                 padding: 3px 10px;
                 font-size: 12px;
             }
@@ -771,11 +773,7 @@
             }
 
             .grid {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-                gap: 8px;
-            }
-            .movie-grid {
-                grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
                 gap: 8px;
             }
 
@@ -783,10 +781,11 @@
                 flex-direction: column;
                 align-items: center;
                 text-align: center;
+                padding: 14px;
             }
             .detail-head .poster {
-                width: 120px;
-                height: 168px;
+                width: 130px;
+                height: 182px;
             }
             .detail-head .info .actions {
                 justify-content: center;
@@ -808,30 +807,28 @@
                 left: 8px;
                 max-width: none;
             }
-            .empty {
-                padding: 40px 16px 30px;
-                font-size: 14px;
-            }
-            .empty .icon {
-                font-size: 32px;
+            .category-nav .cat {
+                font-size: 13px;
+                padding: 3px 14px;
             }
         }
 
         @media (max-width: 400px) {
             .grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 6px;
             }
-            .movie-grid {
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            }
-            .header-right select {
+            .controls select {
                 min-width: 50px;
                 max-width: 65px;
+            }
+            .detail-head .poster {
+                width: 110px;
+                height: 154px;
             }
         }
     </style>
 </head>
-
 <body>
 
     <!-- ===== Toast ===== -->
@@ -839,15 +836,15 @@
 
     <!-- ===== Header ===== -->
     <header>
-        <div class="logo">✦ TV<span>Cloud</span></div>
-        <div class="mode-group">
-            <button id="modeBrowse" class="active" data-mode="browse">浏览</button>
-            <button id="modeSearch" data-mode="search">搜索</button>
+        <div class="logo">🎬 TV<span>Player</span></div>
+        <div class="nav-tabs">
+            <button class="active" data-view="browse">浏览</button>
+            <button data-view="search">搜索</button>
         </div>
-        <div class="header-right">
+        <div class="controls">
             <select id="sourceSelect"></select>
-            <input type="text" id="searchInput" placeholder="片名…" />
-            <button class="btn-primary" id="searchBtn">搜索</button>
+            <input type="text" id="searchInput" placeholder="搜索片名…" />
+            <button class="btn btn-primary" id="searchBtn">搜索</button>
             <span id="status">加载中…</span>
         </div>
     </header>
@@ -855,7 +852,7 @@
     <!-- ===== Main ===== -->
     <main>
 
-        <!-- Player -->
+        <!-- ===== 播放器 ===== -->
         <div id="player-wrap">
             <video id="player" controls preload="metadata" playsinline></video>
             <div class="player-bar">
@@ -876,41 +873,42 @@
             </div>
         </div>
 
-        <!-- ===== VIEW: Browse ===== -->
+        <!-- ===== VIEW: 浏览 ===== -->
         <div id="viewBrowse" class="view active">
-            <div class="browse-top">
-                <button class="btn-primary" id="loadCatsBtn">刷新分类</button>
-                <span class="info" id="browseInfo">—</span>
-                <div style="flex:1;min-width:20px;"></div>
-                <button class="btn-ghost" onclick="pagePrev()">←</button>
-                <span class="info" id="pageInfo">1</span>
-                <button class="btn-ghost" onclick="pageNext()">→</button>
+            <div class="category-nav" id="categoryNav"></div>
+            <div class="content-header">
+                <div class="title" id="browseTitle">热门推荐 <span class="badge" id="browseBadge"></span></div>
+                <div class="actions">
+                    <span class="info" id="browseInfo"></span>
+                    <button class="btn-ghost" onclick="pagePrev()">‹</button>
+                    <span class="info" id="pageInfo">1</span>
+                    <button class="btn-ghost" onclick="pageNext()">›</button>
+                </div>
             </div>
-            <div class="cats" id="cats"></div>
-            <div class="movie-grid" id="browseGrid"></div>
+            <div class="grid" id="browseGrid"></div>
             <div class="pager">
-                <button class="btn-ghost" onclick="pagePrev()">← 上一页</button>
+                <button class="btn-ghost" onclick="pagePrev()">‹ 上一页</button>
                 <span id="pageInfo2">1</span>
-                <button class="btn-ghost" onclick="pageNext()">下一页 →</button>
+                <button class="btn-ghost" onclick="pageNext()">下一页 ›</button>
             </div>
         </div>
 
-        <!-- ===== VIEW: Search ===== -->
+        <!-- ===== VIEW: 搜索 ===== -->
         <div id="viewSearch" class="view">
             <div class="empty" id="emptyState">
-                <span class="icon">⌘ K</span>
+                <span class="icon">🔍</span>
                 输入片名开始搜索<br />
                 试试 <b>完美世界</b> · <b>时光代理人</b> · <b>庆余年</b>
                 <div class="hint">或切换到「浏览」模式逛一逛</div>
             </div>
-            <div class="result-stats" id="resultStats" style="display:none;"></div>
+            <div class="stats" id="resultStats" style="display:none;"></div>
             <div class="grid" id="searchGrid"></div>
         </div>
 
-        <!-- ===== VIEW: Detail ===== -->
+        <!-- ===== VIEW: 详情 ===== -->
         <div id="viewDetail" class="view">
             <div class="detail-back">
-                <button id="detailBack">← 返回列表</button>
+                <button id="detailBack">‹ 返回</button>
             </div>
             <div class="detail-head">
                 <img class="poster" id="dPoster" src="" alt="海报" />
@@ -923,9 +921,9 @@
                     </div>
                 </div>
             </div>
-            <div class="section-label">线路</div>
+            <div class="section-label">📡 播放线路</div>
             <div class="line-tabs" id="lineTabs"></div>
-            <div class="section-label">剧集</div>
+            <div class="section-label">📺 剧集</div>
             <div class="episodes" id="episodes"></div>
         </div>
 
@@ -937,88 +935,62 @@
         <span>·</span>
         <a href="#" onclick="showDisclaimer();return false;">免责声明</a>
         <span>·</span>
-        <span>学习交流</span>
+        <span>仅供学习交流</span>
     </footer>
 
     <script>
         // ============================================================
-        //  CONFIG
+        //  CONFIG — 代理地址指向 Cloudflare Pages Functions
         // ============================================================
         const PROXY = (url) => '/api/proxy?url=' + encodeURIComponent(url);
         const CONCURRENCY = 6;
-        const FETCH_TIMEOUT = 8000;
+        const FETCH_TIMEOUT = 10000;
         const STORAGE_KEY = 'tv_data';
 
         // ============================================================
-        //  STATE — 单一状态树
+        //  STATE
         // ============================================================
         const state = {
             sources: [],
-            mode: 'browse', // 'browse' | 'search' | 'detail'
-
-            // browse
-            source: null, // 当前源对象
-            category: null, // 分类 id
+            mode: 'browse',
+            source: null,
+            category: null,
             page: 1,
             totalPages: 1,
             categories: [],
             movies: [],
-            browseLoaded: false,
-
-            // search
-            query: '',
             searchResults: [],
-            searchDone: 0,
-            searchTotal: 0,
             searchSeq: 0,
-
-            // detail
             detailVod: null,
             detailSource: null,
             detailLines: [],
             detailLineIndex: 0,
-
-            // player
-            playerOpen: false,
-            playerUrl: '',
-            playerTitle: '',
-
-            // storage
             favorites: [],
             history: [],
-
-            // ui
-            loading: false,
-            status: '',
         };
 
         // ============================================================
         //  DOM REFS
         // ============================================================
         const $ = (id) => document.getElementById(id);
-        const $$ = (sel) => document.querySelectorAll(sel);
-
         const dom = {
             sourceSelect: $('sourceSelect'),
             searchInput: $('searchInput'),
             searchBtn: $('searchBtn'),
             status: $('status'),
-
             viewBrowse: $('viewBrowse'),
             viewSearch: $('viewSearch'),
             viewDetail: $('viewDetail'),
-
+            categoryNav: $('categoryNav'),
             browseGrid: $('browseGrid'),
-            cats: $('cats'),
+            browseTitle: $('browseTitle'),
+            browseBadge: $('browseBadge'),
             browseInfo: $('browseInfo'),
             pageInfo: $('pageInfo'),
             pageInfo2: $('pageInfo2'),
-            loadCatsBtn: $('loadCatsBtn'),
-
             emptyState: $('emptyState'),
             searchGrid: $('searchGrid'),
             resultStats: $('resultStats'),
-
             detailBack: $('detailBack'),
             dPoster: $('dPoster'),
             dName: $('dName'),
@@ -1027,7 +999,6 @@
             favBtn: $('favBtn'),
             lineTabs: $('lineTabs'),
             episodes: $('episodes'),
-
             playerWrap: $('player-wrap'),
             player: $('player'),
             nowPlaying: $('nowPlaying'),
@@ -1095,7 +1066,7 @@
         }
 
         // ============================================================
-        //  TOAST
+        //  TOAST & STATUS
         // ============================================================
         function toast(msg, type = 'info') {
             const c = document.getElementById('toast-container');
@@ -1111,11 +1082,7 @@
             }, 2600);
         }
 
-        // ============================================================
-        //  STATUS
-        // ============================================================
         function setStatus(msg, loading = false) {
-            state.status = msg;
             dom.status.innerHTML = loading ? '<span class="spinner"></span> ' + msg : msg;
         }
 
@@ -1131,7 +1098,7 @@
                     const err = await resp.json().catch(() => ({}));
                     throw new Error(err.msg || 'HTTP ' + resp.status);
                 }
-                return resp.json();
+                return await resp.json();
             } finally {
                 clearTimeout(timer);
             }
@@ -1150,7 +1117,6 @@
         async function init() {
             loadStorage();
 
-            // 加载源列表
             try {
                 const resp = await fetch('/sources.json');
                 state.sources = await resp.json();
@@ -1177,13 +1143,17 @@
             dom.searchBtn.addEventListener('click', doSearch);
             dom.searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
 
-            dom.modeBrowse.addEventListener('click', () => switchMode('browse'));
-            dom.modeSearch.addEventListener('click', () => switchMode('search'));
-            dom.detailBack.addEventListener('click', backFromDetail);
-            dom.loadCatsBtn.addEventListener('click', () => {
-                const s = getSelectedSource();
-                if (s) loadCategories(s);
+            // 导航切换
+            document.querySelectorAll('.nav-tabs button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const view = btn.dataset.view;
+                    document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    switchView(view);
+                });
             });
+
+            dom.detailBack.addEventListener('click', backFromDetail);
 
             // 键盘快捷键
             document.addEventListener('keydown', handleKeydown);
@@ -1200,10 +1170,10 @@
             });
 
             // 免责声明
-            setTimeout(showDisclaimer, 500);
+            setTimeout(showDisclaimer, 600);
 
-            // 默认进入浏览模式
-            switchMode('browse');
+            // 默认进入浏览
+            switchView('browse');
         }
 
         function getSelectedSource() {
@@ -1236,25 +1206,18 @@
         }
 
         // ============================================================
-        //  MODE SWITCH
+        //  VIEW SWITCH
         // ============================================================
-        function switchMode(mode) {
-            state.mode = mode;
-            document.querySelectorAll('.mode-group button').forEach(b => b.classList.remove('active'));
-            if (mode === 'browse') {
-                dom.modeBrowse.classList.add('active');
+        function switchView(view) {
+            state.mode = view;
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            if (view === 'browse') {
                 dom.viewBrowse.classList.add('active');
-                dom.viewSearch.classList.remove('active');
-                dom.viewDetail.classList.remove('active');
-            } else if (mode === 'search') {
-                dom.modeSearch.classList.add('active');
-                dom.viewBrowse.classList.remove('active');
+                if (state.source) loadBrowse(state.source);
+            } else if (view === 'search') {
                 dom.viewSearch.classList.add('active');
-                dom.viewDetail.classList.remove('active');
                 dom.searchInput.focus();
-            } else if (mode === 'detail') {
-                dom.viewBrowse.classList.remove('active');
-                dom.viewSearch.classList.remove('active');
+            } else if (view === 'detail') {
                 dom.viewDetail.classList.add('active');
             }
         }
@@ -1267,20 +1230,19 @@
             state.source = source;
             state.category = null;
             state.page = 1;
-            state.browseLoaded = true;
             setStatus('加载中…', true);
-            dom.cats.innerHTML = '<span style="color:var(--text3);font-size:13px;padding:4px 0;">加载分类…</span>';
+            dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">加载分类…</span>';
 
+            // 加载分类（先显示最新列表，再更新分类）
             await loadMovies();
 
-            // 后台加载分类
             try {
                 const data = await fetchProxy(source.api + '?ac=list');
                 const classes = data.class || [];
                 state.categories = classes;
-                renderCats(classes);
+                renderCategories(classes);
             } catch (e) {
-                dom.cats.innerHTML = '<span style="color:var(--text3);font-size:13px;padding:4px 0;">分类加载失败</span>';
+                dom.categoryNav.innerHTML = '';
             }
             setStatus(source.name + ' · 就绪');
         }
@@ -1292,7 +1254,7 @@
                 `${s.api}?ac=videolist&t=${state.category}&pg=${state.page}` :
                 `${s.api}?ac=videolist&pg=${state.page}`;
 
-            dom.browseGrid.innerHTML = '<div class="empty" style="padding:30px 0;"><span class="spinner"></span></div>';
+            dom.browseGrid.innerHTML = '<div class="empty"><span class="spinner"></span> 加载中…</div>';
 
             try {
                 const data = await fetchProxy(url);
@@ -1301,10 +1263,10 @@
                 state.movies = list;
                 renderMovies(list);
                 updatePager();
-                dom.browseInfo.textContent = `${list.length} 部 · 第 ${state.page}/${state.totalPages} 页`;
+                dom.browseInfo.textContent = `${list.length} 部`;
+                dom.browseBadge.textContent = `共 ${state.totalPages} 页`;
             } catch (e) {
-                dom.browseGrid.innerHTML =
-                    `<div class="empty" style="padding:30px 0;">❌ ${esc(e.message)}</div>`;
+                dom.browseGrid.innerHTML = `<div class="empty">❌ ${esc(e.message)}</div>`;
                 toast('加载失败: ' + e.message, 'error');
             }
         }
@@ -1312,19 +1274,32 @@
         function renderMovies(list) {
             const grid = dom.browseGrid;
             if (!list.length) {
-                grid.innerHTML = '<div class="empty" style="padding:30px 0;">📭 暂无内容</div>';
+                grid.innerHTML = '<div class="empty">📭 暂无内容</div>';
                 return;
             }
             const frag = document.createDocumentFragment();
             list.forEach(v => {
                 const el = document.createElement('div');
-                el.className = 'movie';
+                el.className = 'card';
+                const poster = v.vod_pic || '';
+                const score = v.vod_score || '';
+                const remark = v.vod_remarks || '';
                 el.innerHTML = `
-              <img loading="lazy" src="${esc(v.vod_pic || '')}" 
-                   onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22390%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%2312141a%22/%3E%3C/svg%3E'" />
-              <div class="name">${esc(v.vod_name)}</div>
-              <div class="remark">${esc(v.vod_remarks || '')}</div>
-            `;
+                    <div class="poster-wrap">
+                        <img loading="lazy" src="${esc(poster)}" 
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22390%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%231a1f2b%22/%3E%3C/svg%3E'" />
+                        <div class="play-btn">▶</div>
+                        ${score ? `<div class="badge-top score">${esc(score)}</div>` : ''}
+                        ${remark && !score ? `<div class="badge-top">${esc(remark)}</div>` : ''}
+                    </div>
+                    <div class="info">
+                        <div class="name">${esc(v.vod_name)}</div>
+                        <div class="meta">
+                            <span class="tag">${esc(v.type_name || '影视')}</span>
+                            ${score ? `<span class="score">${esc(score)}</span>` : ''}
+                        </div>
+                    </div>
+                `;
                 el.onclick = () => showDetail(v, state.source);
                 frag.appendChild(el);
             });
@@ -1332,50 +1307,51 @@
             grid.appendChild(frag);
         }
 
-        function renderCats(classes) {
+        function renderCategories(classes) {
             const top = classes.filter(c => String(c.type_pid) === '0');
             const kids = classes.filter(c => String(c.type_pid) !== '0');
-            const el = dom.cats;
-            el.innerHTML = '';
+            const nav = dom.categoryNav;
+            nav.innerHTML = '';
 
-            const all = document.createElement('div');
+            const all = document.createElement('span');
             all.className = 'cat active';
-            all.textContent = '最新';
+            all.textContent = '全部';
             all.onclick = () => {
-                document.querySelectorAll('.cat').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('.category-nav .cat').forEach(c => c.classList.remove('active'));
                 all.classList.add('active');
                 state.category = null;
                 state.page = 1;
                 loadMovies();
             };
-            el.appendChild(all);
+            nav.appendChild(all);
 
             top.forEach(c => {
-                const btn = document.createElement('div');
+                const btn = document.createElement('span');
                 btn.className = 'cat';
                 btn.textContent = c.type_name;
                 btn.onclick = () => {
-                    document.querySelectorAll('.cat').forEach(c => c.classList.remove('active'));
+                    document.querySelectorAll('.category-nav .cat').forEach(c => c.classList.remove('active'));
                     btn.classList.add('active');
                     state.category = c.type_id;
                     state.page = 1;
                     loadMovies();
                 };
-                el.appendChild(btn);
+                nav.appendChild(btn);
                 kids.filter(k => String(k.type_pid) === String(c.type_id)).forEach(k => {
-                    const kb = document.createElement('div');
+                    const kb = document.createElement('span');
                     kb.className = 'cat kid';
                     kb.textContent = '└ ' + k.type_name;
                     kb.onclick = () => {
-                        document.querySelectorAll('.cat').forEach(c => c.classList.remove('active'));
+                        document.querySelectorAll('.category-nav .cat').forEach(c => c.classList.remove('active'));
                         kb.classList.add('active');
                         state.category = k.type_id;
                         state.page = 1;
                         loadMovies();
                     };
-                    el.appendChild(kb);
+                    nav.appendChild(kb);
                 });
             });
+            dom.browseTitle.textContent = state.source ? state.source.name : '热门推荐';
         }
 
         function updatePager() {
@@ -1384,28 +1360,11 @@
             dom.pageInfo2.textContent = txt;
         }
 
-        function pagePrev() {
-            if (state.page > 1) { state.page--;
-                loadMovies(); }
-        }
+        function pagePrev() { if (state.page > 1) { state.page--;
+                loadMovies(); } }
 
-        function pageNext() {
-            if (state.page < state.totalPages) { state.page++;
-                loadMovies(); }
-        }
-
-        async function loadCategories(source) {
-            if (!source) return;
-            try {
-                const data = await fetchProxy(source.api + '?ac=list');
-                const classes = data.class || [];
-                state.categories = classes;
-                renderCats(classes);
-                toast('分类已更新', 'success');
-            } catch (e) {
-                toast('分类加载失败: ' + e.message, 'error');
-            }
-        }
+        function pageNext() { if (state.page < state.totalPages) { state.page++;
+                loadMovies(); } }
 
         // ============================================================
         //  SEARCH
@@ -1414,14 +1373,17 @@
             const q = dom.searchInput.value.trim();
             if (!q) { toast('请输入片名', 'error'); return; }
 
-            state.query = q;
             const sel = dom.sourceSelect;
             const targets = sel.value === '__all__' ?
                 state.sources :
                 state.sources.filter(s => s.key === sel.value);
             if (!targets.length) { toast('请选择有效源', 'error'); return; }
 
-            switchMode('search');
+            // 切换到搜索视图
+            document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-view="search"]').classList.add('active');
+            switchView('search');
+
             dom.emptyState.style.display = 'none';
             dom.resultStats.style.display = 'block';
             dom.searchGrid.innerHTML = '';
@@ -1438,14 +1400,25 @@
                     const el = document.createElement('div');
                     el.className = 'card';
                     const fav = isFav(v.vod_id, s.key);
+                    const poster = v.vod_pic || '';
+                    const score = v.vod_score || '';
                     el.innerHTML = `
-                <div class="title">${esc(v.vod_name)}${fav ? ' <span class="fav-star">⭐</span>' : ''}</div>
-                <div class="meta">
-                  <span class="tag">${esc(v.type_name || '影视')}</span>
-                  <span class="tag source">${esc(s.name)}</span>
-                  ${v.vod_remarks ? `<span>${esc(v.vod_remarks)}</span>` : ''}
-                </div>
-              `;
+                        <div class="poster-wrap">
+                            <img loading="lazy" src="${esc(poster)}" 
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22390%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%231a1f2b%22/%3E%3C/svg%3E'" />
+                            <div class="play-btn">▶</div>
+                            ${score ? `<div class="badge-top score">${esc(score)}</div>` : ''}
+                        </div>
+                        <div class="info">
+                            <div class="name">${esc(v.vod_name)}${fav ? ' <span class="star">⭐</span>' : ''}</div>
+                            <div class="meta">
+                                <span class="tag">${esc(v.type_name || '影视')}</span>
+                                <span class="tag source">${esc(s.name)}</span>
+                                ${v.vod_remarks ? `<span>${esc(v.vod_remarks)}</span>` : ''}
+                                ${score ? `<span class="score">${esc(score)}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
                     el.onclick = () => showDetail(v, s);
                     frag.appendChild(el);
                 });
@@ -1493,14 +1466,20 @@
             state.detailLines = [];
             state.detailLineIndex = 0;
 
-            switchMode('detail');
+            // 切换到详情视图
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            dom.viewDetail.classList.add('active');
+
             setStatus('加载详情…', true);
 
             dom.dName.textContent = vod.vod_name;
             dom.dPoster.src = vod.vod_pic ||
-                'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="280"%3E%3Crect width="100%25" height="100%25" fill="%2312141a"/%3E%3Ctext x="50%25" y="50%25" fill="%23515669" font-size="14" text-anchor="middle"%3E暂无%3C/text%3E%3C/svg%3E';
+                'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="280"%3E%3Crect width="100%25" height="100%25" fill="%231a1f2b"/%3E%3Ctext x="50%25" y="50%25" fill="%234c5568" font-size="14" text-anchor="middle"%3E暂无%3C/text%3E%3C/svg%3E';
+
+            const score = vod.vod_score ? `豆瓣评分 ${vod.vod_score}` : '';
             dom.dMeta.textContent = [
                 vod.type_name, vod.vod_year, vod.vod_area,
+                score,
                 '主演: ' + (vod.vod_actor || '-'),
                 '导演: ' + (vod.vod_director || '-')
             ].filter(Boolean).join(' · ');
@@ -1514,11 +1493,33 @@
                 if (data.list && data.list.length) detail = data.list[0];
             } catch (e) { /* use cached */ }
 
-            // 解析线路
-            const froms = (detail.vod_play_from || '').split('$$$').filter(Boolean);
-            const urls = (detail.vod_play_url || '').split('$$$').filter(Boolean);
+            // 解析线路 - 支持多种格式
+            let froms = [],
+                urls = [];
+            const playFrom = detail.vod_play_from || '';
+            const playUrl = detail.vod_play_url || '';
+
+            if (playFrom && playUrl) {
+                froms = playFrom.split('$$$').filter(Boolean);
+                urls = playUrl.split('$$$').filter(Boolean);
+            } else {
+                // 尝试其他常见格式
+                const keys = Object.keys(detail).filter(k => k.startsWith('vod_play_from'));
+                for (const k of keys) {
+                    const idx = k.replace('vod_play_from', '');
+                    const f = detail[k] || '';
+                    const u = detail['vod_play_url' + idx] || '';
+                    if (f && u) {
+                        froms.push(f);
+                        urls.push(u);
+                    }
+                }
+            }
+
             const lines = froms.map((f, i) => ({ name: f, url: urls[i] || '' }))
                 .filter(l => l.url.trim());
+
+            // 排序：m3u8 优先
             lines.sort((a, b) => (a.url.includes('.m3u8') ? 0 : 1) - (b.url.includes('.m3u8') ? 0 : 1));
 
             state.detailLines = lines;
@@ -1580,10 +1581,11 @@
 
         function backFromDetail() {
             if (state.mode === 'search') {
-                switchMode('search');
+                switchView('search');
+                document.querySelector('[data-view="search"]').classList.add('active');
             } else {
-                switchMode('browse');
-                // 刷新列表，保持状态
+                switchView('browse');
+                document.querySelector('[data-view="browse"]').classList.add('active');
                 loadMovies();
             }
         }
@@ -1592,12 +1594,8 @@
         //  PLAYER
         // ============================================================
         function play(url, title) {
-            state.playerUrl = url;
-            state.playerTitle = title || '正在播放';
-            state.playerOpen = true;
-
             dom.playerWrap.classList.add('open');
-            dom.nowPlaying.textContent = title || '—';
+            dom.nowPlaying.textContent = title || '正在播放';
             dom.m3u8Link.value = url;
 
             if (window.hls) {
@@ -1626,12 +1624,10 @@
                 toast('当前浏览器不支持 HLS 播放', 'error');
             }
 
-            // 滚动到播放器
             dom.playerWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function closePlayer() {
-            state.playerOpen = false;
             dom.playerWrap.classList.remove('open');
             if (window.hls) {
                 window.hls.destroy();
@@ -1674,7 +1670,7 @@
             if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
 
             const video = dom.player;
-            if (state.playerOpen && video) {
+            if (dom.playerWrap.classList.contains('open') && video) {
                 switch (e.key) {
                     case ' ':
                         e.preventDefault();
@@ -1702,15 +1698,13 @@
                 }
             }
 
-            // Ctrl+K 聚焦搜索
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
-                if (state.mode !== 'search') switchMode('search');
+                document.querySelector('[data-view="search"]').click();
                 dom.searchInput.focus();
                 dom.searchInput.select();
             }
 
-            // ESC 返回
             if (e.key === 'Escape' && state.mode === 'detail') {
                 backFromDetail();
             }
@@ -1740,5 +1734,6 @@
         // ============================================================
         document.addEventListener('DOMContentLoaded', init);
     </script>
+
 </body>
 </html>
