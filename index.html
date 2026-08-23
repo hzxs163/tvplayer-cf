@@ -27,36 +27,38 @@
     <!-- ===== Main ===== -->
     <main>
 
-        <!-- ==========================================================
+<!-- ==========================================================
         播放器
         ========================================================== -->
-        <div id="player-section">
-            <!-- 加载遮罩 -->
-            <div id="player-loading" class="show">
-                <span class="spinner"></span>
-                <span class="label">加载中…</span>
-            </div>
+<div id="player-section">
+    <!-- 加载遮罩 -->
+    <div id="player-loading" class="show">
+        <span class="spinner"></span>
+        <span class="label">加载中…</span>
+    </div>
 
-            <video id="player" controls preload="metadata" playsinline></video>
-            <iframe id="player-iframe" allowfullscreen></iframe>
+    <video id="player" controls preload="metadata" playsinline></video>
+    <iframe id="player-iframe" allowfullscreen></iframe>
 
-            <!-- 选集面板 -->
-            <div id="episodes-panel">
-                <div class="panel-header">
-                    <span>📺 选集</span>
-                    <button onclick="toggleEpisodesPanel()">✕</button>
-                </div>
-                <div class="ep-list" id="episodes-list"></div>
-            </div>
+    <div class="player-controls">
+        <span class="title" id="nowPlaying">—</span>
+        <select id="lineSelect" onchange="switchPlayerLine(this.value)"></select>
+        <button class="ctrl-btn" onclick="toggleEpisodesPanel()" title="选集">📺</button>
+        <input class="link-input" id="m3u8Link" readonly onclick="this.select()" placeholder="m3u8 地址" />
+        <button class="ctrl-btn close-btn" onclick="closePlayer()" title="收起">✕</button>
+    </div>
+</div>
 
-            <div class="player-controls">
-                <span class="title" id="nowPlaying">—</span>
-                <select id="lineSelect" onchange="switchPlayerLine(this.value)"></select>
-                <button class="ctrl-btn" onclick="toggleEpisodesPanel()" title="选集">📺</button>
-                <input class="link-input" id="m3u8Link" readonly onclick="this.select()" placeholder="m3u8 地址" />
-                <button class="ctrl-btn close-btn" onclick="closePlayer()" title="收起">✕</button>
-            </div>
-        </div>
+<!-- ==========================================================
+        选集面板（在播放器外部，控制栏下方）
+        ========================================================== -->
+<div id="episodes-panel">
+    <div class="panel-header">
+        <span>📺 选集</span>
+        <button onclick="toggleEpisodesPanel()">✕</button>
+    </div>
+    <div class="ep-list" id="episodes-list"></div>
+</div>
 
         <!-- ==========================================================
         PAGE: 浏览
