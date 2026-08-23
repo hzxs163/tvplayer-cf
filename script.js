@@ -525,6 +525,7 @@ async function init() {
         const s = getSelectedSource();
         if (!s) return;
         if (state.isPlaying) closePlayer();
+        state.isLoading = false;
         dom.pageBrowse.classList.add('active');
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         loadBrowse(s);
