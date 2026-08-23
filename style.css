@@ -251,31 +251,37 @@ main {
 }
 
 /* ============================================================
-           播放器（方案一优化版：容器固定高度 + video 填满，切换不缩小）
+           播放器（固定宽高比 + 绝对定位铺满，永不缩小 + 自适应比例）
            ============================================================ */
 #player-section {
     display: none;
-    height: 58vh;
-    min-height: 300px;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 70vh;
     background: #000;
     border-radius: var(--radius);
     overflow: hidden;
     border: 1px solid var(--border);
-    position: relative;
 }
 #player-section.open {
     display: block;
 }
 #player-section video {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     background: #0a0c12;
-    display: block;
     object-fit: contain;
 }
 #player-iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 58vh;
+    height: 100%;
     border: none;
     display: none;
     background: #000;
@@ -284,7 +290,10 @@ main {
 /* ===== 加载遮罩 ===== */
 #player-loading {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: none;
     align-items: center;
     justify-content: center;
@@ -292,7 +301,7 @@ main {
     gap: 12px;
     background: #0a0c12;
     color: var(--text2);
-    z-index: 5;
+    z-index: 10;
     pointer-events: none;
     transition: opacity 0.4s ease;
 }
@@ -329,6 +338,8 @@ main {
     border-top: 1px solid var(--border);
     font-size: 13px;
     color: var(--text2);
+    position: relative;
+    z-index: 20;
 }
 .player-controls .title {
     flex: 1;
@@ -382,7 +393,7 @@ main {
     border-color: var(--primary);
 }
 
-/* ===== 选集面板 ===== */
+/* ===== 选集面板（在播放器外部） ===== */
 #episodes-panel {
     display: none;
     background: var(--card-bg);
@@ -426,7 +437,7 @@ main {
     gap: 6px;
 }
 #episodes-panel .ep-list .ep {
-    padding: 4px 12px;
+    padding: 4px 14px;
     border-radius: 4px;
     font-size: 13px;
     background: var(--card-bg);
@@ -434,7 +445,7 @@ main {
     color: var(--text2);
     cursor: pointer;
     transition: 0.2s;
-    min-width: 36px;
+    min-width: 44px;
     text-align: center;
 }
 #episodes-panel .ep-list .ep:hover {
@@ -900,11 +911,21 @@ footer span {
         max-width: 70px;
         font-size: 11px;
     }
-    #player-section video {
+    #player-section {
+        aspect-ratio: 16 / 9;
         max-height: 50vh;
     }
     #player-iframe {
-        height: 50vh;
+        max-height: 50vh;
+    }
+    #episodes-panel {
+        max-height: 160px;
+        padding: 10px 12px;
+    }
+    #episodes-panel .ep-list .ep {
+        font-size: 12px;
+        padding: 3px 10px;
+        min-width: 36px;
     }
 
     #toast-container {
@@ -916,12 +937,6 @@ footer span {
     .category-nav .cat {
         font-size: 13px;
         padding: 3px 14px;
-    }
-    #episodes-panel {
-        right: 6px;
-        min-width: 150px;
-        max-width: 200px;
-        bottom: 60px;
     }
     .import-box {
         padding: 16px;
@@ -955,5 +970,10 @@ footer span {
     .player-controls select#lineSelect {
         max-width: 55px;
         font-size: 10px;
+    }
+    #episodes-panel .ep-list .ep {
+        font-size: 11px;
+        padding: 2px 8px;
+        min-width: 30px;
     }
 }
