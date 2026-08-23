@@ -342,11 +342,9 @@ function importFromFile(event) {
 
 function loadExample() {
     const example = [
-        { key: 'feifan', name: '非凡资源', api: 'http://ffzy5.tv/api.php/provide/vod', type: 0, searchable: 1,
+        { key: 'fan', name: '**资源', api: 'http://***.tv/api.php/provide/vod', type: 0, searchable: 1,
             filterable: 1, playerType: 1, group: 'stable' },
-        { key: 'wolong', name: '卧龙资源', api: 'https://wolongzyw.com/api.php/provide/vod', type: 0, searchable: 1,
-            filterable: 1, playerType: 1, group: 'stable' },
-        { key: 'zuida', name: '最大资源', api: 'https://api.zuidapi.com/api.php/provide/vod', type: 0, searchable: 1,
+        { key: 'zui', name: '**资源', api: 'https://api.***api.com/api.php/provide/vod', type: 0, searchable: 1,
             filterable: 1, playerType: 1, group: 'stable' }
     ];
     dom.importTextarea.value = JSON.stringify(example, null, 2);
@@ -542,10 +540,9 @@ async function init() {
 
     document.addEventListener('click', (e) => {
         const panel = dom.episodesPanel;
-        if (panel.style.display === 'block') {
-            if (!panel.contains(e.target) && !e.target.closest('.ctrl-btn') && !e.target.closest(
-                    '.close-btn')) {
-                panel.style.display = 'none';
+        if (panel.classList.contains('open')) {
+            if (!panel.contains(e.target) && !e.target.closest('.ctrl-btn') && !e.target.closest('.close-btn')) {
+                panel.classList.remove('open');
             }
         }
     });
@@ -996,9 +993,8 @@ function renderPlayerLines(lines) {
 //  选集面板
 // ============================================================
 function toggleEpisodesPanel() {
-    const panel = document.getElementById('episodes-panel');
-    panel.classList.toggle('open');
-    if (panel.classList.contains('open')) {
+    dom.episodesPanel.classList.toggle('open');
+    if (dom.episodesPanel.classList.contains('open')) {
         if (!state.currentEpisodes.length && state.currentLines.length) {
             const url = state.currentLines[state.currentLineIndex]?.url || '';
             const eps = parseEpisodes(url);
@@ -1023,7 +1019,7 @@ function renderEpisodesPanel(episodes) {
             document.querySelectorAll('#episodes-list .ep').forEach(e => e.classList.remove('active'));
             el.classList.add('active');
             startPlayer(ep.url, (state.currentVod?.vod_name || '') + ' ' + ep.name);
-            dom.episodesPanel.style.display = 'none';
+            dom.episodesPanel.classList.remove('open');
             if (state.currentVod && state.currentSource) {
                 addHistory(state.currentVod, state.currentSource, ep.name);
             }
@@ -1201,7 +1197,7 @@ function startPlayerInIframe(url, title) {
 function closePlayer() {
     state.isPlaying = false;
     dom.playerSection.classList.remove('open');
-    dom.episodesPanel.style.display = 'none';
+    dom.episodesPanel.classList.remove('open');
 
     if (state.hlsInstance) {
         state.hlsInstance.destroy();
