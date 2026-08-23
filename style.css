@@ -301,7 +301,7 @@ main {
     gap: 12px;
     background: #0a0c12;
     color: var(--text2);
-    z-index: 5;
+    z-index: 10;
     pointer-events: none;
     transition: opacity 0.4s ease;
 }
@@ -338,6 +338,8 @@ main {
     border-top: 1px solid var(--border);
     font-size: 13px;
     color: var(--text2);
+    position: relative;
+    z-index: 20;
 }
 .player-controls .title {
     flex: 1;
@@ -404,7 +406,7 @@ main {
     overflow-y: auto;
     min-width: 180px;
     max-width: 260px;
-    z-index: 20;
+    z-index: 999;
     border: 1px solid var(--border);
     backdrop-filter: blur(8px);
 }
