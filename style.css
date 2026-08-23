@@ -251,13 +251,14 @@ main {
 }
 
 /* ============================================================
-           播放器（绝对定位铺满，永不缩小）
+           播放器（固定宽高比 + 绝对定位铺满，永不缩小 + 自适应比例）
            ============================================================ */
 #player-section {
     display: none;
     position: relative;
-    min-height: 58vh;
-    min-height: 300px;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 70vh;
     background: #000;
     border-radius: var(--radius);
     overflow: hidden;
