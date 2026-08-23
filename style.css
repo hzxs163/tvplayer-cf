@@ -251,7 +251,7 @@ main {
 }
 
 /* ============================================================
-           播放器（固定宽高比 + 绝对定位铺满，永不缩小 + 自适应比例）
+           播放器（只包含视频）
            ============================================================ */
 #player-section {
     display: none;
@@ -260,9 +260,10 @@ main {
     aspect-ratio: 16 / 9;
     max-height: 70vh;
     background: #000;
-    border-radius: var(--radius);
+    border-radius: var(--radius) var(--radius) 0 0;
     overflow: hidden;
     border: 1px solid var(--border);
+    border-bottom: none;
 }
 #player-section.open {
     display: block;
@@ -328,18 +329,22 @@ main {
     display: none !important;
 }
 
+/* ===== 播放器控制栏（在视频下方） ===== */
 .player-controls {
-    display: flex;
+    display: none;
     flex-wrap: wrap;
     align-items: center;
     gap: 6px 12px;
     padding: 8px 14px;
-    background: rgba(0, 0, 0, 0.9);
-    border-top: 1px solid var(--border);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
     font-size: 13px;
     color: var(--text2);
-    position: relative;
-    z-index: 20;
+}
+.player-controls.open {
+    display: flex;
 }
 .player-controls .title {
     flex: 1;
@@ -393,14 +398,14 @@ main {
     border-color: var(--primary);
 }
 
-/* ===== 选集面板（在播放器外部） ===== */
+/* ===== 选集面板（在控制栏下方） ===== */
 #episodes-panel {
     display: none;
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
     padding: 12px 14px;
-    margin-top: 10px;
     max-height: 240px;
     overflow-y: auto;
 }
