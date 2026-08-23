@@ -167,6 +167,16 @@ function hasSources() {
 }
 
 // ============================================================
+//  隐藏源切换
+// ============================================================
+let showHiddenSources = false;
+
+function toggleShowHiddenSources() {
+    showHiddenSources = !showHiddenSources;
+    populateSelect();
+}
+
+// ============================================================
 //  源列表渲染（弹窗内）
 // ============================================================
 function renderSourceList() {
@@ -193,9 +203,10 @@ function renderSourceList() {
         html += `<div class="group-label">${labels[g] || g}</div>`;
         groups[g].forEach(s => {
             const isEditing = state.editingKey === s.key;
+            const isHidden = s.enabled === false;
             html += `
                         <div class="source-item" style="${isEditing ? 'background:var(--primary-dim);' : ''}">
-                            <span class="s-name">${esc(s.name)} <span class="s-key">(${esc(s.key)})</span></span>
+                            <span class="s-name">${esc(s.name)} <span class="s-key">(${esc(s.key)})</span>${isHidden ? ' 🔒' : ''}</span>
                             <div class="s-actions">
                                 <button class="edit-btn btn-sm" onclick="editSource('${esc(s.key)}')">✏️</button>
                                 <button class="del-btn btn-sm" onclick="deleteSource('${esc(s.key)}')">🗑️</button>
@@ -566,6 +577,22 @@ async function init() {
         hidePlayerLoading();
     });
 
+    // ===== 连续点击状态栏 8 次切换隐藏源显示 =====
+    let statusClickCount = 0;
+    let statusClickTimer = null;
+
+    dom.status.addEventListener('click', () => {
+        statusClickCount++;
+        clearTimeout(statusClickTimer);
+        statusClickTimer = setTimeout(() => {
+            if (statusClickCount >= 8) {
+                toggleShowHiddenSources();
+                toast(showHiddenSources ? '🔓 已显示隐藏源' : '🔒 已隐藏隐藏源', 'info');
+            }
+            statusClickCount = 0;
+        }, 500);
+    });
+
     setTimeout(showDisclaimer, 500);
 }
 
@@ -585,25 +612,47 @@ function populateSelect() {
         return;
     }
 
+    // 根据 showHiddenSources 决定是否显示隐藏源
+    let sources = state.sources;
+    if (!showHiddenSources) {
+        sources = sources.filter(s => s.enabled !== false);
+    }
+
+    if (!sources || !sources.length) {
+        sel.innerHTML = '<option value="">请导入源</option>';
+        sel.disabled = true;
+        return;
+    }
+
     const groups = { stable: [], normal: [], backup: [] };
-    state.sources.forEach(s => {
+    sources.forEach(s => {
         const g = s.group || 'normal';
         if (groups[g]) groups[g].push(s);
         else groups.normal.push(s);
     });
     const labels = { stable: '🟢 稳定', normal: '🔵 普通', backup: '🟡 备用' };
+
+    let hasOptions = false;
     Object.keys(groups).forEach(g => {
         if (!groups[g].length) return;
+        hasOptions = true;
         const og = document.createElement('optgroup');
         og.label = labels[g] || g;
+        if (showHiddenSources) og.label += ' 🔓';
         groups[g].forEach(s => {
             const opt = document.createElement('option');
             opt.value = s.key;
-            opt.textContent = s.name;
+            const isHidden = s.enabled === false;
+            opt.textContent = s.name + (isHidden ? ' 🔒' : '');
             og.appendChild(opt);
         });
         sel.appendChild(og);
     });
+
+    if (!hasOptions) {
+        sel.innerHTML = '<option value="">请导入源</option>';
+        sel.disabled = true;
+    }
 }
 
 // ============================================================
@@ -769,7 +818,6 @@ async function doSearch() {
         state.sources.filter(s => s.key === sel.value);
     if (!targets.length) { toast('请选择有效源', 'error'); return; }
 
-    // 切换到搜索页
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     dom.pageSearch.classList.add('active');
 
