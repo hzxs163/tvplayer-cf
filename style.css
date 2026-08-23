@@ -1,0 +1,968 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+:root {
+    --bg: #0a0c12;
+    --header-bg: #11161f;
+    --card-bg: #181e2a;
+    --card-hover: #212837;
+    --border: #2a3242;
+    --text: #eef1f5;
+    --text2: #8991a8;
+    --text3: #4a5368;
+    --primary: #ff6a00;
+    --primary-dim: rgba(255, 106, 0, 0.15);
+    --gold: #f5b342;
+    --green: #2ed573;
+    --radius: 8px;
+    --shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+button {
+    cursor: pointer;
+    border: none;
+    outline: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+}
+input,
+select {
+    font: inherit;
+    outline: none;
+    border: none;
+    background: none;
+    color: inherit;
+}
+img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--text3);
+    border-radius: 4px;
+}
+
+/* ===== Toast ===== */
+#toast-container {
+    position: fixed;
+    top: 72px;
+    right: 16px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 340px;
+    pointer-events: none;
+}
+.toast {
+    padding: 10px 16px;
+    border-radius: 6px;
+    background: var(--header-bg);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 13px;
+    box-shadow: var(--shadow);
+    pointer-events: auto;
+    animation: toastIn 0.25s ease;
+}
+.toast.success {
+    border-left: 3px solid var(--green);
+    color: var(--text);
+}
+.toast.error {
+    border-left: 3px solid #e74c3c;
+    color: var(--text);
+}
+.toast.info {
+    border-left: 3px solid var(--primary);
+    color: var(--text);
+}
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ===== Header ===== */
+header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+}
+.logo {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    letter-spacing: -0.3px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.logo:hover {
+    color: var(--primary);
+}
+.logo span {
+    color: var(--primary);
+}
+
+.controls {
+    display: flex;
+    flex: 1;
+    min-width: 160px;
+    align-items: center;
+    gap: 6px;
+}
+.controls select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 13px;
+    color: var(--text);
+    min-width: 70px;
+    max-width: 120px;
+    cursor: pointer;
+}
+.controls select option {
+    background: var(--header-bg);
+}
+.controls input {
+    flex: 1;
+    min-width: 50px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 13px;
+    color: var(--text);
+    transition: 0.2s;
+}
+.controls input:focus {
+    border-color: var(--primary);
+}
+.controls input::placeholder {
+    color: var(--text3);
+}
+
+.btn {
+    padding: 4px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+.btn-primary {
+    background: var(--primary);
+    color: #fff;
+}
+.btn-primary:hover {
+    opacity: 0.85;
+}
+.btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.btn-ghost {
+    color: var(--text2);
+    border: 1px solid transparent;
+    padding: 3px 10px;
+}
+.btn-ghost:hover {
+    color: var(--text);
+    border-color: var(--border);
+}
+.btn-danger {
+    color: #e74c3c;
+}
+.btn-danger:hover {
+    color: #ff6b6b;
+}
+.btn-sm {
+    padding: 1px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+#status {
+    font-size: 12px;
+    color: var(--text3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+    margin-left: auto;
+}
+.spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+}
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===== Main ===== */
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 16px 0;
+}
+
+/* ============================================================
+           播放器
+           ============================================================ */
+#player-section {
+    display: none;
+    min-height: 300px;
+    background: #000;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    position: relative;
+}
+#player-section.open {
+    display: block;
+}
+#player-section video {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    max-height: 58vh;
+    background: #0a0c12;
+    display: block;
+}
+#player-iframe {
+    width: 100%;
+    height: 58vh;
+    border: none;
+    display: none;
+    background: #000;
+}
+
+/* ===== 加载遮罩 ===== */
+#player-loading {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    background: #0a0c12;
+    color: var(--text2);
+    z-index: 5;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+#player-loading.show {
+    display: flex;
+}
+#player-loading.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+#player-loading .spinner {
+    width: 36px;
+    height: 36px;
+    border-width: 3px;
+}
+#player-loading .label {
+    font-size: 14px;
+    color: var(--text3);
+    letter-spacing: 0.5px;
+}
+
+/* ===== 隐藏视频默认控件占位 ===== */
+#player-section video {
+    background: #0a0c12;
+    min-height: 300px;
+}
+#player::-webkit-media-controls-start-playback-button {
+    display: none !important;
+}
+
+.player-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    padding: 8px 14px;
+    background: rgba(0, 0, 0, 0.9);
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text2);
+}
+.player-controls .title {
+    flex: 1;
+    min-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text);
+    font-size: 14px;
+}
+.player-controls select#lineSelect {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    color: var(--text);
+    max-width: 100px;
+    display: none;
+    cursor: pointer;
+}
+.player-controls select#lineSelect option {
+    background: var(--header-bg);
+}
+.player-controls .ctrl-btn {
+    padding: 2px 6px;
+    font-size: 18px;
+    color: var(--text3);
+    border-radius: 4px;
+    transition: 0.2s;
+    line-height: 1.4;
+}
+.player-controls .ctrl-btn:hover {
+    color: var(--text);
+    background: var(--card-bg);
+}
+.player-controls .ctrl-btn.close-btn:hover {
+    color: #e74c3c;
+}
+.player-controls .link-input {
+    flex: 1;
+    min-width: 100px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 12px;
+    color: var(--text3);
+}
+.player-controls .link-input:focus {
+    border-color: var(--primary);
+}
+
+/* ===== 选集面板 ===== */
+#episodes-panel {
+    display: none;
+    position: absolute;
+    bottom: 70px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.92);
+    border-radius: 8px;
+    padding: 12px 14px;
+    max-height: 320px;
+    overflow-y: auto;
+    min-width: 180px;
+    max-width: 260px;
+    z-index: 20;
+    border: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+}
+#episodes-panel::-webkit-scrollbar {
+    width: 3px;
+}
+#episodes-panel::-webkit-scrollbar-thumb {
+    background: var(--text3);
+    border-radius: 4px;
+}
+#episodes-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 500;
+}
+#episodes-panel .panel-header button {
+    color: var(--text3);
+    font-size: 16px;
+    padding: 0 4px;
+}
+#episodes-panel .panel-header button:hover {
+    color: var(--text);
+}
+#episodes-panel .ep-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+#episodes-panel .ep-list .ep {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    cursor: pointer;
+    transition: 0.2s;
+    min-width: 36px;
+    text-align: center;
+}
+#episodes-panel .ep-list .ep:hover {
+    border-color: var(--text3);
+    color: var(--text);
+}
+#episodes-panel .ep-list .ep.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+#episodes-panel .ep-list .ep-loading {
+    color: var(--text3);
+    font-size: 13px;
+    padding: 4px 0;
+}
+
+/* ============================================================
+           视图容器
+           ============================================================ */
+.page {
+    display: none;
+    animation: fadeIn 0.25s ease;
+}
+.page.active {
+    display: block;
+}
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== 空状态 ===== */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px 50px;
+    color: var(--text2);
+    line-height: 2;
+}
+.empty-state .icon {
+    font-size: 40px;
+    display: block;
+    margin-bottom: 8px;
+}
+.empty-state b {
+    color: var(--text);
+}
+.empty-state .hint {
+    font-size: 13px;
+    color: var(--text3);
+}
+
+/* ============================================================
+           浏览模式
+           ============================================================ */
+.category-nav {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 4px 0 12px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.category-nav::-webkit-scrollbar {
+    display: none;
+}
+.category-nav .cat {
+    flex-shrink: 0;
+    padding: 4px 18px;
+    border-radius: 20px;
+    font-size: 14px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: 0.2s;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+.category-nav .cat:hover {
+    color: var(--text);
+}
+.category-nav .cat.active {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: var(--primary-dim);
+}
+.category-nav .cat.kid {
+    font-size: 12px;
+    padding: 4px 12px;
+    opacity: 0.7;
+}
+
+.browse-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.browse-header .title {
+    font-size: 16px;
+    font-weight: 600;
+}
+.browse-header .title .badge {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text3);
+    margin-left: 8px;
+}
+.browse-header .info {
+    font-size: 13px;
+    color: var(--text3);
+}
+
+/* ===== 影片网格 ===== */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: 0.25s ease;
+    border: 1px solid var(--border);
+    position: relative;
+}
+.card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary);
+    box-shadow: 0 8px 30px rgba(255, 106, 0, 0.12);
+}
+.card .poster-wrap {
+    position: relative;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+    background: var(--bg);
+}
+.card .poster-wrap img {
+    transition: 0.3s;
+}
+.card:hover .poster-wrap img {
+    transform: scale(1.03);
+}
+.card .poster-wrap .play-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: 0.3s;
+    font-size: 40px;
+    color: #fff;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+.card:hover .poster-wrap .play-icon {
+    opacity: 1;
+}
+.card .poster-wrap .badge-top {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+.card .poster-wrap .badge-top.score {
+    background: var(--gold);
+    color: #1a1a2e;
+}
+
+.card .info {
+    padding: 8px 10px 10px;
+}
+.card .info .name {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.card .info .name .star {
+    color: var(--gold);
+    margin-left: 2px;
+}
+.card .info .meta {
+    font-size: 12px;
+    color: var(--text2);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin-top: 4px;
+    align-items: center;
+}
+.card .info .meta .tag {
+    font-size: 11px;
+    padding: 0 8px;
+    border-radius: 10px;
+    background: var(--primary-dim);
+    color: var(--primary);
+}
+.card .info .meta .tag.source {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text3);
+}
+.card .info .meta .score {
+    color: var(--gold);
+    font-weight: 600;
+}
+
+.empty-grid {
+    text-align: center;
+    padding: 60px 20px 50px;
+    color: var(--text2);
+    line-height: 2;
+    grid-column: 1 / -1;
+}
+
+/* ===== 分页 ===== */
+.pager {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--text3);
+}
+
+/* ============================================================
+           导入弹窗
+           ============================================================ */
+#importModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+#importModal.open {
+    display: flex;
+}
+.import-box {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 700px;
+    width: 94%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+}
+.import-box h3 {
+    font-size: 18px;
+    margin-bottom: 4px;
+}
+.import-box .sub {
+    color: var(--text2);
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+.import-box textarea {
+    width: 100%;
+    height: 120px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    resize: vertical;
+}
+.import-box textarea:focus {
+    border-color: var(--primary);
+}
+.import-box .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+.import-box .hint {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text3);
+    line-height: 1.6;
+}
+.import-box .hint a {
+    color: var(--primary);
+    cursor: pointer;
+}
+.import-box .hint a:hover {
+    text-decoration: underline;
+}
+.import-box .source-count {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: var(--bg);
+    border-radius: 4px;
+    display: inline-block;
+}
+
+/* 已有源列表 */
+.source-list {
+    margin-top: 14px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+.source-list .group-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    margin: 8px 0 4px;
+    padding: 2px 0;
+}
+.source-list .group-label:first-child {
+    margin-top: 0;
+}
+.source-list .source-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    gap: 6px;
+    transition: 0.2s;
+}
+.source-list .source-item:hover {
+    background: var(--card-bg);
+}
+.source-list .source-item .s-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text);
+}
+.source-list .source-item .s-key {
+    font-size: 11px;
+    color: var(--text3);
+    margin-right: 6px;
+}
+.source-list .source-item .s-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.source-list .source-item .s-actions button {
+    padding: 1px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    transition: 0.2s;
+}
+.source-list .source-item .s-actions .edit-btn {
+    color: var(--primary);
+}
+.source-list .source-item .s-actions .edit-btn:hover {
+    background: var(--primary-dim);
+}
+.source-list .source-item .s-actions .del-btn {
+    color: #e74c3c;
+}
+.source-list .source-item .s-actions .del-btn:hover {
+    background: rgba(231, 76, 60, 0.15);
+}
+.source-list .empty-hint {
+    color: var(--text3);
+    font-size: 13px;
+    padding: 8px 0;
+    text-align: center;
+}
+
+/* ============================================================
+           Footer
+           ============================================================ */
+footer {
+    text-align: center;
+    padding: 24px 16px 6px;
+    font-size: 12px;
+    color: var(--text3);
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+}
+footer a {
+    color: var(--text3);
+    transition: 0.2s;
+}
+footer a:hover {
+    color: var(--text2);
+}
+footer span {
+    margin: 0 4px;
+}
+
+/* ============================================================
+           响应式
+           ============================================================ */
+@media (max-width: 768px) {
+    header {
+        padding: 6px 10px;
+        gap: 4px 8px;
+    }
+    .logo {
+        font-size: 17px;
+    }
+    .controls select {
+        min-width: 60px;
+        max-width: 80px;
+        font-size: 12px;
+        padding: 3px 6px;
+    }
+    .controls input {
+        min-width: 40px;
+        font-size: 12px;
+        padding: 3px 6px;
+    }
+    .btn {
+        padding: 3px 10px;
+        font-size: 12px;
+    }
+    #status {
+        max-width: 70px;
+        font-size: 11px;
+    }
+
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+    }
+
+    .player-controls {
+        font-size: 12px;
+        padding: 6px 10px;
+        gap: 4px 8px;
+    }
+    .player-controls select#lineSelect {
+        max-width: 70px;
+        font-size: 11px;
+    }
+    #player-section {
+        min-height: 200px;
+    }
+    #player-section video {
+        min-height: 200px;
+        max-height: 40vh;
+    }
+    #player-iframe {
+        height: 40vh;
+    }
+
+    #toast-container {
+        top: 64px;
+        right: 8px;
+        left: 8px;
+        max-width: none;
+    }
+    .category-nav .cat {
+        font-size: 13px;
+        padding: 3px 14px;
+    }
+    #episodes-panel {
+        right: 6px;
+        min-width: 150px;
+        max-width: 200px;
+        bottom: 60px;
+    }
+    .import-box {
+        padding: 16px;
+        max-width: 95%;
+    }
+    .import-box textarea {
+        height: 100px;
+    }
+    .source-list {
+        max-height: 160px;
+    }
+    .source-list .source-item {
+        font-size: 12px;
+        padding: 3px 4px;
+        flex-wrap: wrap;
+    }
+    .source-list .source-item .s-name {
+        min-width: 60px;
+    }
+}
+
+@media (max-width: 400px) {
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 6px;
+    }
+    .controls select {
+        min-width: 50px;
+        max-width: 65px;
+    }
+    .player-controls select#lineSelect {
+        max-width: 55px;
+        font-size: 10px;
+    }
+}
