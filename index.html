@@ -6,7 +6,9 @@
     <title>TVPlayer · 云端影视</title>
     <script src="/hls.min.js"></script>
     <style>
-
+        /* ============================================================
+                   爱奇艺风格 · 从零重构
+                   ============================================================ */
         * {
             margin: 0;
             padding: 0;
@@ -365,25 +367,19 @@
             color: var(--text);
             font-size: 14px;
         }
-        .player-controls .speed-group {
-            display: flex;
-            gap: 2px;
-        }
-        .player-controls .speed-group button {
-            padding: 1px 7px;
-            border-radius: 3px;
+        .player-controls select#lineSelect {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 6px;
             font-size: 12px;
-            color: var(--text3);
-            border: 1px solid transparent;
-            transition: 0.2s;
-        }
-        .player-controls .speed-group button.active {
-            color: var(--primary);
-            border-color: var(--primary);
-            background: var(--primary-dim);
-        }
-        .player-controls .speed-group button:hover:not(.active) {
             color: var(--text);
+            max-width: 100px;
+            display: none;
+            cursor: pointer;
+        }
+        .player-controls select#lineSelect option {
+            background: var(--header-bg);
         }
         .player-controls .ctrl-btn {
             padding: 2px 6px;
@@ -485,62 +481,6 @@
             color: var(--text3);
             font-size: 13px;
             padding: 4px 0;
-        }
-
-        /* 播放器信息栏 */
-        #player-info {
-            display: none;
-            padding: 10px 14px;
-            background: var(--card-bg);
-            border-top: 1px solid var(--border);
-            border-radius: 0 0 var(--radius) var(--radius);
-        }
-        #player-info.open {
-            display: block;
-        }
-        #player-info .info-row {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 6px 14px;
-        }
-        #player-info .info-row .name {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text);
-        }
-        #player-info .info-row .meta {
-            font-size: 13px;
-            color: var(--text2);
-        }
-        #player-info .info-row .meta .score {
-            color: var(--gold);
-            font-weight: 600;
-        }
-        #player-info .line-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-top: 6px;
-        }
-        #player-info .line-tabs .line-tab {
-            padding: 3px 14px;
-            border-radius: 14px;
-            font-size: 13px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text2);
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        #player-info .line-tabs .line-tab:hover {
-            border-color: var(--text3);
-            color: var(--text);
-        }
-        #player-info .line-tabs .line-tab.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: #fff;
         }
 
         /* ============================================================
@@ -991,9 +931,9 @@
                 padding: 6px 10px;
                 gap: 4px 8px;
             }
-            .player-controls .speed-group button {
+            .player-controls select#lineSelect {
+                max-width: 70px;
                 font-size: 11px;
-                padding: 0 5px;
             }
 
             #toast-container {
@@ -1011,9 +951,6 @@
                 min-width: 150px;
                 max-width: 200px;
                 bottom: 60px;
-            }
-            #player-info .info-row .name {
-                font-size: 14px;
             }
             .import-box {
                 padding: 16px;
@@ -1043,6 +980,10 @@
             .controls select {
                 min-width: 50px;
                 max-width: 65px;
+            }
+            .player-controls select#lineSelect {
+                max-width: 55px;
+                font-size: 10px;
             }
         }
     </style>
@@ -1095,30 +1036,11 @@
 
             <div class="player-controls">
                 <span class="title" id="nowPlaying">—</span>
-                <div class="speed-group">
-                    <button data-speed="0.5">0.5</button>
-                    <button data-speed="0.75">0.75</button>
-                    <button data-speed="1" class="active">1</button>
-                    <button data-speed="1.25">1.25</button>
-                    <button data-speed="1.5">1.5</button>
-                    <button data-speed="2">2</button>
-                </div>
+                <select id="lineSelect" onchange="switchPlayerLine(this.value)"></select>
                 <button class="ctrl-btn" onclick="toggleEpisodesPanel()" title="选集">📺</button>
-                <button class="ctrl-btn" onclick="togglePIP()" title="画中画">⛶</button>
-                <button class="ctrl-btn" onclick="toggleFullscreen()" title="全屏">⛶</button>
                 <input class="link-input" id="m3u8Link" readonly onclick="this.select()" placeholder="m3u8 地址" />
-                <button class="btn-ghost" onclick="copyLink()" style="font-size:12px;padding:2px 8px;">复制</button>
                 <button class="ctrl-btn close-btn" onclick="closePlayer()" title="收起">✕</button>
             </div>
-        </div>
-
-        <!-- 播放器信息栏 -->
-        <div id="player-info">
-            <div class="info-row">
-                <span class="name" id="pInfoName"></span>
-                <span class="meta" id="pInfoMeta"></span>
-            </div>
-            <div class="line-tabs" id="pInfoLines"></div>
         </div>
 
         <!-- ==========================================================
@@ -1232,7 +1154,6 @@
             currentPage: 'browse',
             isPlaying: false,
             isLoading: false,
-            // 编辑状态
             editingKey: null,
         };
 
@@ -1268,13 +1189,9 @@
             playerIframe: $('player-iframe'),
             nowPlaying: $('nowPlaying'),
             m3u8Link: $('m3u8Link'),
+            lineSelect: $('lineSelect'),
             episodesPanel: $('episodes-panel'),
             episodesList: $('episodes-list'),
-
-            playerInfo: $('player-info'),
-            pInfoName: $('pInfoName'),
-            pInfoMeta: $('pInfoMeta'),
-            pInfoLines: $('pInfoLines'),
 
             importModal: $('importModal'),
             importTextarea: $('importTextarea'),
@@ -1321,7 +1238,6 @@
                 toast('⭐ 已收藏', 'success');
             }
             saveStorage();
-            updatePlayerInfo();
         }
 
         function addHistory(vod, source, episode) {
@@ -1444,7 +1360,6 @@
             }
             setStoredSources(filtered);
             state.sources = filtered;
-            // 如果当前正在编辑该源，清空编辑状态
             if (state.editingKey === key) {
                 state.editingKey = null;
                 dom.importTextarea.value = '';
@@ -1454,7 +1369,6 @@
             if (!filtered.length) {
                 renderEmptyState();
             } else {
-                // 刷新当前浏览
                 const first = filtered.find(s => s.group === 'stable') || filtered[0];
                 if (first) {
                     dom.sourceSelect.value = first.key;
@@ -1465,16 +1379,11 @@
         }
 
         // ============================================================
-        //  导入功能（支持新增和更新）
+        //  导入功能
         // ============================================================
         function showImportModal() {
             dom.importModal.classList.add('open');
-            const stored = getStoredSources();
-            if (stored && !dom.importTextarea.value) {
-                // 如果编辑区为空，显示已有源列表
-            }
             renderSourceList();
-            // 如果当前有编辑状态，不覆盖 textarea
             if (!state.editingKey) {
                 dom.importTextarea.value = '';
             }
@@ -1501,10 +1410,8 @@
                     }
                 }
 
-                // 如果是单条（编辑模式），直接替换
                 let currentSources = getStoredSources() || [];
                 if (state.editingKey) {
-                    // 找到并替换
                     const idx = currentSources.findIndex(s => s.key === state.editingKey);
                     if (idx > -1) {
                         currentSources[idx] = data[0];
@@ -1515,15 +1422,12 @@
                     setStoredSources(currentSources);
                     toast('✅ 更新成功', 'success');
                 } else {
-                    // 批量导入：合并或覆盖？
-                    // 简单做法：覆盖全部
                     setStoredSources(data);
                     toast('✅ 导入成功，' + data.length + ' 个源', 'success');
                 }
 
                 state.sources = getStoredSources() || [];
                 closeImportModal();
-                // 刷新页面
                 location.reload();
             } catch (e) {
                 toast('JSON 格式错误: ' + e.message, 'error');
@@ -1676,6 +1580,24 @@
         }
 
         // ============================================================
+        //  线路切换
+        // ============================================================
+        function switchPlayerLine(index) {
+            index = parseInt(index);
+            state.currentLineIndex = index;
+            const lines = state.currentLines;
+            if (!lines || !lines[index]) return;
+            const episodes = parseEpisodes(lines[index].url);
+            state.currentEpisodes = episodes;
+            renderEpisodesPanel(episodes);
+            if (episodes.length) {
+                const first = episodes[0];
+                startPlayer(first.url, (state.currentVod?.vod_name || '') + ' ' + first.name);
+            }
+            toast('已切换: ' + lines[index].name, 'info');
+        }
+
+        // ============================================================
         //  INIT
         // ============================================================
         async function init() {
@@ -1687,7 +1609,6 @@
                 state.sources = [];
             }
 
-            // 如果没有源，显示空状态
             if (!hasSources()) {
                 renderEmptyState();
                 setTimeout(showDisclaimer, 500);
@@ -1698,7 +1619,6 @@
                 return;
             }
 
-            // ---- 有源，正常初始化 ----
             populateSelect();
             setControlsEnabled(true);
             setStatus('就绪');
@@ -1714,7 +1634,6 @@
             dom.pageBrowse.classList.add('active');
             document.querySelector('[data-page="browse"]').classList.add('active');
 
-            // ---- 事件绑定 ----
             dom.sourceSelect.addEventListener('change', () => {
                 const s = getSelectedSource();
                 if (!s) return;
@@ -1752,16 +1671,6 @@
             });
 
             document.addEventListener('keydown', handleKeydown);
-
-            document.querySelector('.speed-group').addEventListener('click', (e) => {
-                const btn = e.target.closest('button');
-                if (!btn || !btn.dataset.speed) return;
-                const speed = parseFloat(btn.dataset.speed);
-                dom.player.playbackRate = speed;
-                document.querySelectorAll('.speed-group button').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                toast(speed + '×', 'info');
-            });
 
             document.addEventListener('click', (e) => {
                 const panel = dom.episodesPanel;
@@ -2139,7 +2048,7 @@
                 state.currentLines = lines;
                 state.currentLineIndex = 0;
 
-                showPlayer(vod, detail);
+                showPlayer();
 
                 const firstUrl = lines[0].url;
                 const episodes = parseEpisodes(firstUrl);
@@ -2196,54 +2105,24 @@
         // ============================================================
         //  显示播放器
         // ============================================================
-        function showPlayer(vod, detail) {
+        function showPlayer() {
             state.isPlaying = true;
-
             dom.playerSection.classList.add('open');
-
-            const score = vod.vod_score ? `豆瓣评分 ${vod.vod_score}` : '';
-            dom.pInfoName.textContent = vod.vod_name;
-            dom.pInfoMeta.textContent = [
-                vod.type_name, vod.vod_year, vod.vod_area,
-                score,
-                '主演: ' + (vod.vod_actor || '-'),
-                '导演: ' + (vod.vod_director || '-')
-            ].filter(Boolean).join(' · ');
-
-            dom.playerInfo.classList.add('open');
-
             dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function renderPlayerLines(lines) {
-            const container = dom.pInfoLines;
-            container.innerHTML = '';
-            lines.forEach((l, i) => {
-                const tab = document.createElement('span');
-                tab.className = 'line-tab' + (i === state.currentLineIndex ? ' active' : '');
-                tab.textContent = l.name;
-                tab.onclick = () => {
-                    document.querySelectorAll('#pInfoLines .line-tab').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    state.currentLineIndex = i;
-                    const episodes = parseEpisodes(lines[i].url);
-                    state.currentEpisodes = episodes;
-                    renderEpisodesPanel(episodes);
-                    if (episodes.length) {
-                        const first = episodes[0];
-                        startPlayer(first.url, (state.currentVod?.vod_name || '') + ' ' + first.name);
-                    }
-                };
-                container.appendChild(tab);
-            });
-        }
+            const select = dom.lineSelect;
+            select.innerHTML = '';
+            select.style.display = lines.length > 1 ? 'block' : 'none';
 
-        function updatePlayerInfo() {
-            if (state.currentVod) {
-                const fav = isFav(state.currentVod.vod_id, state.currentSource?.key);
-                const name = state.currentVod.vod_name + (fav ? ' ⭐' : '');
-                dom.pInfoName.textContent = name;
-            }
+            lines.forEach((l, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = l.name;
+                if (i === state.currentLineIndex) opt.selected = true;
+                select.appendChild(opt);
+            });
         }
 
         // ============================================================
@@ -2446,7 +2325,6 @@
         function closePlayer() {
             state.isPlaying = false;
             dom.playerSection.classList.remove('open');
-            dom.playerInfo.classList.remove('open');
             dom.episodesPanel.style.display = 'none';
 
             if (window.hls) {
@@ -2464,33 +2342,10 @@
             state.currentLines = [];
             state.currentEpisodes = [];
 
+            dom.lineSelect.style.display = 'none';
+
             hidePlayerLoading();
             restoreAllContent();
-        }
-
-        function copyLink() {
-            const input = dom.m3u8Link;
-            input.select();
-            navigator.clipboard?.writeText(input.value).then(() => toast('已复制', 'success'))
-                .catch(() => toast('请手动复制', 'info'));
-        }
-
-        function togglePIP() {
-            const video = dom.player;
-            if (document.pictureInPictureElement) {
-                document.exitPictureInPicture();
-            } else if (document.pictureInPictureEnabled) {
-                video.requestPictureInPicture().catch(() => {});
-            }
-        }
-
-        function toggleFullscreen() {
-            const wrap = dom.playerSection;
-            if (!document.fullscreenElement) {
-                wrap.requestFullscreen().catch(() => {});
-            } else {
-                document.exitFullscreen();
-            }
         }
 
         // ============================================================
@@ -2514,14 +2369,6 @@
                     case 'ArrowLeft':
                         e.preventDefault();
                         video.currentTime -= 10;
-                        break;
-                    case 'f':
-                    case 'F':
-                        toggleFullscreen();
-                        break;
-                    case 'p':
-                    case 'P':
-                        togglePIP();
                         break;
                     case 'Escape':
                         if (document.fullscreenElement) document.exitFullscreen();
