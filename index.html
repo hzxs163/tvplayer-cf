@@ -1025,7 +1025,7 @@
         <div class="import-box">
             <h3>📥 导入源列表</h3>
             <div class="sub">粘贴 JSON 格式的源列表，或上传 <code>.json</code> 文件</div>
-            <textarea id="importTextarea" placeholder='[\n  {\n    "key": "feifan",\n    "name": "非凡资源",\n    "api": "http://ffzy5.tv/api.php/provide/vod",\n    "type": 0,\n    "searchable": 1,\n    "filterable": 1,\n    "playerType": 1,\n    "group": "stable"\n  }\n]'></textarea>
+            <textarea id="importTextarea" placeholder='[\n  {\n    "key": "feifan",\n    "name": "**资源",\n    "api": "http://***.tv/api.php/provide/vod",\n    "type": 0,\n    "searchable": 1,\n    "filterable": 1,\n    "playerType": 1,\n    "group": "stable"\n  }\n]'></textarea>
             <div class="source-count" id="importCount">当前源：0 个</div>
             <div class="actions">
                 <button class="btn-primary" onclick="importSources()">✅ 导入</button>
@@ -1289,15 +1289,9 @@
 
         function loadExample() {
             const example = [
-                { key: 'feifan', name: '非凡资源', api: 'http://ffzy5.tv/api.php/provide/vod', type: 0, searchable: 1,
+                { key: 'feifan', name: '**资源', api: 'http://***.tv/api.php/provide/vod', type: 0, searchable: 1,
                     filterable: 1, playerType: 1, group: 'stable' },
-                { key: 'wolong', name: '卧龙资源', api: 'https://wolongzyw.com/api.php/provide/vod', type: 0, searchable: 1,
-                    filterable: 1, playerType: 1, group: 'stable' },
-                { key: 'zuida', name: '最大资源', api: 'https://api.zuidapi.com/api.php/provide/vod', type: 0, searchable: 1,
-                    filterable: 1, playerType: 1, group: 'stable' },
-                { key: 'baiduyun', name: '百度云资源', api: 'https://api.apibdzy.com/api.php/provide/vod', type: 0,
-                    searchable: 1, filterable: 1, playerType: 1, group: 'stable' },
-                { key: 'baofeng', name: '暴风资源', api: 'https://bfzyapi.com/api.php/provide/vod', type: 0, searchable: 1,
+                { key: 'baofeng', name: '**资源', api: 'https://***.com/api.php/provide/vod', type: 0, searchable: 1,
                     filterable: 1, playerType: 1, group: 'stable' }
             ];
             dom.importTextarea.value = JSON.stringify(example, null, 2);
