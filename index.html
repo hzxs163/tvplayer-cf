@@ -897,7 +897,7 @@
         ========================================================== -->
         <div id="pageBrowse" class="page active">
             <div class="category-nav" id="categoryNav"></div>
-            <div class="browse-header">
+            <div class="browse-header" id="browseHeader">
                 <div class="title" id="browseTitle">热门推荐 <span class="badge" id="browseBadge"></span></div>
                 <div>
                     <span class="info" id="browseInfo"></span>
@@ -907,7 +907,7 @@
                 </div>
             </div>
             <div class="grid" id="browseGrid"></div>
-            <div class="pager">
+            <div class="pager" id="browsePager">
                 <button class="btn-ghost" onclick="pagePrev()">‹ 上一页</button>
                 <span id="pageInfo2">1</span>
                 <button class="btn-ghost" onclick="pageNext()">下一页 ›</button>
@@ -994,6 +994,8 @@
             browseInfo: $('browseInfo'),
             pageInfo: $('pageInfo'),
             pageInfo2: $('pageInfo2'),
+            browseHeader: $('browseHeader'),
+            browsePager: $('browsePager'),
 
             emptyState: $('emptyState'),
             searchGrid: $('searchGrid'),
@@ -1508,6 +1510,12 @@
             setStatus('加载播放地址…', true);
             toast('加载播放地址…', 'info');
 
+            // ---- 隐藏浏览内容，专注播放 ----
+            dom.browseGrid.style.display = 'none';
+            dom.categoryNav.style.display = 'none';
+            dom.browseHeader.style.display = 'none';
+            dom.browsePager.style.display = 'none';
+
             try {
                 const data = await fetchProxy(source.api + '?ac=detail&ids=' + vod.vod_id);
                 const detail = data.list?.[0] || vod;
@@ -1543,6 +1551,8 @@
                 if (!lines.length) {
                     toast('该源无可用播放地址', 'error');
                     setStatus('无播放地址');
+                    // 恢复浏览
+                    restoreBrowse();
                     return;
                 }
 
@@ -1572,7 +1582,17 @@
             } catch (e) {
                 toast('获取播放地址失败: ' + e.message, 'error');
                 setStatus('加载失败');
+                // 恢复浏览
+                restoreBrowse();
             }
+        }
+
+        // ---- 恢复浏览 ----
+        function restoreBrowse() {
+            dom.browseGrid.style.display = '';
+            dom.categoryNav.style.display = '';
+            dom.browseHeader.style.display = '';
+            dom.browsePager.style.display = '';
         }
 
         function parseEpisodes(url) {
@@ -1877,6 +1897,9 @@
 
             state.currentLines = [];
             state.currentEpisodes = [];
+
+            // ---- 恢复浏览内容 ----
+            restoreBrowse();
         }
 
         function copyLink() {
