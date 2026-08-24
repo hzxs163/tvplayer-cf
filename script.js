@@ -1062,7 +1062,7 @@ function renderPlayerLines(lines) {
 
     const defaultOpt = document.createElement('option');
     defaultOpt.value = '';
-    defaultOpt.textContent = '📡 换源';
+    defaultOpt.textContent = '📡换源';
     defaultOpt.disabled = true;
     defaultOpt.selected = true;  // ← 始终选中这个
     select.appendChild(defaultOpt);
