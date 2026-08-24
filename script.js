@@ -699,7 +699,7 @@ async function loadBrowse(source) {
     } catch (e) {
         dom.categoryNav.innerHTML = '';
     }
-    setStatus(source.name + ' · 就绪');
+    setStatus(· 就绪');
     state.isLoading = false;
 }
 
