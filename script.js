@@ -1319,7 +1319,9 @@ function startPlayerInIframe(url, title) {
 function closePlayer() {
     state.isPlaying = false;
     dom.playerSection.classList.remove('open');
+    dom.playerSection.style.display = 'none';
     dom.playerControls.classList.remove('open');
+    dom.playerControls.style.display = 'none';
     dom.episodesPanel.classList.remove('open');
 
     if (state.hlsInstance) {
