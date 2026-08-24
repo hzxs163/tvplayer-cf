@@ -185,7 +185,7 @@ function renderSourceList() {
 
     if (!sources.length) {
         container.innerHTML = '<div class="empty-hint">📭 暂无源，请导入</div>';
-        dom.importCount.textContent = '当前源：0 个';
+        dom.importCount.textContent = '0 个';
         return;
     }
 
@@ -195,29 +195,33 @@ function renderSourceList() {
         if (groups[g]) groups[g].push(s);
         else groups.normal.push(s);
     });
-    const labels = { stable: '🟢 稳定', normal: '🔵 普通', backup: '🟡 备用' };
+    const labels = { stable: '稳定', normal: '普通', backup: '备用' };
+    const dots = { stable: 'stable', normal: 'normal', backup: 'backup' };
 
     let html = '';
     Object.keys(groups).forEach(g => {
         if (!groups[g].length) return;
-        html += `<div class="group-label">${labels[g] || g}</div>`;
+        html += `<div class="group-label"><span class="dot ${dots[g] || 'normal'}"></span> ${labels[g] || g}</div>`;
         groups[g].forEach(s => {
             const isEditing = state.editingKey === s.key;
             const isHidden = s.enabled === false;
             html += `
-                        <div class="source-item" style="${isEditing ? 'background:var(--primary-dim);' : ''}">
-                            <span class="s-name">${esc(s.name)} <span class="s-key">(${esc(s.key)})</span>${isHidden ? ' 🔒' : ''}</span>
-                            <div class="s-actions">
-                                <button class="edit-btn btn-sm" onclick="editSource('${esc(s.key)}')">✏️</button>
-                                <button class="del-btn btn-sm" onclick="deleteSource('${esc(s.key)}')">🗑️</button>
-                            </div>
-                        </div>
-                    `;
+                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''}">
+                    <div class="s-info">
+                        <span class="s-name">${esc(s.name)}${isHidden ? ' 🔒' : ''}</span>
+                        <span class="s-key">${esc(s.key)}</span>
+                    </div>
+                    <div class="s-actions">
+                        <button class="edit-btn" onclick="editSource('${esc(s.key)}')">编辑</button>
+                        <button class="del-btn" onclick="deleteSource('${esc(s.key)}')">删除</button>
+                    </div>
+                </div>
+            `;
         });
     });
 
     container.innerHTML = html;
-    dom.importCount.textContent = `当前源：${sources.length} 个`;
+    dom.importCount.textContent = sources.length + ' 个';
 }
 
 // ============================================================
@@ -234,7 +238,8 @@ function editSource(key) {
     dom.importTextarea.value = JSON.stringify(item, null, 2);
     renderSourceList();
     dom.importTextarea.focus();
-    toast('已加载到编辑区，修改后点击「导入 / 更新」保存', 'info');
+    dom.importTextarea.scrollTop = 0;
+    toast('已加载到编辑区，修改后点击「导入」保存', 'info');
 }
 
 // ============================================================
@@ -265,6 +270,7 @@ function deleteSource(key) {
             loadBrowse(first);
         }
     }
+    closeImportModal();
     toast('✅ 已删除', 'success');
 }
 
@@ -318,7 +324,14 @@ function importSources() {
 
         state.sources = getStoredSources() || [];
         closeImportModal();
-        location.reload();
+        populateSelect();
+        const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
+        if (first) {
+            dom.sourceSelect.value = first.key;
+            loadBrowse(first);
+        } else {
+            renderEmptyState();
+        }
     } catch (e) {
         toast('JSON 格式错误: ' + e.message, 'error');
     }
@@ -343,7 +356,14 @@ function importFromFile(event) {
             state.sources = data;
             toast('✅ 导入成功，' + data.length + ' 个源', 'success');
             closeImportModal();
-            location.reload();
+            populateSelect();
+            const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
+            if (first) {
+                dom.sourceSelect.value = first.key;
+                loadBrowse(first);
+            } else {
+                renderEmptyState();
+            }
         } catch (err) {
             toast('文件解析失败: ' + err.message, 'error');
         }
@@ -364,7 +384,9 @@ function loadExample() {
     dom.importTextarea.value = JSON.stringify(example, null, 2);
     state.editingKey = null;
     renderSourceList();
-    toast('示例已填入，点击「导入 / 更新」即可', 'info');
+    dom.importTextarea.focus();
+    dom.importTextarea.scrollTop = 0;
+    toast('示例已填入，点击「导入」即可', 'info');
 }
 
 // ============================================================
@@ -818,6 +840,7 @@ async function doSearch() {
         state.sources.filter(s => s.key === sel.value);
     if (!targets.length) { toast('请选择有效源', 'error'); return; }
 
+    // 切换到搜索页
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     dom.pageSearch.classList.add('active');
 
