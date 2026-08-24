@@ -1144,7 +1144,7 @@ function renderEpisodesPanel(episodes) {
 }
 
 // ============================================================
-//  核心播放引擎（直链优先 + hls.js 备选）
+//  核心播放引擎（直连优先 → 失败走代理 → 最后 iframe）
 // ============================================================
 function startPlayer(url, title) {
     if (!url || !url.trim()) {
@@ -1194,32 +1194,88 @@ function startPlayer(url, title) {
 
     // ===== m3u8 播放 =====
     if (url.includes('.m3u8') || url.includes('.m3u8?')) {
-        // ===== 直链检测 =====
         const isDirectM3u8 = url.includes('.m3u8') && !url.includes('#') && url.startsWith('http');
 
         if (isDirectM3u8) {
-            // 先展开播放器
             showPlayer();
-            // 直接用 video 标签播放
+            dom.playerLoading.classList.remove('hidden');
+            dom.playerLoading.classList.add('show');
+
+            let fallbackTimer = null;
+            let isFallbackUsed = false;
+
+            const cleanup = function() {
+                if (fallbackTimer) {
+                    clearTimeout(fallbackTimer);
+                    fallbackTimer = null;
+                }
+                video.removeEventListener('canplay', onSuccess);
+                video.removeEventListener('loadedmetadata', onSuccess);
+                video.removeEventListener('error', onError);
+            };
+
+            const onSuccess = function() {
+                if (isFallbackUsed) return;
+                cleanup();
+                dom.playerLoading.classList.add('hidden');
+                setTimeout(function() {
+                    dom.playerLoading.classList.remove('show');
+                }, 400);
+                video.play().catch(function() {});
+                dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                console.log('✅ 直连播放成功');
+            };
+
+            const onError = function() {
+                if (isFallbackUsed) return;
+                isFallbackUsed = true;
+                cleanup();
+                console.warn('⚠️ 直连失败，切换到代理模式');
+                dom.playerLoading.classList.remove('hidden');
+                dom.playerLoading.classList.add('show');
+                startPlayerWithProxy(url, title);
+            };
+
+            video.addEventListener('canplay', onSuccess, { once: true });
+            video.addEventListener('loadedmetadata', onSuccess, { once: true });
+            video.addEventListener('error', onError, { once: true });
+
+            // 4秒超时切代理
+            fallbackTimer = setTimeout(function() {
+                if (isFallbackUsed) return;
+                isFallbackUsed = true;
+                cleanup();
+                console.warn('⏱️ 直连超时，切换到代理模式');
+                dom.playerLoading.classList.remove('hidden');
+                dom.playerLoading.classList.add('show');
+                startPlayerWithProxy(url, title);
+            }, 4000);
+
+            // 开始直连
             video.src = url;
-            video.play().catch(() => {});
+            video.load();
+            video.play().catch(function() {});
             dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             return;
         }
 
-        // 其他情况使用 hls.js
+        // 非直连 m3u8（带参数等），直接用 hls.js
         if (window.Hls && Hls.isSupported()) {
             const hls = new Hls({ enableWorker: true });
             state.hlsInstance = hls;
             hls.loadSource(url);
             hls.attachMedia(video);
 
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
                 video.style.minHeight = '';
-                video.play().catch(() => {});
+                dom.playerLoading.classList.add('hidden');
+                setTimeout(function() {
+                    dom.playerLoading.classList.remove('show');
+                }, 400);
+                video.play().catch(function() {});
             });
 
-            hls.on(Hls.Events.ERROR, (e, data) => {
+            hls.on(Hls.Events.ERROR, function(e, data) {
                 video.style.minHeight = '';
                 if (data.fatal) {
                     toast('HLS 播放失败，尝试嵌入', 'error');
@@ -1228,7 +1284,7 @@ function startPlayer(url, title) {
             });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = url;
-            video.play().catch(() => {});
+            video.play().catch(function() {});
         } else {
             startPlayerInIframe(url, title);
         }
@@ -1238,10 +1294,64 @@ function startPlayer(url, title) {
 
     // ===== 普通视频直链 =====
     video.src = url;
-    video.play().catch(() => {
+    video.play().catch(function() {
         toast('无法直接播放，尝试嵌入', 'error');
         startPlayerInIframe(url, title);
     });
+}
+
+// ============================================================
+//  代理播放（备用）
+// ============================================================
+function startPlayerWithProxy(url, title) {
+    const video = dom.player;
+
+    if (window.Hls && Hls.isSupported()) {
+        const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
+
+        fetch(proxyUrl)
+            .then(function(r) {
+                if (!r.ok) throw new Error('代理请求失败: ' + r.status);
+                return r.text();
+            })
+            .then(function(m3u8Content) {
+                const blob = new Blob([m3u8Content], { type: 'application/vnd.apple.mpegurl' });
+                const blobUrl = URL.createObjectURL(blob);
+
+                const hls = new Hls({ enableWorker: true });
+                state.hlsInstance = hls;
+                hls.loadSource(blobUrl);
+                hls.attachMedia(video);
+
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    dom.playerLoading.classList.add('hidden');
+                    setTimeout(function() {
+                        dom.playerLoading.classList.remove('show');
+                    }, 400);
+                    video.play().catch(function() {});
+                    console.log('✅ 代理播放成功');
+                });
+
+                hls.on(Hls.Events.ERROR, function(e, data) {
+                    dom.playerLoading.classList.add('hidden');
+                    if (data.fatal) {
+                        toast('HLS 播放失败，尝试嵌入', 'error');
+                        startPlayerInIframe(url, title);
+                    }
+                });
+            })
+            .catch(function(e) {
+                console.error('代理加载失败:', e);
+                dom.playerLoading.classList.add('hidden');
+                toast('播放失败: ' + e.message, 'error');
+                startPlayerInIframe(url, title);
+            });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = url;
+        video.play().catch(function() {});
+    } else {
+        startPlayerInIframe(url, title);
+    }
 }
 
 // ============================================================
