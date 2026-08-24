@@ -1344,7 +1344,28 @@ function closePlayer() {
     hidePlayerLoading();
     restoreAllContent();
 }
-
+// ============================================================
+//  复制链接
+// ============================================================
+function copyLink() {
+    const input = dom.m3u8Link;
+    if (!input || !input.value) {
+        toast('没有可复制的链接', 'error');
+        return;
+    }
+    input.select();
+    input.setSelectionRange(0, input.value.length);
+    try {
+        navigator.clipboard.writeText(input.value).then(() => {
+            toast('✅ 已复制到剪贴板', 'success');
+        }).catch(() => {
+            document.execCommand('copy');
+            toast('✅ 已复制', 'success');
+        });
+    } catch (e) {
+        toast('请手动复制：' + input.value, 'info');
+    }
+}
 // ============================================================
 //  KEYBOARD
 // ============================================================
