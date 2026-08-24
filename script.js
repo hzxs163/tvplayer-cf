@@ -1197,6 +1197,19 @@ function startPlayer(url, title) {
         const isDirectM3u8 = url.includes('.m3u8') && !url.includes('#') && url.startsWith('http');
 
         if (isDirectM3u8) {
+            // ============================================
+            // 虎牙资源直接走代理，跳过直连
+            // ============================================
+            if (url.includes('huyall.com') || url.includes('baisiweiting.com')) {
+                console.log('🔵 虎牙资源，直接走代理');
+                showPlayer();
+                dom.playerLoading.classList.remove('hidden');
+                dom.playerLoading.classList.add('show');
+                startPlayerWithProxy(url, title);
+                return;
+            }
+            // ============================================
+
             showPlayer();
             dom.playerLoading.classList.remove('hidden');
             dom.playerLoading.classList.add('show');
@@ -1240,7 +1253,7 @@ function startPlayer(url, title) {
             video.addEventListener('loadedmetadata', onSuccess, { once: true });
             video.addEventListener('error', onError, { once: true });
 
-            // 4秒超时切代理
+            // 9秒超时切代理
             fallbackTimer = setTimeout(function() {
                 if (isFallbackUsed) return;
                 isFallbackUsed = true;
