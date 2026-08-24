@@ -608,7 +608,7 @@ async function init() {
         statusClickTimer = setTimeout(() => {
             if (statusClickCount >= 8) {
                 toggleShowHiddenSources();
-                toast(showHiddenSources ? '🔓 已显示隐藏源' : '🔒 已隐藏隐藏源', 'info');
+                toast(showHiddenSources ? '🔓 已显示特殊源' : '🔒 已隐藏特殊源', 'info');
             }
             statusClickCount = 0;
         }, 500);
