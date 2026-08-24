@@ -270,7 +270,6 @@ function deleteSource(key) {
             loadBrowse(first);
         }
     }
-    closeImportModal();
     toast('✅ 已删除', 'success');
 }
 
@@ -455,12 +454,12 @@ function renderEmptyState() {
     const grid = dom.browseGrid;
     grid.innerHTML = `
                 <div class="empty-grid" style="grid-column:1/-1;padding:80px 20px;text-align:center;">
-                    <div style="font-size:56px;margin-bottom:16px;">📥</div>
-                    <div style="font-size:20px;font-weight:700;margin-bottom:8px;color:var(--text);">还没有影视源</div>
-                    <div style="color:var(--text2);margin-bottom:16px;font-size:15px;">点击右上角「📥」按钮，导入你的源列表</div>
-                    <button class="btn-primary" onclick="showImportModal()" style="font-size:15px;padding:8px 24px;">📥 导入源</button>
+                    <div style="font-size:56px;margin-bottom:16px;">📜</div>
+                    <div style="font-size:20px;font-weight:700;margin-bottom:8px;color:var(--text);">藏源阁尚空</div>
+                    <div style="color:var(--text2);margin-bottom:16px;font-size:15px;">点击右上角「📜」按钮，录入你的源列表</div>
+                    <button class="btn-primary" onclick="showImportModal()" style="font-size:15px;padding:8px 24px;">📜 录入源</button>
                     <div style="margin-top:12px;font-size:13px;color:var(--text3);">
-                        或 <a onclick="loadExample()" style="color:var(--primary);cursor:pointer;">加载示例源</a> 快速体验
+                        或 <a onclick="loadExample()" style="color:var(--primary);cursor:pointer;">批阅示例</a> 快速体验
                     </div>
                 </div>
             `;
@@ -699,7 +698,7 @@ async function loadBrowse(source) {
     } catch (e) {
         dom.categoryNav.innerHTML = '';
     }
-    setStatus(· 就绪');
+    setStatus('就绪');
     state.isLoading = false;
 }
 
