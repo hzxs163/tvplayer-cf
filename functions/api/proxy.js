@@ -103,21 +103,27 @@ export async function onRequest(context) {
   // ============================================================
   // 端口限制 - 已放开所有端口
   // ============================================================
-  // 仅屏蔽极少数高危端口，其他全部放行
   const port = targetUrl.port || (targetUrl.protocol === 'https:' ? '443' : '80');
   const blockedPorts = ['25', '465', '587', '3389', '5900'];
   if (blockedPorts.includes(port)) {
     return jsonResponse({ code: 403, msg: '端口 ' + port + ' 被禁止' }, 403);
   }
-  // 其他端口全部放行
   // ============================================================
 
   try {
+    const hostname = targetUrl.hostname;
+
     // ============================================================
-    // 完全模拟浏览器请求
+    // 动态 User-Agent：极速源用移动端，其他用桌面端
     // ============================================================
+    let userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+    if (hostname.includes('jisuzyv.com') || hostname.includes('jisuts.com')) {
+      userAgent = 'Mozilla/5.0 (Linux; Android 10; SM-G960F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36';
+    }
+    // ============================================================
+
     const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+      'User-Agent': userAgent,
       'Accept': '*/*',
       'Accept-Encoding': 'gzip, deflate, br',
       'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
@@ -130,7 +136,6 @@ export async function onRequest(context) {
     };
 
     // 动态设置 Referer 和 Origin
-    const hostname = targetUrl.hostname;
     if (hostname.includes('huyall.com') || hostname.includes('baisiweiting.com')) {
       headers['Referer'] = 'https://1080p.huyall.com/';
       headers['Origin'] = 'https://1080p.huyall.com';
@@ -141,12 +146,11 @@ export async function onRequest(context) {
       headers['Referer'] = 'https://ffzy5.tv/';
       headers['Origin'] = 'https://ffzy5.tv';
     } else {
-      // 默认使用目标网站的 origin
       headers['Referer'] = targetUrl.origin + '/';
       headers['Origin'] = targetUrl.origin;
     }
 
-    // 如果请求的是 m3u8 或 ts 分片，带上额外的头
+    // 如果请求的是 m3u8 或 ts 分片，带上额外的 Accept 头
     if (target.includes('.m3u8') || target.includes('.ts')) {
       headers['Accept'] = 'application/vnd.apple.mpegurl, video/mp2t, */*;q=0.9';
     }
@@ -155,10 +159,10 @@ export async function onRequest(context) {
       headers: headers,
     });
 
-    // 获取响应数据
+    // 获取响应数据（二进制透传）
     const data = await resp.arrayBuffer();
 
-    // 构建响应头，透传服务器返回的头
+    // 构建响应头
     const responseHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
