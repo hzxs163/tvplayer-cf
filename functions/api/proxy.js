@@ -114,46 +114,64 @@ export async function onRequest(context) {
     const hostname = targetUrl.hostname;
 
     // ============================================================
-    // 动态 User-Agent：极速源用移动端，其他用桌面端
+    // 根据域名构建不同的请求头
     // ============================================================
-    let userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+    let headers;
+
     if (hostname.includes('jisuzyv.com') || hostname.includes('jisuts.com')) {
-      userAgent = 'Mozilla/5.0 (Linux; Android 10; SM-G960F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36';
+      // ==========================================================
+      // 极速源：完全模拟移动端浏览器（不带 Sec-* 头）
+      // ==========================================================
+      headers = {
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Mobile Safari/537.36 EdgA/146.0.0.0',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Upgrade-Insecure-Requests': '1',
+        'Referer': 'https://vv.jisuzyv.com/',
+        'Origin': 'https://vv.jisuzyv.com',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Connection': 'keep-alive',
+      };
+      // 注意：不包含 Sec-Ch-Ua、Sec-Fetch-* 等头
+      // ==========================================================
+
+    } else {
+      // ==========================================================
+      // 其他源：桌面端完整请求头
+      // ==========================================================
+      headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+        'Accept': '*/*',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        'Connection': 'keep-alive',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'cross-site',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      };
+
+      // 动态设置 Referer
+      if (hostname.includes('huyall.com') || hostname.includes('baisiweiting.com')) {
+        headers['Referer'] = 'https://1080p.huyall.com/';
+        headers['Origin'] = 'https://1080p.huyall.com';
+      } else if (hostname.includes('ffzy')) {
+        headers['Referer'] = 'https://ffzy5.tv/';
+        headers['Origin'] = 'https://ffzy5.tv';
+      } else {
+        headers['Referer'] = targetUrl.origin + '/';
+        headers['Origin'] = targetUrl.origin;
+      }
+
+      // 如果请求的是 m3u8 或 ts 分片，带上额外的 Accept 头
+      if (target.includes('.m3u8') || target.includes('.ts')) {
+        headers['Accept'] = 'application/vnd.apple.mpegurl, video/mp2t, */*;q=0.9';
+      }
     }
     // ============================================================
-
-    const headers = {
-      'User-Agent': userAgent,
-      'Accept': '*/*',
-      'Accept-Encoding': 'gzip, deflate, br',
-      'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-      'Connection': 'keep-alive',
-      'Sec-Fetch-Dest': 'empty',
-      'Sec-Fetch-Mode': 'cors',
-      'Sec-Fetch-Site': 'cross-site',
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache',
-    };
-
-    // 动态设置 Referer 和 Origin
-    if (hostname.includes('huyall.com') || hostname.includes('baisiweiting.com')) {
-      headers['Referer'] = 'https://1080p.huyall.com/';
-      headers['Origin'] = 'https://1080p.huyall.com';
-    } else if (hostname.includes('jisuzyv.com') || hostname.includes('jisuts.com')) {
-      headers['Referer'] = 'https://vv.jisuzyv.com/';
-      headers['Origin'] = 'https://vv.jisuzyv.com';
-    } else if (hostname.includes('ffzy')) {
-      headers['Referer'] = 'https://ffzy5.tv/';
-      headers['Origin'] = 'https://ffzy5.tv';
-    } else {
-      headers['Referer'] = targetUrl.origin + '/';
-      headers['Origin'] = targetUrl.origin;
-    }
-
-    // 如果请求的是 m3u8 或 ts 分片，带上额外的 Accept 头
-    if (target.includes('.m3u8') || target.includes('.ts')) {
-      headers['Accept'] = 'application/vnd.apple.mpegurl, video/mp2t, */*;q=0.9';
-    }
 
     const resp = await fetch(target, {
       headers: headers,
