@@ -1058,20 +1058,19 @@ function showPlayer() {
 function renderPlayerLines(lines) {
     const select = dom.lineSelect;
     select.innerHTML = '';
-    select.style.display = lines.length > 1 ? 'block' : 'none';
+    select.style.display = lines.length > 1 ? 'block' : 'block';
 
-    // 添加默认选项
     const defaultOpt = document.createElement('option');
     defaultOpt.value = '';
     defaultOpt.textContent = '📡 换源';
     defaultOpt.disabled = true;
+    defaultOpt.selected = true;  // ← 始终选中这个
     select.appendChild(defaultOpt);
 
     lines.forEach((l, i) => {
         const opt = document.createElement('option');
         opt.value = i;
         opt.textContent = l.name;
-        if (i === state.currentLineIndex) opt.selected = true;
         select.appendChild(opt);
     });
 }
