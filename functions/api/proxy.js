@@ -114,13 +114,21 @@ export async function onRequest(context) {
     const hostname = targetUrl.hostname;
 
     // ============================================================
-    // 根据域名构建不同的请求头
+    // 需要移动端伪装的域名列表
     // ============================================================
-    let headers;
+    const mobileDomains = [
+      'jisuzyv.com', 'jisuts.com',
+      'huyall.com', 'baisiweiting.com',
+      'gs.gszyi.com', 'gszyi.com',
+      'v.gsuus.com'
+    ];
 
-    if (hostname.includes('jisuzyv.com') || hostname.includes('jisuts.com')) {
+    const isMobileDomain = mobileDomains.some(domain => hostname.includes(domain));
+    // ============================================================
+
+    if (isMobileDomain) {
       // ==========================================================
-      // 极速源：完全模拟移动端浏览器（不带 Sec-* 头）
+      // 移动端伪装：完全模拟移动端浏览器（不带 Sec-* 头）
       // ==========================================================
       headers = {
         'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Mobile Safari/537.36 EdgA/146.0.0.0',
@@ -128,13 +136,29 @@ export async function onRequest(context) {
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
         'Upgrade-Insecure-Requests': '1',
-        'Referer': 'https://vv.jisuzyv.com/',
-        'Origin': 'https://vv.jisuzyv.com',
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
         'Connection': 'keep-alive',
       };
       // 注意：不包含 Sec-Ch-Ua、Sec-Fetch-* 等头
+
+      // 动态设置 Referer
+      if (hostname.includes('huyall.com') || hostname.includes('baisiweiting.com')) {
+        headers['Referer'] = 'https://1080p.huyall.com/';
+        headers['Origin'] = 'https://1080p.huyall.com';
+      } else if (hostname.includes('v.gsuus.com')) {
+        headers['Referer'] = 'https://v.gsuus.com/';
+        headers['Origin'] = 'https://v.gsuus.com';
+      } else if (hostname.includes('jisuzyv.com') || hostname.includes('jisuts.com')) {
+        headers['Referer'] = 'https://vv.jisuzyv.com/';
+        headers['Origin'] = 'https://vv.jisuzyv.com';
+      } else if (hostname.includes('gs.gszyi.com') || hostname.includes('gszyi.com')) {
+        headers['Referer'] = 'https://gs.gszyi.com/';
+        headers['Origin'] = 'https://gs.gszyi.com';
+      } else {
+        headers['Referer'] = targetUrl.origin + '/';
+        headers['Origin'] = targetUrl.origin;
+      }
       // ==========================================================
 
     } else {
