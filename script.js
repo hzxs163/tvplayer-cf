@@ -1249,7 +1249,7 @@ function startPlayer(url, title) {
                 dom.playerLoading.classList.remove('hidden');
                 dom.playerLoading.classList.add('show');
                 startPlayerWithProxy(url, title);
-            }, 4000);
+            }, 9000);
 
             // 开始直连
             video.src = url;
