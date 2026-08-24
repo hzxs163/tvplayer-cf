@@ -1129,7 +1129,7 @@ function renderEpisodesPanel(episodes) {
 }
 
 // ============================================================
-//  核心播放引擎（方案一优化版：防塌陷）
+//  核心播放引擎（直链优先 + hls.js 备选）
 // ============================================================
 function startPlayer(url, title) {
     if (!url || !url.trim()) {
@@ -1179,7 +1179,20 @@ function startPlayer(url, title) {
         return;
     }
 
+    // ===== m3u8 播放 =====
     if (url.includes('.m3u8') || url.includes('.m3u8?')) {
+        // 【新增】检测是否是纯直链 m3u8（没有 # 分隔符）
+        const isDirectM3u8 = !url.includes('#') && url.trim().startsWith('http');
+
+        // 【新增】如果是直链且浏览器支持直接播放 m3u8，直接用 video 标签
+        if (isDirectM3u8 && video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+            video.play().catch(() => {});
+            dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+        }
+
+        // 其他情况使用 hls.js
         if (window.Hls && Hls.isSupported()) {
             const hls = new Hls({ enableWorker: true });
             state.hlsInstance = hls;
@@ -1205,9 +1218,11 @@ function startPlayer(url, title) {
         } else {
             startPlayerInIframe(url, title);
         }
+        dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
     }
 
+    // ===== 普通视频直链 =====
     video.src = url;
     video.play().catch(() => {
         toast('无法直接播放，尝试嵌入', 'error');
