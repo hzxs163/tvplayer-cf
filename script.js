@@ -999,6 +999,23 @@ async function playMovie(vod, source) {
         const firstUrl = lines[0].url;
         const episodes = parseEpisodes(firstUrl);
 
+        // ============================================
+        // 虎牙资源特殊处理：直接走代理播放
+        // ============================================
+        if (firstUrl.includes('huyall.com') || firstUrl.includes('baisiweiting.com')) {
+            console.log('🔵 检测到虎牙资源，使用专用播放逻辑');
+            const fullUrl = normalizeUrl(firstUrl);
+            // 直接调用 startPlayerWithProxy，跳过直连
+            showPlayer();
+            dom.playerLoading.classList.remove('hidden');
+            dom.playerLoading.classList.add('show');
+            startPlayerWithProxy(fullUrl, vod.vod_name);
+            renderEpisodesPanel(episodes);
+            setStatus('播放中');
+            return;
+        }
+        // ============================================
+
         if (episodes.length) {
             state.currentEpisodes = episodes;
             const firstEp = episodes[0];
