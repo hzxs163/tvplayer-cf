@@ -115,15 +115,13 @@
         <!-- 导入区域 -->
         <div class="import-section">
             <div class="section-label">📄 导入 JSON</div>
-            <textarea id="importTextarea" placeholder='请粘贴 JSON 格式的源列表，点击下方「加载示例」查看格式'></textarea>
+            <textarea id="importTextarea" placeholder='请粘贴 JSON 格式的源列表，点击「加载示例」查看格式'></textarea>
             <div class="import-actions">
+                <button class="btn btn-ghost" onclick="loadExample()" style="font-size:12px;">💡 加载示例</button>
                 <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">📂 选择文件</button>
                 <button class="btn btn-primary" onclick="importSources()">📤 导入</button>
                 <button class="btn btn-cancel" onclick="closeImportModal()">取消</button>
                 <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importFromFile(event)" />
-            </div>
-            <div class="hint">
-                💡 <a onclick="loadExample()">加载示例</a>
             </div>
         </div>
 
