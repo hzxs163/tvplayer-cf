@@ -334,6 +334,7 @@ main {
 
 /* ===== 播放器控制栏 ===== */
 /* ===== 播放器控制栏 ===== */
+/* ===== 播放器控制栏 ===== */
 .player-controls {
     display: flex;
     flex-wrap: wrap;
@@ -357,23 +358,25 @@ main {
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--text);
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 500;
 }
 .player-controls select#lineSelect {
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 12px;
+    padding: 4px 8px;
+    font-size: 13px;
     color: var(--text);
     max-width: 100px;
     cursor: pointer;
+    height: 32px;
 }
 .player-controls select#lineSelect option {
     background: var(--bg2);
 }
 .player-controls .ctrl-btn {
-    padding: 4px 10px;
+    padding: 4px 12px;
     font-size: 13px;
     font-weight: 500;
     color: var(--text2);
@@ -384,6 +387,10 @@ main {
     border: 1px solid var(--border);
     cursor: pointer;
     white-space: nowrap;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .player-controls .ctrl-btn:hover {
     color: var(--text);
@@ -395,6 +402,8 @@ main {
     background: none;
     font-size: 18px;
     padding: 2px 6px;
+    height: 32px;
+    width: 32px;
 }
 .player-controls .ctrl-btn.close-btn:hover {
     color: #c0392b;
@@ -415,15 +424,16 @@ main {
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 4px 8px;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text3);
+    height: 32px;
 }
 .player-controls .link-input:focus {
     border-color: var(--primary);
 }
 .player-controls .btn-copy {
-    padding: 4px 12px;
-    font-size: 12px;
+    padding: 4px 14px;
+    font-size: 13px;
     border-radius: 4px;
     background: var(--primary);
     color: #fff;
@@ -432,6 +442,10 @@ main {
     white-space: nowrap;
     transition: 0.2s;
     flex-shrink: 0;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .player-controls .btn-copy:hover {
     opacity: 0.85;
