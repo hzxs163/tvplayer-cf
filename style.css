@@ -333,10 +333,8 @@ main {
 }
 
 /* ===== 播放器控制栏 ===== */
-/* ===== 播放器控制栏 ===== */
-/* ===== 播放器控制栏 ===== */
 .player-controls {
-    display: flex;
+    display: none !important;
     flex-wrap: wrap;
     align-items: center;
     gap: 6px 12px;
@@ -349,7 +347,7 @@ main {
     color: var(--text2);
 }
 .player-controls.open {
-    display: flex;
+    display: flex !important;
 }
 .player-controls .title {
     flex: 1;
