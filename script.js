@@ -267,7 +267,6 @@ function deleteSource(key) {
         const first = filtered.find(s => s.group === 'stable') || filtered[0];
         if (first) {
             dom.sourceSelect.value = first.key;
-            // loadBrowse(first);  // ← 删掉这行
         }
     }
     toast('✅ 已删除', 'success');
@@ -1055,7 +1054,13 @@ function normalizeUrl(url) {
 function showPlayer() {
     state.isPlaying = true;
     dom.playerSection.classList.add('open');
+    dom.playerSection.style.display = 'block';
+    dom.playerSection.style.minHeight = '300px';
     dom.playerControls.classList.add('open');
+    dom.playerControls.style.display = 'flex';
+    dom.player.style.display = 'block';
+    dom.player.style.opacity = '1';
+    dom.player.style.visibility = 'visible';
     dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -1068,7 +1073,7 @@ function renderPlayerLines(lines) {
     defaultOpt.value = '';
     defaultOpt.textContent = '📡换源';
     defaultOpt.disabled = true;
-    defaultOpt.selected = true;  // ← 始终选中这个
+    defaultOpt.selected = true;
     select.appendChild(defaultOpt);
 
     lines.forEach((l, i) => {
@@ -1193,12 +1198,9 @@ function startPlayer(url, title) {
         const isDirectM3u8 = url.includes('.m3u8') && !url.includes('#') && url.startsWith('http');
 
         if (isDirectM3u8) {
+            // 先展开播放器
+            showPlayer();
             // 直接用 video 标签播放
-            video.style.display = 'block';
-            video.style.minHeight = '300px';
-            dom.playerSection.style.display = 'block';
-            dom.playerSection.style.minHeight = '300px';
-            dom.playerControls.style.display = 'flex';
             video.src = url;
             video.play().catch(() => {});
             dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1350,6 +1352,7 @@ function closePlayer() {
     hidePlayerLoading();
     restoreAllContent();
 }
+
 // ============================================================
 //  复制链接
 // ============================================================
@@ -1372,6 +1375,7 @@ function copyLink() {
         toast('请手动复制：' + input.value, 'info');
     }
 }
+
 // ============================================================
 //  KEYBOARD
 // ============================================================
