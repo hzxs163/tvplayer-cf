@@ -270,7 +270,7 @@ function deleteSource(key) {
             loadBrowse(first);
         }
     }
-    // closeImportModal();
+    closeImportModal();
     toast('✅ 已删除', 'success');
 }
 
