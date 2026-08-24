@@ -100,35 +100,46 @@
 
     </main>
 
-    <!-- ============================================================
-    导入弹窗（含已有源列表）
+<!-- ============================================================
+    导入弹窗（美化版）
     ============================================================ -->
-    <div id="importModal">
-        <div class="import-box">
-            <h3>📥 源管理</h3>
-            <div class="sub">粘贴 JSON 格式的源列表导入，或管理已有源</div>
+<div id="importModal">
+    <div class="import-box">
+        <!-- 标题栏 -->
+        <div class="modal-header">
+            <h3>✦ 源管理</h3>
+            <button class="close-modal" onclick="closeImportModal()">✕</button>
+        </div>
+        <div class="sub">管理你的影视源列表 · 支持 JSON 导入与在线编辑</div>
 
-            <!-- 已有源列表 -->
-            <div class="source-list" id="sourceList"></div>
+        <!-- 导入区域 -->
+        <div class="import-section">
+            <div class="section-label">📄 导入 JSON</div>
+            <textarea id="importTextarea" placeholder='[\n  {\n    "key": "唯一ID",\n    "name": "显示名称",\n    "api": "接口地址",\n    "type": 0,\n    "searchable": 1,\n    "filterable": 1,\n    "playerType": 1,\n    "group": "stable"\n  }\n]'></textarea>
+            <div class="import-actions">
+                <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">📂 选择文件</button>
+                <button class="btn btn-primary" onclick="importSources()">📤 导入</button>
+                <button class="btn btn-cancel" onclick="closeImportModal()">取消</button>
+                <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importFromFile(event)" />
+            </div>
+            <div class="hint">
+                💡 <a onclick="loadExample()">加载示例</a> ｜
+                📖 格式：<code>[{"key":"唯一ID","name":"显示名称","api":"接口地址","group":"stable|normal|backup"}]</code>
+            </div>
+        </div>
 
-            <!-- 导入区域 -->
-            <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
-                <div style="font-size:13px;color:var(--text2);margin-bottom:6px;">📝 导入 / 编辑源（JSON 格式）</div>
-                <textarea id="importTextarea" placeholder='[\n  {\n    "key": "唯一ID",\n    "name": "显示名称",\n    "api": "接口地址",\n    "type": 0,\n    "searchable": 1,\n    "filterable": 1,\n    "playerType": 1,\n    "group": "stable"\n  }\n]'></textarea>
-                <div class="source-count" id="importCount">当前源：0 个</div>
-                <div class="actions">
-                    <button class="btn-primary" onclick="importSources()">✅ 导入 / 更新</button>
-                    <button class="btn-ghost" onclick="document.getElementById('fileInput').click()">📂 上传 JSON 文件</button>
-                    <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importFromFile(event)" />
-                    <button class="btn-ghost" onclick="closeImportModal()" style="margin-left:auto;">关闭</button>
-                </div>
-                <div class="hint">
-                    💡 <a onclick="loadExample()">加载示例</a> ｜
-                    📖 格式：<code>[{"key":"唯一ID","name":"显示名称","api":"接口地址","group":"stable|normal|backup"}]</code>
-                </div>
+        <!-- 已有源列表 -->
+        <div class="source-section">
+            <div class="source-header">
+                <span class="label">📋 已有源列表</span>
+                <span class="count" id="importCount">0 个</span>
+            </div>
+            <div class="source-list" id="sourceList">
+                <div class="empty-hint">📭 暂无源，请导入</div>
             </div>
         </div>
     </div>
+</div>
 
     <!-- ===== Footer ===== -->
     <footer>
