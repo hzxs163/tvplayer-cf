@@ -1303,11 +1303,11 @@ function startPlayer(url, title) {
 // ============================================================
 //  代理播放（备用）- 隐藏加载过程，避免缩小画面闪烁
 // ============================================================
+// ============================================================
+//  代理播放（备用）
+// ============================================================
 function startPlayerWithProxy(url, title) {
     const video = dom.player;
-    
-    // 先隐藏视频，避免加载过程中显示被缩小的画面
-    video.style.opacity = '0';
 
     if (window.Hls && Hls.isSupported()) {
         const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
@@ -1327,12 +1327,6 @@ function startPlayerWithProxy(url, title) {
                 hls.attachMedia(video);
 
                 hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    // 加载完成，恢复显示
-                    video.style.opacity = '1';
-                    video.style.width = '100%';
-                    video.style.height = '100%';
-                    video.style.minHeight = '';
-                    
                     dom.playerLoading.classList.add('hidden');
                     setTimeout(function() {
                         dom.playerLoading.classList.remove('show');
@@ -1342,8 +1336,6 @@ function startPlayerWithProxy(url, title) {
                 });
 
                 hls.on(Hls.Events.ERROR, function(e, data) {
-                    // 出错也恢复显示，避免一直黑屏
-                    video.style.opacity = '1';
                     dom.playerLoading.classList.add('hidden');
                     if (data.fatal) {
                         toast('HLS 播放失败，尝试嵌入', 'error');
@@ -1353,17 +1345,14 @@ function startPlayerWithProxy(url, title) {
             })
             .catch(function(e) {
                 console.error('代理加载失败:', e);
-                video.style.opacity = '1';
                 dom.playerLoading.classList.add('hidden');
                 toast('播放失败: ' + e.message, 'error');
                 startPlayerInIframe(url, title);
             });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.style.opacity = '1';
         video.src = url;
         video.play().catch(function() {});
     } else {
-        video.style.opacity = '1';
         startPlayerInIframe(url, title);
     }
 }
