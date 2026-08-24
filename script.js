@@ -1060,6 +1060,13 @@ function renderPlayerLines(lines) {
     select.innerHTML = '';
     select.style.display = lines.length > 1 ? 'block' : 'none';
 
+    // 添加默认选项
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = '📡 换源';
+    defaultOpt.disabled = true;
+    select.appendChild(defaultOpt);
+
     lines.forEach((l, i) => {
         const opt = document.createElement('option');
         opt.value = i;
