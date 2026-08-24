@@ -333,8 +333,9 @@ main {
 }
 
 /* ===== 播放器控制栏 ===== */
+/* ===== 播放器控制栏 ===== */
 .player-controls {
-    display: none;
+    display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 6px 12px;
@@ -366,39 +367,74 @@ main {
     font-size: 12px;
     color: var(--text);
     max-width: 100px;
-    display: none;
     cursor: pointer;
 }
 .player-controls select#lineSelect option {
     background: var(--bg2);
 }
 .player-controls .ctrl-btn {
-    padding: 2px 6px;
-    font-size: 18px;
-    color: var(--text3);
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
     border-radius: 4px;
     transition: 0.2s;
     line-height: 1.4;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    white-space: nowrap;
 }
 .player-controls .ctrl-btn:hover {
     color: var(--text);
     background: var(--card-hover);
 }
+.player-controls .ctrl-btn.close-btn {
+    color: var(--text3);
+    border: none;
+    background: none;
+    font-size: 18px;
+    padding: 2px 6px;
+}
 .player-controls .ctrl-btn.close-btn:hover {
     color: #c0392b;
+    background: none;
+}
+.player-controls .link-row {
+    display: flex;
+    flex: 1 1 100%;
+    gap: 6px;
+    align-items: center;
+    width: 100%;
+    margin-top: 2px;
 }
 .player-controls .link-input {
     flex: 1;
-    min-width: 100px;
+    min-width: 60px;
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 4px;
-    padding: 2px 8px;
+    padding: 4px 8px;
     font-size: 12px;
     color: var(--text3);
 }
 .player-controls .link-input:focus {
     border-color: var(--primary);
+}
+.player-controls .btn-copy {
+    padding: 4px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: 0.2s;
+    flex-shrink: 0;
+}
+.player-controls .btn-copy:hover {
+    opacity: 0.85;
 }
 
 /* ===== 选集面板 ===== */
@@ -1037,12 +1073,46 @@ footer span {
     .player-controls {
         font-size: 12px;
         padding: 6px 10px;
-        gap: 4px 8px;
+        gap: 4px 6px;
+    }
+    .player-controls .title {
+        font-size: 12px;
+        min-width: 50px;
+        max-width: 100px;
+        flex: 0 1 auto;
     }
     .player-controls select#lineSelect {
         max-width: 70px;
         font-size: 11px;
+        padding: 2px 4px;
+        flex-shrink: 0;
     }
+    .player-controls .ctrl-btn {
+        font-size: 12px;
+        padding: 3px 8px;
+        flex-shrink: 0;
+    }
+    .player-controls .ctrl-btn.close-btn {
+        font-size: 16px;
+        padding: 2px 4px;
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+    .player-controls .link-row {
+        flex: 1 1 100%;
+        width: 100%;
+        gap: 4px;
+    }
+    .player-controls .link-input {
+        font-size: 11px;
+        padding: 3px 6px;
+        min-width: 40px;
+    }
+    .player-controls .btn-copy {
+        font-size: 11px;
+        padding: 3px 10px;
+    }
+
     #player-section {
         aspect-ratio: 16 / 9;
         max-height: 50vh;
