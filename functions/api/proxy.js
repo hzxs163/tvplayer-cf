@@ -103,108 +103,62 @@ export async function onRequest(context) {
   // ============================================================
   // 端口限制 - 已放开所有端口
   // ============================================================
+  // 仅屏蔽极少数高危端口，其他全部放行
   const port = targetUrl.port || (targetUrl.protocol === 'https:' ? '443' : '80');
   const blockedPorts = ['25', '465', '587', '3389', '5900'];
   if (blockedPorts.includes(port)) {
     return jsonResponse({ code: 403, msg: '端口 ' + port + ' 被禁止' }, 403);
   }
+  // 其他端口全部放行
   // ============================================================
 
   try {
+    // ============================================================
+    // 完全模拟浏览器请求
+    // ============================================================
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+      'Accept': '*/*',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+      'Connection': 'keep-alive',
+      'Sec-Fetch-Dest': 'empty',
+      'Sec-Fetch-Mode': 'cors',
+      'Sec-Fetch-Site': 'cross-site',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+    };
+
+    // 动态设置 Referer 和 Origin
     const hostname = targetUrl.hostname;
-
-    // ============================================================
-    // 构建请求头
-    // ============================================================
-    let headers = {};  // 👈 先声明空对象
-
-    // 需要移动端伪装的域名列表
-    const mobileDomains = [
-      'jisuzyv.com', 'jisuts.com',
-      'huyall.com', 'baisiweiting.com',
-      'gs.gszyi.com', 'gszyi.com',
-      'v.gsuus.com'
-    ];
-
-    const isMobileDomain = mobileDomains.some(domain => hostname.includes(domain));
-
-    if (isMobileDomain) {
-      // ==========================================================
-      // 移动端伪装：完全模拟移动端浏览器（不带 Sec-* 头）
-      // ==========================================================
-      headers = {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Mobile Safari/537.36 EdgA/146.0.0.0',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'Accept-Encoding': 'gzip, deflate',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Upgrade-Insecure-Requests': '1',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-        'Connection': 'keep-alive',
-      };
-
-      // 动态设置 Referer
-      if (hostname.includes('huyall.com') || hostname.includes('baisiweiting.com')) {
-        headers['Referer'] = 'https://1080p.huyall.com/';
-        headers['Origin'] = 'https://1080p.huyall.com';
-      } else if (hostname.includes('v.gsuus.com')) {
-        headers['Referer'] = 'https://v.gsuus.com/';
-        headers['Origin'] = 'https://v.gsuus.com';
-      } else if (hostname.includes('jisuzyv.com') || hostname.includes('jisuts.com')) {
-        headers['Referer'] = 'https://vv.jisuzyv.com/';
-        headers['Origin'] = 'https://vv.jisuzyv.com';
-      } else if (hostname.includes('gs.gszyi.com') || hostname.includes('gszyi.com')) {
-        headers['Referer'] = 'https://gs.gszyi.com/';
-        headers['Origin'] = 'https://gs.gszyi.com';
-      } else {
-        headers['Referer'] = targetUrl.origin + '/';
-        headers['Origin'] = targetUrl.origin;
-      }
-
+    if (hostname.includes('huyall.com') || hostname.includes('baisiweiting.com')) {
+      headers['Referer'] = 'https://1080p.huyall.com/';
+      headers['Origin'] = 'https://1080p.huyall.com';
+    } else if (hostname.includes('jisuzyv.com') || hostname.includes('jisuts.com')) {
+      headers['Referer'] = 'https://vv.jisuzyv.com/';
+      headers['Origin'] = 'https://vv.jisuzyv.com';
+    } else if (hostname.includes('ffzy')) {
+      headers['Referer'] = 'https://ffzy5.tv/';
+      headers['Origin'] = 'https://ffzy5.tv';
     } else {
-      // ==========================================================
-      // 其他源：桌面端完整请求头
-      // ==========================================================
-      headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-        'Accept': '*/*',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-        'Connection': 'keep-alive',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'cross-site',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      };
-
-      // 动态设置 Referer
-      if (hostname.includes('huyall.com') || hostname.includes('baisiweiting.com')) {
-        headers['Referer'] = 'https://1080p.huyall.com/';
-        headers['Origin'] = 'https://1080p.huyall.com';
-      } else if (hostname.includes('ffzy')) {
-        headers['Referer'] = 'https://ffzy5.tv/';
-        headers['Origin'] = 'https://ffzy5.tv';
-      } else {
-        headers['Referer'] = targetUrl.origin + '/';
-        headers['Origin'] = targetUrl.origin;
-      }
-
-      // 如果请求的是 m3u8 或 ts 分片，带上额外的 Accept 头
-      if (target.includes('.m3u8') || target.includes('.ts')) {
-        headers['Accept'] = 'application/vnd.apple.mpegurl, video/mp2t, */*;q=0.9';
-      }
+      // 默认使用目标网站的 origin
+      headers['Referer'] = targetUrl.origin + '/';
+      headers['Origin'] = targetUrl.origin;
     }
-    // ============================================================
+
+    // 如果请求的是 m3u8 或 ts 分片，带上额外的头
+    if (target.includes('.m3u8') || target.includes('.ts')) {
+      headers['Accept'] = 'application/vnd.apple.mpegurl, video/mp2t, */*;q=0.9';
+    }
 
     const resp = await fetch(target, {
       headers: headers,
     });
 
-    // 获取响应数据（二进制透传）
+    // 获取响应数据
     const data = await resp.arrayBuffer();
 
-    // 构建响应头
+    // 构建响应头，透传服务器返回的头
     const responseHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
