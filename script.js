@@ -1091,6 +1091,26 @@ function renderEpisodesPanel(episodes) {
         list.innerHTML = '<span class="ep-loading">暂无剧集</span>';
         return;
     }
+
+    // 判断是否为直链播放（只有一集且名字叫"播放"）
+    if (episodes.length === 1 && episodes[0].name === '播放') {
+        const el = document.createElement('span');
+        el.className = 'ep';
+        el.textContent = '▶ 播放';
+        el.onclick = () => {
+            document.querySelectorAll('#episodes-list .ep').forEach(e => e.classList.remove('active'));
+            el.classList.add('active');
+            startPlayer(episodes[0].url, state.currentVod?.vod_name || '播放');
+            dom.episodesPanel.classList.remove('open');
+            if (state.currentVod && state.currentSource) {
+                addHistory(state.currentVod, state.currentSource, '播放');
+            }
+        };
+        list.appendChild(el);
+        return;
+    }
+
+    // 多集正常显示
     episodes.forEach((ep, idx) => {
         const el = document.createElement('span');
         el.className = 'ep';
