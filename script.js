@@ -833,11 +833,15 @@ async function doSearch() {
     const q = dom.searchInput.value.trim();
     if (!q) { toast('请输入片名', 'error'); return; }
 
-    const sel = dom.sourceSelect;
-    const targets = sel.value === '__all__' ?
-        state.sources :
-        state.sources.filter(s => s.key === sel.value);
-    if (!targets.length) { toast('请选择有效源', 'error'); return; }
+    // ===== 根据模式决定搜索范围 =====
+    let targets = state.sources;
+    if (!showHiddenSources) {
+        targets = targets.filter(s => s.enabled !== false);
+    }
+    if (!targets.length) {
+        toast(showHiddenSources ? '没有可用源（含隐藏）' : '没有可用源', 'error');
+        return;
+    }
 
     // 切换到搜索页
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
