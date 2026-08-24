@@ -1004,8 +1004,10 @@ async function playMovie(vod, source) {
         // ============================================
         if (firstUrl.includes('huyall.com') || firstUrl.includes('baisiweiting.com')) {
             console.log('🔵 检测到虎牙资源，使用专用播放逻辑');
-            const fullUrl = normalizeUrl(firstUrl);
-            // 直接调用 startPlayerWithProxy，跳过直连
+            // 先解析出真正的第一集地址
+            const episodes = parseEpisodes(firstUrl);
+            const firstEp = episodes[0];
+            const fullUrl = normalizeUrl(firstEp.url);
             showPlayer();
             dom.playerLoading.classList.remove('hidden');
             dom.playerLoading.classList.add('show');
