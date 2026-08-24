@@ -267,7 +267,7 @@ function deleteSource(key) {
         const first = filtered.find(s => s.group === 'stable') || filtered[0];
         if (first) {
             dom.sourceSelect.value = first.key;
-            loadBrowse(first);
+            // loadBrowse(first);  // ← 删掉这行
         }
     }
     toast('✅ 已删除', 'success');
