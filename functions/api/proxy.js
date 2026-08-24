@@ -101,10 +101,10 @@ export async function onRequest(context) {
   }
 
   // ============================================================
-  // ⚠️ 端口限制 - 已放开所有端口（仅屏蔽高危端口）
+  // 端口限制 - 已放开所有端口
   // ============================================================
-  const port = targetUrl.port || (targetUrl.protocol === 'https:' ? '443' : '80');
   // 仅屏蔽极少数高危端口，其他全部放行
+  const port = targetUrl.port || (targetUrl.protocol === 'https:' ? '443' : '80');
   const blockedPorts = ['25', '465', '587', '3389', '5900'];
   if (blockedPorts.includes(port)) {
     return jsonResponse({ code: 403, msg: '端口 ' + port + ' 被禁止' }, 403);
@@ -113,26 +113,73 @@ export async function onRequest(context) {
   // ============================================================
 
   try {
+    // ============================================================
+    // 完全模拟浏览器请求
+    // ============================================================
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+      'Accept': '*/*',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+      'Connection': 'keep-alive',
+      'Sec-Fetch-Dest': 'empty',
+      'Sec-Fetch-Mode': 'cors',
+      'Sec-Fetch-Site': 'cross-site',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+    };
+
+    // 动态设置 Referer 和 Origin
+    const hostname = targetUrl.hostname;
+    if (hostname.includes('huyall.com') || hostname.includes('baisiweiting.com')) {
+      headers['Referer'] = 'https://1080p.huyall.com/';
+      headers['Origin'] = 'https://1080p.huyall.com';
+    } else if (hostname.includes('jisuzyv.com') || hostname.includes('jisuts.com')) {
+      headers['Referer'] = 'https://vv.jisuzyv.com/';
+      headers['Origin'] = 'https://vv.jisuzyv.com';
+    } else if (hostname.includes('ffzy')) {
+      headers['Referer'] = 'https://ffzy5.tv/';
+      headers['Origin'] = 'https://ffzy5.tv';
+    } else {
+      // 默认使用目标网站的 origin
+      headers['Referer'] = targetUrl.origin + '/';
+      headers['Origin'] = targetUrl.origin;
+    }
+
+    // 如果请求的是 m3u8 或 ts 分片，带上额外的头
+    if (target.includes('.m3u8') || target.includes('.ts')) {
+      headers['Accept'] = 'application/vnd.apple.mpegurl, video/mp2t, */*;q=0.9';
+    }
+
     const resp = await fetch(target, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-        'Accept': '*/*',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-        'Referer': targetUrl.origin + '/',
-      }
+      headers: headers,
     });
 
+    // 获取响应数据
     const data = await resp.arrayBuffer();
+
+    // 构建响应头，透传服务器返回的头
+    const responseHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Cache-Control': 'no-store',
+      'Content-Type': resp.headers.get('Content-Type') || 'application/octet-stream',
+      'Content-Length': data.byteLength.toString(),
+    };
+
+    // 透传关键头
+    const headersToForward = ['Content-Range', 'Accept-Ranges', 'Content-Disposition', 'ETag', 'Last-Modified'];
+    for (const header of headersToForward) {
+      const value = resp.headers.get(header);
+      if (value) {
+        responseHeaders[header] = value;
+      }
+    }
 
     return new Response(data, {
       status: resp.status,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': resp.headers.get('Content-Type') || 'application/json',
-        'Cache-Control': 'no-store',
-        'Content-Length': data.byteLength.toString(),
-      }
+      statusText: resp.statusText,
+      headers: responseHeaders,
     });
 
   } catch (error) {
