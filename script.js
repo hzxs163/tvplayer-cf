@@ -267,6 +267,7 @@ function deleteSource(key) {
         const first = filtered.find(s => s.group === 'stable') || filtered[0];
         if (first) {
             dom.sourceSelect.value = first.key;
+            // loadBrowse(first);  // ← 删掉这行
         }
     }
     toast('✅ 已删除', 'success');
@@ -832,15 +833,11 @@ async function doSearch() {
     const q = dom.searchInput.value.trim();
     if (!q) { toast('请输入片名', 'error'); return; }
 
-    // ===== 根据模式决定搜索范围 =====
-    let targets = state.sources;
-    if (!showHiddenSources) {
-        targets = targets.filter(s => s.enabled !== false);
-    }
-    if (!targets.length) {
-        toast(showHiddenSources ? '没有可用源（含隐藏）' : '没有可用源', 'error');
-        return;
-    }
+    const sel = dom.sourceSelect;
+    const targets = sel.value === '__all__' ?
+        state.sources :
+        state.sources.filter(s => s.key === sel.value);
+    if (!targets.length) { toast('请选择有效源', 'error'); return; }
 
     // 切换到搜索页
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1054,13 +1051,7 @@ function normalizeUrl(url) {
 function showPlayer() {
     state.isPlaying = true;
     dom.playerSection.classList.add('open');
-    dom.playerSection.style.display = 'block';
-    dom.playerSection.style.minHeight = '300px';
     dom.playerControls.classList.add('open');
-    dom.playerControls.style.display = 'flex';
-    dom.player.style.display = 'block';
-    dom.player.style.opacity = '1';
-    dom.player.style.visibility = 'visible';
     dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -1073,7 +1064,7 @@ function renderPlayerLines(lines) {
     defaultOpt.value = '';
     defaultOpt.textContent = '📡换源';
     defaultOpt.disabled = true;
-    defaultOpt.selected = true;
+    defaultOpt.selected = true;  // ← 始终选中这个
     select.appendChild(defaultOpt);
 
     lines.forEach((l, i) => {
@@ -1144,7 +1135,7 @@ function renderEpisodesPanel(episodes) {
 }
 
 // ============================================================
-//  核心播放引擎（直连优先 → 失败走代理 → 最后 iframe）
+//  核心播放引擎（直链优先 + hls.js 备选）
 // ============================================================
 function startPlayer(url, title) {
     if (!url || !url.trim()) {
@@ -1171,12 +1162,14 @@ function startPlayer(url, title) {
     dom.playerIframe.src = '';
     dom.player.style.display = 'block';
 
+    // === 切换前：记住当前高度，防止塌陷 ===
     const video = dom.player;
     const currentHeight = video.offsetHeight;
     if (currentHeight > 50) {
         video.style.minHeight = currentHeight + 'px';
     }
 
+    // === 销毁旧 HLS 实例 ===
     if (state.hlsInstance) {
         state.hlsInstance.destroy();
         state.hlsInstance = null;
@@ -1194,88 +1187,31 @@ function startPlayer(url, title) {
 
     // ===== m3u8 播放 =====
     if (url.includes('.m3u8') || url.includes('.m3u8?')) {
-        const isDirectM3u8 = url.includes('.m3u8') && !url.includes('#') && url.startsWith('http');
+        // 【新增】检测是否是纯直链 m3u8（没有 # 分隔符）
+        const isDirectM3u8 = !url.includes('#') && url.trim().startsWith('http');
 
-        if (isDirectM3u8) {
-            showPlayer();
-            dom.playerLoading.classList.remove('hidden');
-            dom.playerLoading.classList.add('show');
-
-            let fallbackTimer = null;
-            let isFallbackUsed = false;
-
-            const cleanup = function() {
-                if (fallbackTimer) {
-                    clearTimeout(fallbackTimer);
-                    fallbackTimer = null;
-                }
-                video.removeEventListener('canplay', onSuccess);
-                video.removeEventListener('loadedmetadata', onSuccess);
-                video.removeEventListener('error', onError);
-            };
-
-            const onSuccess = function() {
-                if (isFallbackUsed) return;
-                cleanup();
-                dom.playerLoading.classList.add('hidden');
-                setTimeout(function() {
-                    dom.playerLoading.classList.remove('show');
-                }, 400);
-                video.play().catch(function() {});
-                dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                console.log('✅ 直连播放成功');
-            };
-
-            const onError = function() {
-                if (isFallbackUsed) return;
-                isFallbackUsed = true;
-                cleanup();
-                console.warn('⚠️ 直连失败，切换到代理模式');
-                dom.playerLoading.classList.remove('hidden');
-                dom.playerLoading.classList.add('show');
-                startPlayerWithProxy(url, title);
-            };
-
-            video.addEventListener('canplay', onSuccess, { once: true });
-            video.addEventListener('loadedmetadata', onSuccess, { once: true });
-            video.addEventListener('error', onError, { once: true });
-
-            // 4秒超时切代理
-            fallbackTimer = setTimeout(function() {
-                if (isFallbackUsed) return;
-                isFallbackUsed = true;
-                cleanup();
-                console.warn('⏱️ 直连超时，切换到代理模式');
-                dom.playerLoading.classList.remove('hidden');
-                dom.playerLoading.classList.add('show');
-                startPlayerWithProxy(url, title);
-            }, 9000);
-
-            // 开始直连
+        // 【新增】如果是直链且浏览器支持直接播放 m3u8，直接用 video 标签
+        if (isDirectM3u8 && video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = url;
-            video.load();
-            video.play().catch(function() {});
+            video.play().catch(() => {});
             dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             return;
         }
 
-        // 非直连 m3u8（带参数等），直接用 hls.js
+        // 其他情况使用 hls.js
         if (window.Hls && Hls.isSupported()) {
             const hls = new Hls({ enableWorker: true });
             state.hlsInstance = hls;
             hls.loadSource(url);
             hls.attachMedia(video);
 
-            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            // 加载完成后清除占位高度
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
                 video.style.minHeight = '';
-                dom.playerLoading.classList.add('hidden');
-                setTimeout(function() {
-                    dom.playerLoading.classList.remove('show');
-                }, 400);
-                video.play().catch(function() {});
+                video.play().catch(() => {});
             });
 
-            hls.on(Hls.Events.ERROR, function(e, data) {
+            hls.on(Hls.Events.ERROR, (e, data) => {
                 video.style.minHeight = '';
                 if (data.fatal) {
                     toast('HLS 播放失败，尝试嵌入', 'error');
@@ -1284,7 +1220,7 @@ function startPlayer(url, title) {
             });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = url;
-            video.play().catch(function() {});
+            video.play().catch(() => {});
         } else {
             startPlayerInIframe(url, title);
         }
@@ -1294,67 +1230,10 @@ function startPlayer(url, title) {
 
     // ===== 普通视频直链 =====
     video.src = url;
-    video.play().catch(function() {
+    video.play().catch(() => {
         toast('无法直接播放，尝试嵌入', 'error');
         startPlayerInIframe(url, title);
     });
-}
-
-// ============================================================
-//  代理播放（备用）- 隐藏加载过程，避免缩小画面闪烁
-// ============================================================
-// ============================================================
-//  代理播放（备用）
-// ============================================================
-function startPlayerWithProxy(url, title) {
-    const video = dom.player;
-
-    if (window.Hls && Hls.isSupported()) {
-        const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
-
-        fetch(proxyUrl)
-            .then(function(r) {
-                if (!r.ok) throw new Error('代理请求失败: ' + r.status);
-                return r.text();
-            })
-            .then(function(m3u8Content) {
-                const blob = new Blob([m3u8Content], { type: 'application/vnd.apple.mpegurl' });
-                const blobUrl = URL.createObjectURL(blob);
-
-                const hls = new Hls({ enableWorker: true });
-                state.hlsInstance = hls;
-                hls.loadSource(blobUrl);
-                hls.attachMedia(video);
-
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    dom.playerLoading.classList.add('hidden');
-                    setTimeout(function() {
-                        dom.playerLoading.classList.remove('show');
-                    }, 400);
-                    video.play().catch(function() {});
-                    console.log('✅ 代理播放成功');
-                });
-
-                hls.on(Hls.Events.ERROR, function(e, data) {
-                    dom.playerLoading.classList.add('hidden');
-                    if (data.fatal) {
-                        toast('HLS 播放失败，尝试嵌入', 'error');
-                        startPlayerInIframe(url, title);
-                    }
-                });
-            })
-            .catch(function(e) {
-                console.error('代理加载失败:', e);
-                dom.playerLoading.classList.add('hidden');
-                toast('播放失败: ' + e.message, 'error');
-                startPlayerInIframe(url, title);
-            });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = url;
-        video.play().catch(function() {});
-    } else {
-        startPlayerInIframe(url, title);
-    }
 }
 
 // ============================================================
@@ -1465,7 +1344,6 @@ function closePlayer() {
     hidePlayerLoading();
     restoreAllContent();
 }
-
 // ============================================================
 //  复制链接
 // ============================================================
@@ -1488,7 +1366,6 @@ function copyLink() {
         toast('请手动复制：' + input.value, 'info');
     }
 }
-
 // ============================================================
 //  KEYBOARD
 // ============================================================
