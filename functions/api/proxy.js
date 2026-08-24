@@ -100,11 +100,17 @@ export async function onRequest(context) {
     return jsonResponse({ code: 403, msg: '禁止访问内网地址' }, 403);
   }
 
-  // 端口限制
+  // ============================================================
+  // ⚠️ 端口限制 - 已放开所有端口（仅屏蔽高危端口）
+  // ============================================================
   const port = targetUrl.port || (targetUrl.protocol === 'https:' ? '443' : '80');
-  if (!['80', '443'].includes(port)) {
-    return jsonResponse({ code: 403, msg: '仅允许 80/443 端口' }, 403);
+  // 仅屏蔽极少数高危端口，其他全部放行
+  const blockedPorts = ['25', '465', '587', '3389', '5900'];
+  if (blockedPorts.includes(port)) {
+    return jsonResponse({ code: 403, msg: '端口 ' + port + ' 被禁止' }, 403);
   }
+  // 其他端口全部放行
+  // ============================================================
 
   try {
     const resp = await fetch(target, {
