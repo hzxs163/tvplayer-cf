@@ -114,8 +114,11 @@ export async function onRequest(context) {
     const hostname = targetUrl.hostname;
 
     // ============================================================
-    // 需要移动端伪装的域名列表
+    // 构建请求头
     // ============================================================
+    let headers = {};  // 👈 先声明空对象
+
+    // 需要移动端伪装的域名列表
     const mobileDomains = [
       'jisuzyv.com', 'jisuts.com',
       'huyall.com', 'baisiweiting.com',
@@ -124,7 +127,6 @@ export async function onRequest(context) {
     ];
 
     const isMobileDomain = mobileDomains.some(domain => hostname.includes(domain));
-    // ============================================================
 
     if (isMobileDomain) {
       // ==========================================================
@@ -140,7 +142,6 @@ export async function onRequest(context) {
         'Pragma': 'no-cache',
         'Connection': 'keep-alive',
       };
-      // 注意：不包含 Sec-Ch-Ua、Sec-Fetch-* 等头
 
       // 动态设置 Referer
       if (hostname.includes('huyall.com') || hostname.includes('baisiweiting.com')) {
@@ -159,7 +160,6 @@ export async function onRequest(context) {
         headers['Referer'] = targetUrl.origin + '/';
         headers['Origin'] = targetUrl.origin;
       }
-      // ==========================================================
 
     } else {
       // ==========================================================
