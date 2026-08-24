@@ -1349,7 +1349,7 @@ function startPlayerWithProxy(url, title) {
                 const baseUrl = window.location.origin;
                 
                 // ============================================
-                // 关键修复：只替换 Key，分片保持原样
+                // 关键：替换 enc.key
                 // ============================================
                 const keyUrl = url.replace('/index.m3u8', '/enc.key');
                 m3u8Content = m3u8Content.replace(
