@@ -1166,14 +1166,12 @@ function startPlayer(url, title) {
     dom.playerIframe.src = '';
     dom.player.style.display = 'block';
 
-    // === 切换前：记住当前高度，防止塌陷 ===
     const video = dom.player;
     const currentHeight = video.offsetHeight;
     if (currentHeight > 50) {
         video.style.minHeight = currentHeight + 'px';
     }
 
-    // === 销毁旧 HLS 实例 ===
     if (state.hlsInstance) {
         state.hlsInstance.destroy();
         state.hlsInstance = null;
@@ -1191,11 +1189,16 @@ function startPlayer(url, title) {
 
     // ===== m3u8 播放 =====
     if (url.includes('.m3u8') || url.includes('.m3u8?')) {
-        // 【新增】检测是否是纯直链 m3u8（没有 # 分隔符）
-        const isDirectM3u8 = !url.includes('#') && url.trim().startsWith('http');
+        // ===== 直链检测 =====
+        const isDirectM3u8 = url.includes('.m3u8') && !url.includes('#') && url.startsWith('http');
 
-        // 【新增】如果是直链且浏览器支持直接播放 m3u8，直接用 video 标签
-        if (isDirectM3u8 && video.canPlayType('application/vnd.apple.mpegurl')) {
+        if (isDirectM3u8) {
+            // 直接用 video 标签播放
+            video.style.display = 'block';
+            video.style.minHeight = '300px';
+            dom.playerSection.style.display = 'block';
+            dom.playerSection.style.minHeight = '300px';
+            dom.playerControls.style.display = 'flex';
             video.src = url;
             video.play().catch(() => {});
             dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1209,7 +1212,6 @@ function startPlayer(url, title) {
             hls.loadSource(url);
             hls.attachMedia(video);
 
-            // 加载完成后清除占位高度
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
                 video.style.minHeight = '';
                 video.play().catch(() => {});
