@@ -46,9 +46,12 @@
         <div class="player-controls" id="playerControls">
             <span class="title" id="nowPlaying">—</span>
             <select id="lineSelect" onchange="switchPlayerLine(this.value)"></select>
-            <button class="ctrl-btn" onclick="toggleEpisodesPanel()" title="选集" style="font-size:13px;font-weight:500;padding:4px 10px;">📋选集</button>
-            <input class="link-input" id="m3u8Link" readonly onclick="this.select()" placeholder="m3u8 地址" />
+            <button class="ctrl-btn" onclick="toggleEpisodesPanel()" title="选集">📋 选集</button>
             <button class="ctrl-btn close-btn" onclick="closePlayer()" title="收起">✕</button>
+            <div class="link-row">
+                <input class="link-input" id="m3u8Link" readonly onclick="this.select()" placeholder="m3u8 地址" />
+                <button class="btn-copy" onclick="copyLink()">复制</button>
+            </div>
         </div>
 
         <!-- ==========================================================
