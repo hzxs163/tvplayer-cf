@@ -1305,7 +1305,6 @@ function startPlayer(url, title) {
 // ============================================================
 function startPlayerWithProxy(url, title) {
     const video = dom.player;
-    // 先隐藏视频，避免闪烁
     video.style.opacity = '0';
 
     if (window.Hls && Hls.isSupported()) {
@@ -1317,11 +1316,11 @@ function startPlayerWithProxy(url, title) {
                 return r.text();
             })
             .then(function(m3u8Content) {
-                // ============================================
-                // 修复 enc.key 相对路径问题
-                // ============================================
                 const baseUrl = window.location.origin;
-                // 把 m3u8 地址中的 index.m3u8 替换成 enc.key
+                
+                // ============================================
+                // 关键修复：只替换 Key，分片保持原样
+                // ============================================
                 const keyUrl = url.replace('/index.m3u8', '/enc.key');
                 m3u8Content = m3u8Content.replace(
                     /URI="enc\.key"/,
@@ -1338,12 +1337,10 @@ function startPlayerWithProxy(url, title) {
                 hls.attachMedia(video);
 
                 hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    // 加载完成，恢复显示
                     video.style.opacity = '1';
                     video.style.width = '100%';
                     video.style.height = '100%';
                     video.style.minHeight = '';
-                    
                     dom.playerLoading.classList.add('hidden');
                     setTimeout(function() {
                         dom.playerLoading.classList.remove('show');
