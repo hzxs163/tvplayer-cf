@@ -1075,22 +1075,11 @@ function showPlayer() {
     dom.playerSection.classList.add('open');
     dom.playerSection.style.display = 'block';
     dom.playerSection.style.minHeight = '300px';
-    dom.playerSection.style.position = 'relative';
-    dom.playerSection.style.zIndex = '100';
-
     dom.playerControls.classList.add('open');
     dom.playerControls.style.display = 'flex';
-    dom.playerControls.style.zIndex = '101';
-
     dom.player.style.display = 'block';
     dom.player.style.opacity = '1';
     dom.player.style.visibility = 'visible';
-    dom.player.style.zIndex = '102';
-    dom.player.style.position = 'relative';
-    dom.player.style.width = '100%';
-    dom.player.style.height = '100%';
-    dom.player.style.objectFit = 'contain';
-
     dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
