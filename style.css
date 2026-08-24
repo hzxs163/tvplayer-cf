@@ -259,6 +259,7 @@ main {
 #player-section {
     display: none;
     position: relative;
+    z-index: 100;  /* 👈 添加 */
     width: 100%;
     aspect-ratio: 16 / 9;
     max-height: 70vh;
@@ -273,6 +274,7 @@ main {
 }
 #player-section video {
     position: absolute;
+    z-index: 102;  /* 👈 添加 */
     top: 0;
     left: 0;
     width: 100%;
@@ -345,6 +347,8 @@ main {
     border-radius: 0 0 var(--radius) var(--radius);
     font-size: 13px;
     color: var(--text2);
+    position: relative;   /* 👈 添加这一行 */
+    z-index: 101;         /* 👈 添加这一行 */
 }
 .player-controls.open {
     display: flex !important;
