@@ -194,8 +194,8 @@ function renderSourceList() {
     }
 
     // 分组：有效源 和 失效源
-    const validSources = sources.filter(s => s.enabled !== false);
-    const invalidSources = sources.filter(s => s.enabled === false);
+    const validSources = sources.filter(s => s.disabled !== false);
+    const invalidSources = sources.filter(s => s.disabled === false);
 
     let html = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
@@ -516,7 +516,7 @@ async function checkAllSources() {
         const found = results.invalid.find(inv => inv.key === s.key);
         if (found) {
             modified = true;
-            return { ...s, enabled: false };
+            return { ...s, disabled: false };
         }
         return s;
     });
@@ -832,8 +832,8 @@ function populateSelect() {
     }
 
     // 分组：有效源 和 失效源
-    const validSources = sources.filter(s => s.enabled !== false);
-    const invalidSources = sources.filter(s => s.enabled === false);
+    const validSources = sources.filter(s => s.disabled !== false);
+    const invalidSources = sources.filter(s => s.disabled === false);
 
     let hasOptions = false;
 
@@ -1034,7 +1034,7 @@ async function doSearch() {
     // ===== 根据模式决定搜索范围 =====
     let targets = state.sources;
     if (!showHiddenSources) {
-        targets = targets.filter(s => s.enabled !== false);
+        targets = targets.filter(s => s.disabled !== false);
     }
     if (!targets.length) {
         toast(showHiddenSources ? '没有可用源（含隐藏）' : '没有可用源', 'error');
