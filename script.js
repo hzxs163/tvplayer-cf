@@ -33,6 +33,7 @@ const state = {
     isLoading: false,
     editingKey: null,
     hlsInstance: null,
+    currentController: null,
 };
 
 // ============================================================
@@ -419,17 +420,33 @@ function esc(s) {
 //  API
 // ============================================================
 async function fetchProxy(url, timeout = FETCH_TIMEOUT) {
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), timeout);
+    // 取消上一个请求
+    if (state.currentController) {
+        state.currentController.abort();
+    }
+    
+    const controller = new AbortController();
+    state.currentController = controller;
+    
+    const timer = setTimeout(() => controller.abort(), timeout);
     try {
-        const resp = await fetch(PROXY(url), { signal: ctl.signal });
+        const resp = await fetch(PROXY(url), { signal: controller.signal });
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({}));
             throw new Error(err.msg || 'HTTP ' + resp.status);
         }
         return await resp.json();
+    } catch (e) {
+        if (e.name === 'AbortError') {
+            console.log('📌 请求已取消');
+            return null;
+        }
+        throw e;
     } finally {
         clearTimeout(timer);
+        if (state.currentController === controller) {
+            state.currentController = null;
+        }
     }
 }
 
@@ -711,6 +728,7 @@ async function loadBrowse(source) {
 
     try {
         const data = await fetchProxy(source.api + '?ac=list');
+        if (data === null) return;
         const classes = data.class || [];
         state.categories = classes;
         renderCategories(classes);
@@ -732,6 +750,7 @@ async function loadMovies() {
 
     try {
         const data = await fetchProxy(url);
+        if (data === null) return;
         const list = data.list || [];
         state.totalPages = Math.max(1, parseInt(data.pagecount) || 1);
         state.movies = list;
@@ -916,6 +935,7 @@ async function doSearch() {
             try {
                 const url = s.api + '?ac=detail&wd=' + encodeURIComponent(q);
                 const data = await fetchProxy(url);
+                if (data === null) continue;
                 (data.list || []).forEach(v => {
                     if (v && v.vod_id && v.vod_name) {
                         if (!results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
@@ -973,6 +993,7 @@ async function playMovie(vod, source) {
 
     try {
         const data = await fetchProxy(source.api + '?ac=detail&ids=' + vod.vod_id);
+        if (data === null) return;
         const detail = data.list?.[0] || vod;
 
         let froms = [],
@@ -1494,6 +1515,7 @@ async function extractM3u8FromHtml(pageUrl, title) {
         }
 
         const resp = await fetchProxy(pageUrl);
+        if (resp === null) return;
         const html = typeof resp === 'string' ? resp : JSON.stringify(resp);
 
         // 防御：若内容本身就是 m3u8 播放列表（#EXTM3U 开头），说明 URL 是直链但被误判为页面，直接播放原地址
