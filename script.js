@@ -510,6 +510,26 @@ function switchPlayerLine(index) {
     const episodes = parseEpisodes(lines[index].url);
     state.currentEpisodes = episodes;
     renderEpisodesPanel(episodes);
+    
+    // ============================================
+    // 百度源：使用 iframe 播放
+    // ============================================
+    if (state.currentSource?.key === 'dbm3u8' || state.currentSource?.name.includes('百度')) {
+        const firstEp = episodes[0];
+        const m3u8Url = normalizeUrl(firstEp.url);
+        const baiduPlayerUrl = 'https://jx.jxbdzyw.com/m3u8/?url=' + encodeURIComponent(m3u8Url);
+        dom.playerIframe.style.display = 'block';
+        dom.playerIframe.src = baiduPlayerUrl;
+        dom.player.style.display = 'none';
+        dom.playerLoading.classList.add('hidden');
+        setTimeout(() => {
+            dom.playerLoading.classList.remove('show');
+        }, 400);
+        toast('已切换: ' + lines[index].name, 'info');
+        return;
+    }
+    // ============================================
+    
     if (episodes.length) {
         const first = episodes[0];
         startPlayer(first.url, (state.currentVod?.vod_name || '') + ' ' + first.name);
@@ -997,6 +1017,41 @@ async function playMovie(vod, source) {
         showPlayer();
 
         const firstUrl = lines[0].url;
+
+        // ============================================
+        // 百度源 (dbm3u8) 特殊处理：使用 iframe 播放
+        // ============================================
+        if (source.key === 'dbm3u8' || source.name.includes('百度') || firstUrl.includes('b3.bdzybf22.com')) {
+            console.log('🔵 检测到百度源，使用 iframe 播放');
+            
+            // 解析第一集的 m3u8 地址
+            const episodes = parseEpisodes(firstUrl);
+            const firstEp = episodes[0];
+            const m3u8Url = normalizeUrl(firstEp.url);
+            
+            // 构造百度播放器地址
+            const baiduPlayerUrl = 'https://jx.jxbdzyw.com/m3u8/?url=' + encodeURIComponent(m3u8Url);
+            
+            showPlayer();
+            dom.playerLoading.classList.remove('hidden');
+            dom.playerLoading.classList.add('show');
+            
+            // 用 iframe 播放
+            dom.playerIframe.style.display = 'block';
+            dom.playerIframe.src = baiduPlayerUrl;
+            dom.player.style.display = 'none';
+            
+            dom.playerLoading.classList.add('hidden');
+            setTimeout(function() {
+                dom.playerLoading.classList.remove('show');
+            }, 400);
+            
+            renderEpisodesPanel(episodes);
+            setStatus('播放中');
+            return;
+        }
+        // ============================================
+
         const episodes = parseEpisodes(firstUrl);
 
         // ============================================
@@ -1152,6 +1207,22 @@ function renderEpisodesPanel(episodes) {
         el.onclick = () => {
             document.querySelectorAll('#episodes-list .ep').forEach(e => e.classList.remove('active'));
             el.classList.add('active');
+            // ============================================
+            // 百度源选集：使用 iframe 播放
+            // ============================================
+            if (state.currentSource?.key === 'dbm3u8' || state.currentSource?.name.includes('百度')) {
+                const m3u8Url = normalizeUrl(ep.url);
+                const baiduPlayerUrl = 'https://jx.jxbdzyw.com/m3u8/?url=' + encodeURIComponent(m3u8Url);
+                dom.playerIframe.style.display = 'block';
+                dom.playerIframe.src = baiduPlayerUrl;
+                dom.player.style.display = 'none';
+                dom.episodesPanel.classList.remove('open');
+                if (state.currentVod && state.currentSource) {
+                    addHistory(state.currentVod, state.currentSource, ep.name);
+                }
+                return;
+            }
+            // ============================================
             startPlayer(ep.url, (state.currentVod?.vod_name || '') + ' ' + ep.name);
             dom.episodesPanel.classList.remove('open');
             if (state.currentVod && state.currentSource) {
