@@ -180,9 +180,6 @@ function toggleShowHiddenSources() {
 // ============================================================
 //  源列表渲染（弹窗内）
 // ============================================================
-// ============================================================
-//  源列表渲染（弹窗内）
-// ============================================================
 function renderSourceList() {
     const container = dom.sourceList;
     const sources = getStoredSources() || [];
@@ -193,20 +190,23 @@ function renderSourceList() {
         return;
     }
 
-    // 分组：有效源 和 失效源
-    const validSources = sources.filter(s => s.disabled !== false);
-    const invalidSources = sources.filter(s => s.disabled === false);
+    // 1. 先过滤掉隐藏源（enabled: false）
+    const visibleSources = sources.filter(s => s.enabled !== false);
+
+    // 2. 再分组：有效源（disabled !== true）和失效源（disabled === true）
+    const validSources = visibleSources.filter(s => s.disabled !== true);
+    const invalidSources = visibleSources.filter(s => s.disabled === true);
 
     let html = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                <span style="font-size:14px; font-weight:600; color:var(--text);">📋源</span>
+                <span style="font-size:14px; font-weight:600; color:var(--text);">📋 已有源列表</span>
                 <span style="font-size:13px; color:var(--text2);">共 ${sources.length} 个</span>
-                <span style="font-size:13px; color:#2e7d32;">🟢有效 ${validSources.length} 个</span>
-                ${invalidSources.length > 0 ? `<span style="font-size:13px; color:#c62828;">🔴失效 ${invalidSources.length} 个</span>` : ''}
+                <span style="font-size:13px; color:#2e7d32;">🟢 有效 ${validSources.length} 个</span>
+                ${invalidSources.length > 0 ? `<span style="font-size:13px; color:#c62828;">🔴 失效 ${invalidSources.length} 个</span>` : ''}
             </div>
             <button class="btn btn-ghost" onclick="checkAllSources()" style="font-size:12px; padding:4px 14px; border:1px solid var(--border); border-radius:6px; cursor:pointer; background:var(--bg);">
-                🔍检测
+                🔍 检查失效源
             </button>
         </div>
     `;
@@ -429,7 +429,7 @@ async function checkAllSources() {
     const sources = getStoredSources() || [];
     if (sources.length) {
         const clearedSources = sources.map(s => {
-            return { ...s, enabled: true };
+            return { ...s, disabled: false };
         });
         setStoredSources(clearedSources);
         state.sources = clearedSources;
@@ -516,7 +516,7 @@ async function checkAllSources() {
         const found = results.invalid.find(inv => inv.key === s.key);
         if (found) {
             modified = true;
-            return { ...s, disabled: false };
+            return { ...s, disabled: true };
         }
         return s;
     });
@@ -1034,8 +1034,10 @@ async function doSearch() {
     // ===== 根据模式决定搜索范围 =====
     let targets = state.sources;
     if (!showHiddenSources) {
-        targets = targets.filter(s => s.disabled !== false);
+        targets = targets.filter(s => s.enabled !== false);  // 过滤隐藏源
     }
+    targets = targets.filter(s => s.disabled !== true);  // 过滤失效源
+
     if (!targets.length) {
         toast(showHiddenSources ? '没有可用源（含隐藏）' : '没有可用源', 'error');
         return;
@@ -1089,29 +1091,29 @@ async function doSearch() {
             `找到 ${results.length} 个结果 · 完成 ${done}/${targets.length} 个源`;
     };
 
-async function worker() {
-    while (pool.length && mySeq === state.searchSeq) {
-        const s = pool.shift();
-        try {
-            const url = s.api + '?ac=detail&wd=' + encodeURIComponent(q);
-            const data = await fetchProxy(url);
-            if (data === null) continue;
-            const rawList = data.list || [];
-            const keyword = q.toLowerCase();
-            rawList.forEach(v => {
-                if (v && v.vod_id && v.vod_name) {
-                    const name = (v.vod_name || '').toLowerCase();
-                    // 包含匹配：adn 只匹配包含 adn 的标题
-                    if (name.includes(keyword) && !results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
-                        results.push({ v, s });
+    async function worker() {
+        while (pool.length && mySeq === state.searchSeq) {
+            const s = pool.shift();
+            try {
+                const url = s.api + '?ac=detail&wd=' + encodeURIComponent(q);
+                const data = await fetchProxy(url);
+                if (data === null) continue;
+                const rawList = data.list || [];
+                const keyword = q.toLowerCase();
+                rawList.forEach(v => {
+                    if (v && v.vod_id && v.vod_name) {
+                        const name = (v.vod_name || '').toLowerCase();
+                        // 包含匹配：adn 只匹配包含 adn 的标题
+                        if (name.includes(keyword) && !results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
+                            results.push({ v, s });
+                        }
                     }
-                }
-            });
-        } catch (e) { /* skip */ }
-        done++;
-        render();
+                });
+            } catch (e) { /* skip */ }
+            done++;
+            render();
+        }
     }
-}
 
     const workers = Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker);
     await Promise.all(workers);
