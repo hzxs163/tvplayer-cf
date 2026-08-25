@@ -423,27 +423,14 @@ function loadExample() {
 //  一键检查失效源（控制台版逻辑）
 // ============================================================
 async function checkAllSources() {
-    // ============================================
-    // 检查前先清除所有失效标记
-    // ============================================
     const sources = getStoredSources() || [];
-    if (sources.length) {
-        const clearedSources = sources.map(s => {
-            return { ...s, disabled: false };
-        });
-        setStoredSources(clearedSources);
-        state.sources = clearedSources;
-    }
-    // ============================================
-
-    const sources2 = getStoredSources() || [];
-    if (!sources2.length) {
+    if (!sources.length) {
         toast('没有源需要检查', 'info');
         return;
     }
 
     const checkBtn = document.querySelector('#sourceList .btn-ghost');
-    const total = sources2.length;
+    const total = sources.length;
     let checked = 0;
     const results = { valid: [], invalid: [] };
 
@@ -479,7 +466,7 @@ async function checkAllSources() {
 
     const batchSize = 5;
     for (let i = 0; i < total; i += batchSize) {
-        const batch = sources2.slice(i, i + batchSize);
+        const batch = sources.slice(i, i + batchSize);
         const batchResults = await Promise.all(batch.map(s => checkSource(s)));
         batchResults.forEach(result => {
             checked++;
@@ -510,26 +497,20 @@ async function checkAllSources() {
         return;
     }
 
-    // 标记失效源（仅标记，不删除）
-    let modified = false;
-    const newSources = sources2.map(s => {
+    // 标记失效源：先重置所有 disabled，再标记失效的
+    const newSources = sources.map(s => {
         const found = results.invalid.find(inv => inv.key === s.key);
         if (found) {
-            modified = true;
             return { ...s, disabled: true };
         }
-        return s;
+        return { ...s, disabled: false };
     });
 
-    if (modified) {
-        setStoredSources(newSources);
-        state.sources = newSources;
-        renderSourceList();
-        populateSelect();
-        toast('⚠️ 发现 ' + invalidCount + ' 个失效源，已标记', 'warning');
-    } else {
-        renderSourceList();
-    }
+    setStoredSources(newSources);
+    state.sources = newSources;
+    renderSourceList();
+    populateSelect();
+    toast('⚠️ 发现 ' + invalidCount + ' 个失效源，已标记', 'warning');
 }
 
 // ============================================================
