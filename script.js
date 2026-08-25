@@ -1089,25 +1089,29 @@ async function doSearch() {
             `找到 ${results.length} 个结果 · 完成 ${done}/${targets.length} 个源`;
     };
 
-    async function worker() {
-        while (pool.length && mySeq === state.searchSeq) {
-            const s = pool.shift();
-            try {
-                const url = s.api + '?ac=detail&wd=' + encodeURIComponent(q);
-                const data = await fetchProxy(url);
-                if (data === null) continue;
-                (data.list || []).forEach(v => {
-                    if (v && v.vod_id && v.vod_name) {
-                        if (!results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
-                            results.push({ v, s });
-                        }
+async function worker() {
+    while (pool.length && mySeq === state.searchSeq) {
+        const s = pool.shift();
+        try {
+            const url = s.api + '?ac=detail&wd=' + encodeURIComponent(q);
+            const data = await fetchProxy(url);
+            if (data === null) continue;
+            const rawList = data.list || [];
+            const keyword = q.toLowerCase();
+            rawList.forEach(v => {
+                if (v && v.vod_id && v.vod_name) {
+                    const name = (v.vod_name || '').toLowerCase();
+                    // 包含匹配：adn 只匹配包含 adn 的标题
+                    if (name.includes(keyword) && !results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
+                        results.push({ v, s });
                     }
-                });
-            } catch (e) { /* skip */ }
-            done++;
-            render();
-        }
+                }
+            });
+        } catch (e) { /* skip */ }
+        done++;
+        render();
     }
+}
 
     const workers = Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker);
     await Promise.all(workers);
