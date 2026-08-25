@@ -1576,6 +1576,20 @@ function startPlayer(url, title) {
 //  代理播放（备用）- 隐藏加载过程，避免缩小画面闪烁
 // ============================================================
 function startPlayerWithProxy(url, title) {
+    // ============================================
+    // 确保播放器显示在最上层
+    // ============================================
+    dom.playerSection.style.display = 'block';
+    dom.playerSection.style.position = 'relative';
+    dom.playerSection.style.zIndex = '9999';
+    dom.player.style.display = 'block';
+    dom.player.style.zIndex = '9999';
+    dom.player.style.position = 'relative';
+    dom.player.style.width = '100%';
+    dom.player.style.height = '100%';
+    dom.player.style.background = '#000';
+    // ============================================
+    
     const video = dom.player;
     video.style.opacity = '0';
 
