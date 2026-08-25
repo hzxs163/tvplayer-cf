@@ -253,7 +253,7 @@ function renderSourceList() {
     }
 
     container.innerHTML = html;
-    dom.importCount.textContent = sources.length + ' 个';
+    // dom.importCount.textContent = sources.length + ' 个';
 }
 
 // ============================================================
