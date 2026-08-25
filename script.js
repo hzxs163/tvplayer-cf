@@ -190,26 +190,28 @@ function renderSourceList() {
         return;
     }
 
-    const groups = { stable: [], normal: [], backup: [] };
-    sources.forEach(s => {
-        const g = s.group || 'normal';
-        if (groups[g]) groups[g].push(s);
-        else groups.normal.push(s);
-    });
-    const labels = { stable: '稳定', normal: '普通', backup: '备用' };
-    const dots = { stable: 'stable', normal: 'normal', backup: 'backup' };
+    // 分组：有效源 和 失效源
+    const validSources = sources.filter(s => s.enabled !== false);
+    const invalidSources = sources.filter(s => s.enabled === false);
 
-    let html = '';
-    Object.keys(groups).forEach(g => {
-        if (!groups[g].length) return;
-        html += `<div class="group-label"><span class="dot ${dots[g] || 'normal'}"></span> ${labels[g] || g}</div>`;
-        groups[g].forEach(s => {
+    let html = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
+            <span style="font-size:13px; color:var(--text2);">共 ${sources.length} 个源</span>
+            <button class="btn btn-ghost" onclick="checkAllSources()" style="font-size:12px; padding:4px 14px; border:1px solid var(--border); border-radius:6px; cursor:pointer; background:var(--bg);">
+                🔍 检查失效源
+            </button>
+        </div>
+    `;
+
+    // 有效源分组
+    if (validSources.length) {
+        html += `<div class="group-label"><span class="dot stable"></span> 🟢 有效</div>`;
+        validSources.forEach(s => {
             const isEditing = state.editingKey === s.key;
-            const isHidden = s.enabled === false;
             html += `
                 <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''}">
                     <div class="s-info">
-                        <span class="s-name">${esc(s.name)}${isHidden ? ' 🔒' : ''}</span>
+                        <span class="s-name">${esc(s.name)}</span>
                         <span class="s-key">${esc(s.key)}</span>
                     </div>
                     <div class="s-actions">
@@ -219,7 +221,28 @@ function renderSourceList() {
                 </div>
             `;
         });
-    });
+    }
+
+    // 失效源分组
+    if (invalidSources.length) {
+        html += `<div style="margin-top:12px; padding-top:8px; border-top:1px solid var(--border);"></div>`;
+        html += `<div class="group-label"><span class="dot backup"></span> 🔴 失效（${invalidSources.length} 个）</div>`;
+        invalidSources.forEach(s => {
+            const isEditing = state.editingKey === s.key;
+            html += `
+                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''} opacity:0.7;">
+                    <div class="s-info">
+                        <span class="s-name" style="color:var(--text3);">🔴 ${esc(s.name)} <span style="font-size:11px; color:var(--text3);">(失效)</span></span>
+                        <span class="s-key">${esc(s.key)}</span>
+                    </div>
+                    <div class="s-actions">
+                        <button class="edit-btn" onclick="editSource('${esc(s.key)}')">编辑</button>
+                        <button class="del-btn" onclick="deleteSource('${esc(s.key)}')">删除</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
 
     container.innerHTML = html;
     dom.importCount.textContent = sources.length + ' 个';
@@ -386,6 +409,110 @@ function loadExample() {
     dom.importTextarea.focus();
     dom.importTextarea.scrollTop = 0;
     toast('示例已填入，点击「导入」即可', 'info');
+}
+
+// ============================================================
+//  一键检查失效源
+// ============================================================
+async function checkAllSources() {
+    const sources = getStoredSources() || [];
+    if (!sources.length) {
+        toast('没有源需要检查', 'info');
+        return;
+    }
+
+    const checkBtn = document.querySelector('#sourceList .btn-ghost');
+    const total = sources.length;
+    let checked = 0;
+    const results = { valid: [], invalid: [] };
+
+    // 修改按钮文字
+    if (checkBtn) {
+        checkBtn.textContent = '⏳ 0/' + total;
+        checkBtn.disabled = true;
+    }
+
+    toast('🔍 开始检查 ' + total + ' 个源...', 'info');
+
+    function checkSource(source) {
+        return new Promise((resolve) => {
+            const proxyUrl = '/api/proxy?url=' + encodeURIComponent(source.api + '?ac=list');
+            fetch(proxyUrl, { signal: AbortSignal.timeout(8000) })
+                .then(r => {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.text();
+                })
+                .then(text => {
+                    const isJSON = text.trimStart().startsWith('{') || text.trimStart().startsWith('[');
+                    const hasList = text.includes('"list"') || text.includes('"class"') || text.includes('"code"');
+                    if (isJSON && (hasList || text.length > 50)) {
+                        resolve({ valid: true, source });
+                    } else if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+                        resolve({ valid: false, source, reason: '返回 HTML' });
+                    } else {
+                        resolve({ valid: false, source, reason: '数据异常' });
+                    }
+                })
+                .catch(err => {
+                    resolve({ valid: false, source, reason: err.message });
+                });
+        });
+    }
+
+    const batchSize = 8;
+    for (let i = 0; i < total; i += batchSize) {
+        const batch = sources.slice(i, i + batchSize);
+        const batchResults = await Promise.all(batch.map(s => checkSource(s)));
+        batchResults.forEach(result => {
+            checked++;
+            if (result.valid) {
+                results.valid.push(result.source);
+            } else {
+                results.invalid.push(result.source);
+            }
+            if (checkBtn) {
+                checkBtn.textContent = '⏳ ' + checked + '/' + total;
+            }
+        });
+        if (i + batchSize < total) {
+            await new Promise(r => setTimeout(r, 150));
+        }
+    }
+
+    // 恢复按钮
+    if (checkBtn) {
+        checkBtn.textContent = '🔍 检查失效源';
+        checkBtn.disabled = false;
+    }
+
+    const invalidCount = results.invalid.length;
+
+    if (invalidCount === 0) {
+        toast('🎉 全部 ' + total + ' 个源均有效！', 'success');
+        renderSourceList();
+        return;
+    }
+
+    // 标记失效源
+    let modified = false;
+    const newSources = sources.map(s => {
+        const found = results.invalid.find(inv => inv.key === s.key);
+        if (found) {
+            modified = true;
+            return { ...s, enabled: false };
+        }
+        return s;
+    });
+
+    if (modified) {
+        setStoredSources(newSources);
+        state.sources = newSources;
+        renderSourceList();
+        populateSelect();
+        toast('⚠️ 发现 ' + invalidCount + ' 个失效源，已标记', 'warning');
+    } else {
+        renderSourceList();
+    }
 }
 
 // ============================================================
@@ -658,6 +785,9 @@ function getSelectedSource() {
     return state.sources.find(s => s.key === key) || null;
 }
 
+// ============================================================
+//  populateSelect - 首页下拉框
+// ============================================================
 function populateSelect() {
     const sel = dom.sourceSelect;
     sel.innerHTML = '';
@@ -681,30 +811,40 @@ function populateSelect() {
         return;
     }
 
-    const groups = { stable: [], normal: [], backup: [] };
-    sources.forEach(s => {
-        const g = s.group || 'normal';
-        if (groups[g]) groups[g].push(s);
-        else groups.normal.push(s);
-    });
-    const labels = { stable: '🟢 稳定', normal: '🔵 普通', backup: '🟡 备用' };
+    // 分组：有效源 和 失效源
+    const validSources = sources.filter(s => s.enabled !== false);
+    const invalidSources = sources.filter(s => s.enabled === false);
 
     let hasOptions = false;
-    Object.keys(groups).forEach(g => {
-        if (!groups[g].length) return;
-        hasOptions = true;
+
+    // 有效源分组
+    if (validSources.length) {
         const og = document.createElement('optgroup');
-        og.label = labels[g] || g;
-        if (showHiddenSources) og.label += ' 🔓';
-        groups[g].forEach(s => {
+        og.label = '🟢 有效';
+        validSources.forEach(s => {
             const opt = document.createElement('option');
             opt.value = s.key;
-            const isHidden = s.enabled === false;
-            opt.textContent = s.name + (isHidden ? ' 🔒' : '');
+            opt.textContent = s.name;
             og.appendChild(opt);
+            hasOptions = true;
         });
         sel.appendChild(og);
-    });
+    }
+
+    // 失效源分组
+    if (invalidSources.length) {
+        const og = document.createElement('optgroup');
+        og.label = '🔴 失效';
+        invalidSources.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.key;
+            opt.textContent = s.name + ' (失效)';
+            opt.style.color = '#999';
+            og.appendChild(opt);
+            hasOptions = true;
+        });
+        sel.appendChild(og);
+    }
 
     if (!hasOptions) {
         sel.innerHTML = '<option value="">请导入源</option>';
