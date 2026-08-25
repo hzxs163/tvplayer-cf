@@ -1201,10 +1201,10 @@ function startPlayer(url, title) {
         state.hlsInstance = null;
     }
 
-    const isHtml = url.includes('.html') ||
-        url.includes('/play/') ||
-        (!url.includes('.m3u8') && !url.includes('.mp4') && !url.includes('.ts') && !url.includes('.flv') && !url
-            .includes('.mkv'));
+    // 先判断是否为流媒体直链，再判断是否为 HTML 页面
+    // 修复：vv.jisuzyv.com/play/xxx/index.m3u8 这类地址含 /play/ 但本质是 m3u8，不能误判为 HTML
+    const isMedia = /\.(m3u8|mp4|ts|flv|mkv|mp3|aac|webm|m4s)(\?[^#]*)?(#.*)?$/i.test(url);
+    const isHtml = !isMedia && (url.includes('.html') || url.includes('/play/') || url.includes('/vod/') || url.includes('/show/') || url.includes('/detail/'));
 
     if (isHtml) {
         extractM3u8FromHtml(url, title);
@@ -1424,6 +1424,14 @@ async function extractM3u8FromHtml(pageUrl, title) {
 
         const resp = await fetchProxy(pageUrl);
         const html = typeof resp === 'string' ? resp : JSON.stringify(resp);
+
+        // 防御：若内容本身就是 m3u8 播放列表（#EXTM3U 开头），说明 URL 是直链但被误判为页面，直接播放原地址
+        if (String(html).trimStart().startsWith('#EXTM3U')) {
+            toast('✅ 识别为 m3u8 直链', 'success');
+            setStatus('就绪');
+            startPlayer(pageUrl, title || '解析播放');
+            return;
+        }
 
         const patterns = [
             /["'](https?:[^"']+\.m3u8[^"']*)["']/,
