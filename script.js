@@ -201,7 +201,7 @@ function renderSourceList() {
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                 <span style="font-size:14px; font-weight:600; color:var(--text);">📋 已有源列表</span>
-                <span style="font-size:13px; color:var(--text2);">共 ${sources.length} 个</span>
+                <span style="font-size:13px; color:var(--text2);">共 ${visibleSources.length} 个</span>
                 <span style="font-size:13px; color:#2e7d32;">🟢 有效 ${validSources.length} 个</span>
                 ${invalidSources.length > 0 ? `<span style="font-size:13px; color:#c62828;">🔴 失效 ${invalidSources.length} 个</span>` : ''}
             </div>
@@ -424,7 +424,7 @@ function loadExample() {
 // ============================================================
 async function checkAllSources() {
     // 检测所有源（包括隐藏源），不过滤
-    const sources = getStoredSources() || [];
+    const sources = state.sources || [];
     if (!sources.length) {
         toast('没有源需要检查', 'info');
         return;
@@ -814,8 +814,8 @@ function populateSelect() {
     }
 
     // 分组：有效源 和 失效源
-    const validSources = sources.filter(s => s.disabled !== false);
-    const invalidSources = sources.filter(s => s.disabled === false);
+    const validSources = sources.filter(s => s.disabled !== true);
+    const invalidSources = sources.filter(s => s.disabled === true);
 
     let hasOptions = false;
 
