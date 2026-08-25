@@ -412,7 +412,7 @@ function loadExample() {
 }
 
 // ============================================================
-//  一键检查失效源（宽松版）
+//  一键检查失效源（控制台版逻辑）
 // ============================================================
 async function checkAllSources() {
     const sources = getStoredSources() || [];
@@ -435,47 +435,28 @@ async function checkAllSources() {
 
     function checkSource(source) {
         return new Promise((resolve) => {
-            const apis = [
-                source.api + '?ac=list',
-                source.api + '?ac=videolist',
-                source.api + '?ac=videolist&pg=1'
-            ];
-            
-            let index = 0;
-            let found = false;
-
-            function tryNext() {
-                if (index >= apis.length) {
-                    resolve({ valid: false, source, reason: '所有接口均失败' });
-                    return;
-                }
-                const url = apis[index];
-                const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
-                fetch(proxyUrl, { signal: AbortSignal.timeout(6000) })
-                    .then(r => {
-                        if (!r.ok) throw new Error('HTTP ' + r.status);
-                        return r.text();
-                    })
-                    .then(text => {
-                        const isJSON = text.trimStart().startsWith('{') || text.trimStart().startsWith('[');
-                        const hasList = text.includes('"list"') || text.includes('"class"') || text.includes('"code"');
-                        if (isJSON && hasList) {
-                            resolve({ valid: true, source });
-                        } else {
-                            index++;
-                            tryNext();
-                        }
-                    })
-                    .catch(() => {
-                        index++;
-                        tryNext();
-                    });
-            }
-            tryNext();
+            const proxyUrl = '/api/proxy?url=' + encodeURIComponent(source.api);
+            fetch(proxyUrl, { signal: AbortSignal.timeout(5000) })
+                .then(r => {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.text();
+                })
+                .then(text => {
+                    const isJSON = text.trimStart().startsWith('{') || text.trimStart().startsWith('[');
+                    const hasList = text.includes('"list"');
+                    const hasClass = text.includes('"class"');
+                    const hasCode = text.includes('"code"');
+                    const hasVodId = text.includes('"vod_id"');
+                    const valid = isJSON && (hasList || hasClass || hasCode || hasVodId);
+                    resolve({ valid, source });
+                })
+                .catch(() => {
+                    resolve({ valid: false, source });
+                });
         });
     }
 
-    const batchSize = 6;
+    const batchSize = 5;
     for (let i = 0; i < total; i += batchSize) {
         const batch = sources.slice(i, i + batchSize);
         const batchResults = await Promise.all(batch.map(s => checkSource(s)));
