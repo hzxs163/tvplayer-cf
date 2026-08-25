@@ -1573,7 +1573,7 @@ function startPlayer(url, title) {
 }
 
 // ============================================================
-//  代理播放（备用）- 隐藏加载过程，避免缩小画面闪烁
+//  代理播放（备用）- 完整支持森林资源（二级 m3u8 + 分片代理）
 // ============================================================
 function startPlayerWithProxy(url, title) {
     // ============================================
@@ -1604,37 +1604,93 @@ function startPlayerWithProxy(url, title) {
     // ============================================
     
     const video = dom.player;
-    video.style.opacity = '0';
+    const baseUrl = window.location.origin;
 
     if (window.Hls && Hls.isSupported()) {
+        // ============================================
+        // 步骤1：通过代理获取主 m3u8
+        // ============================================
         const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
-
+        
         fetch(proxyUrl)
             .then(function(r) {
                 if (!r.ok) throw new Error('代理请求失败: ' + r.status);
                 return r.text();
             })
-            .then(function(m3u8Content) {
-                const baseUrl = window.location.origin;
+            .then(function(mainM3u8) {
+                // ============================================
+                // 步骤2：解析主 m3u8 中的二级 m3u8 地址
+                // ============================================
+                const targetOrigin = new URL(url).origin;
+                const subMatch = mainM3u8.match(/(\/[^\s]+\.m3u8)/);
                 
+                if (subMatch) {
+                    // 有二级 m3u8（森林资源等）
+                    const subUrl = targetOrigin + subMatch[1];
+                    console.log('📡 检测到二级 m3u8，请求:', subUrl);
+                    return fetch('/api/proxy?url=' + encodeURIComponent(subUrl))
+                        .then(function(r) {
+                            if (!r.ok) throw new Error('二级 m3u8 请求失败: ' + r.status);
+                            return r.text();
+                        })
+                        .then(function(subM3u8) {
+                            // ============================================
+                            // 步骤3：替换二级 m3u8 中的 Key 和分片为代理地址
+                            // ============================================
+                            let modified = subM3u8;
+                            
+                            // 替换 Key (URI="xxx")
+                            modified = modified.replace(
+                                /(URI=")([^"]+)(")/g,
+                                function(match, p1, p2, p3) {
+                                    if (p2.startsWith('/')) {
+                                        return p1 + baseUrl + '/api/proxy?url=' + encodeURIComponent(targetOrigin + p2) + p3;
+                                    }
+                                    return match;
+                                }
+                            );
+                            
+                            // 替换分片 (.ts)
+                            modified = modified.replace(
+                                /(\/[^\s]+\.ts)/g,
+                                function(match) {
+                                    return baseUrl + '/api/proxy?url=' + encodeURIComponent(targetOrigin + match);
+                                }
+                            );
+                            
+                            console.log('✅ 二级 m3u8 替换完成');
+                            return modified;
+                        });
+                } else {
+                    // 没有二级 m3u8（普通源），直接处理主 m3u8
+                    console.log('📡 单层 m3u8，直接处理');
+                    let modified = mainM3u8;
+                    const keyUrl = url.replace('/index.m3u8', '/enc.key');
+                    modified = modified.replace(
+                        /URI="enc\.key"/,
+                        'URI="' + baseUrl + '/api/proxy?url=' + encodeURIComponent(keyUrl) + '"'
+                    );
+                    return modified;
+                }
+            })
+            .then(function(modifiedM3u8) {
                 // ============================================
-                // 关键：替换 enc.key
+                // 步骤4：创建 blob 并播放
                 // ============================================
-                const keyUrl = url.replace('/index.m3u8', '/enc.key');
-                m3u8Content = m3u8Content.replace(
-                    /URI="enc\.key"/,
-                    `URI="${baseUrl}/api/proxy?url=${encodeURIComponent(keyUrl)}"`
-                );
-                // ============================================
-
-                const blob = new Blob([m3u8Content], { type: 'application/vnd.apple.mpegurl' });
+                const blob = new Blob([modifiedM3u8], { type: 'application/vnd.apple.mpegurl' });
                 const blobUrl = URL.createObjectURL(blob);
-
+                
+                // 清理旧 hls 实例
+                if (state.hlsInstance) {
+                    state.hlsInstance.destroy();
+                    state.hlsInstance = null;
+                }
+                
                 const hls = new Hls({ enableWorker: true });
                 state.hlsInstance = hls;
                 hls.loadSource(blobUrl);
                 hls.attachMedia(video);
-
+                
                 hls.on(Hls.Events.MANIFEST_PARSED, function() {
                     video.style.opacity = '1';
                     video.style.width = '100%';
@@ -1647,7 +1703,7 @@ function startPlayerWithProxy(url, title) {
                     video.play().catch(function() {});
                     console.log('✅ 代理播放成功');
                 });
-
+                
                 hls.on(Hls.Events.ERROR, function(e, data) {
                     video.style.opacity = '1';
                     dom.playerLoading.classList.add('hidden');
@@ -1664,6 +1720,7 @@ function startPlayerWithProxy(url, title) {
                 toast('播放失败: ' + e.message, 'error');
                 startPlayerInIframe(url, title);
             });
+            
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.style.opacity = '1';
         video.src = url;
