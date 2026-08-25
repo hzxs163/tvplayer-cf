@@ -196,7 +196,12 @@ function renderSourceList() {
 
     let html = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
-            <span style="font-size:13px; color:var(--text2);">共 ${sources.length} 个源</span>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <span style="font-size:14px; font-weight:600; color:var(--text);">📋 已有源列表</span>
+                <span style="font-size:13px; color:var(--text2);">共 ${sources.length} 个</span>
+                <span style="font-size:13px; color:#2e7d32;">🟢 有效 ${validSources.length} 个</span>
+                ${invalidSources.length > 0 ? `<span style="font-size:13px; color:#c62828;">🔴 失效 ${invalidSources.length} 个</span>` : ''}
+            </div>
             <button class="btn btn-ghost" onclick="checkAllSources()" style="font-size:12px; padding:4px 14px; border:1px solid var(--border); border-radius:6px; cursor:pointer; background:var(--bg);">
                 🔍 检查失效源
             </button>
@@ -415,14 +420,27 @@ function loadExample() {
 //  一键检查失效源（控制台版逻辑）
 // ============================================================
 async function checkAllSources() {
+    // ============================================
+    // 检查前先清除所有失效标记
+    // ============================================
     const sources = getStoredSources() || [];
-    if (!sources.length) {
+    if (sources.length) {
+        const clearedSources = sources.map(s => {
+            return { ...s, enabled: true };
+        });
+        setStoredSources(clearedSources);
+        state.sources = clearedSources;
+    }
+    // ============================================
+
+    const sources2 = getStoredSources() || [];
+    if (!sources2.length) {
         toast('没有源需要检查', 'info');
         return;
     }
 
     const checkBtn = document.querySelector('#sourceList .btn-ghost');
-    const total = sources.length;
+    const total = sources2.length;
     let checked = 0;
     const results = { valid: [], invalid: [] };
 
@@ -458,7 +476,7 @@ async function checkAllSources() {
 
     const batchSize = 5;
     for (let i = 0; i < total; i += batchSize) {
-        const batch = sources.slice(i, i + batchSize);
+        const batch = sources2.slice(i, i + batchSize);
         const batchResults = await Promise.all(batch.map(s => checkSource(s)));
         batchResults.forEach(result => {
             checked++;
@@ -491,7 +509,7 @@ async function checkAllSources() {
 
     // 标记失效源（仅标记，不删除）
     let modified = false;
-    const newSources = sources.map(s => {
+    const newSources = sources2.map(s => {
         const found = results.invalid.find(inv => inv.key === s.key);
         if (found) {
             modified = true;
