@@ -660,12 +660,31 @@ function switchPlayerLine(index) {
     // ============================================
     // 百度源：使用 iframe 播放
     // ============================================
-    if (state.currentSource?.key === 'dbm3u8' || state.currentSource?.name.includes('百度')) {
+    if (state.currentSource?.key === 'dbm3u8' || state.currentSource?.name.includes('百度') || state.currentSource?.name.includes('iqiyizyjx')) {
         const firstEp = episodes[0];
         const m3u8Url = normalizeUrl(firstEp.url);
         const baiduPlayerUrl = 'https://jx.jxbdzyw.com/m3u8/?url=' + encodeURIComponent(m3u8Url);
         dom.playerIframe.style.display = 'block';
         dom.playerIframe.src = baiduPlayerUrl;
+        dom.player.style.display = 'none';
+        dom.playerLoading.classList.add('hidden');
+        setTimeout(() => {
+            dom.playerLoading.classList.remove('show');
+        }, 400);
+        toast('已切换: ' + lines[index].name, 'info');
+        return;
+    }
+    // ============================================
+
+    // ============================================
+    // ly166 源（爱奇艺解析）：使用 iframe 播放
+    // ============================================
+    if (state.currentSource?.name.includes('爱奇艺') || state.currentSource?.key.includes('iqiyi') || firstUrl.includes('ly166.com') || firstUrl.includes('iqiyizyjx.com')) {
+        const firstEp = episodes[0];
+        const m3u8Url = normalizeUrl(firstEp.url);
+        const playerUrl = 'https://www.iqiyizyjx.com/?url=' + encodeURIComponent(m3u8Url);
+        dom.playerIframe.style.display = 'block';
+        dom.playerIframe.src = playerUrl;
         dom.player.style.display = 'none';
         dom.playerLoading.classList.add('hidden');
         setTimeout(() => {
@@ -1221,6 +1240,40 @@ async function playMovie(vod, source) {
         }
         // ============================================
 
+        // ============================================
+        // ly166 源（爱奇艺解析）：使用 iframe 播放
+        // ============================================
+        if (source.name.includes('爱奇艺') || source.key.includes('iqiyi') || firstUrl.includes('ly166.com') || firstUrl.includes('iqiyizyjx.com')) {
+            console.log('🔵 检测到 ly166/爱奇艺源，使用 iframe 播放');
+            
+            // 解析第一集的 m3u8 地址
+            const episodes = parseEpisodes(firstUrl);
+            const firstEp = episodes[0];
+            const m3u8Url = normalizeUrl(firstEp.url);
+            
+            // 构造播放器地址
+            const playerUrl = 'https://www.iqiyizyjx.com/?url=' + encodeURIComponent(m3u8Url);
+            
+            showPlayer();
+            dom.playerLoading.classList.remove('hidden');
+            dom.playerLoading.classList.add('show');
+            
+            // 用 iframe 播放
+            dom.playerIframe.style.display = 'block';
+            dom.playerIframe.src = playerUrl;
+            dom.player.style.display = 'none';
+            
+            dom.playerLoading.classList.add('hidden');
+            setTimeout(function() {
+                dom.playerLoading.classList.remove('show');
+            }, 400);
+            
+            renderEpisodesPanel(episodes);
+            setStatus('播放中');
+            return;
+        }
+        // ============================================
+
         const episodes = parseEpisodes(firstUrl);
 
         // ============================================
@@ -1384,6 +1437,21 @@ function renderEpisodesPanel(episodes) {
                 const baiduPlayerUrl = 'https://jx.jxbdzyw.com/m3u8/?url=' + encodeURIComponent(m3u8Url);
                 dom.playerIframe.style.display = 'block';
                 dom.playerIframe.src = baiduPlayerUrl;
+                dom.player.style.display = 'none';
+                dom.episodesPanel.classList.remove('open');
+                if (state.currentVod && state.currentSource) {
+                    addHistory(state.currentVod, state.currentSource, ep.name);
+                }
+                return;
+            }
+            // ============================================
+            // ly166/爱奇艺源选集：使用 iframe 播放
+            // ============================================
+            if (state.currentSource?.name.includes('爱奇艺') || state.currentSource?.key.includes('iqiyi') || ep.url.includes('ly166.com') || ep.url.includes('iqiyizyjx.com')) {
+                const m3u8Url = normalizeUrl(ep.url);
+                const playerUrl = 'https://www.iqiyizyjx.com/?url=' + encodeURIComponent(m3u8Url);
+                dom.playerIframe.style.display = 'block';
+                dom.playerIframe.src = playerUrl;
                 dom.player.style.display = 'none';
                 dom.episodesPanel.classList.remove('open');
                 if (state.currentVod && state.currentSource) {
