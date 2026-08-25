@@ -200,13 +200,13 @@ function renderSourceList() {
     let html = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                <span style="font-size:14px; font-weight:600; color:var(--text);">📋 已有源列表</span>
+                <span style="font-size:14px; font-weight:600; color:var(--text);">📋源</span>
                 <span style="font-size:13px; color:var(--text2);">共 ${sources.length} 个</span>
-                <span style="font-size:13px; color:#2e7d32;">🟢 有效 ${validSources.length} 个</span>
-                ${invalidSources.length > 0 ? `<span style="font-size:13px; color:#c62828;">🔴 失效 ${invalidSources.length} 个</span>` : ''}
+                <span style="font-size:13px; color:#2e7d32;">🟢有效 ${validSources.length} 个</span>
+                ${invalidSources.length > 0 ? `<span style="font-size:13px; color:#c62828;">🔴失效 ${invalidSources.length} 个</span>` : ''}
             </div>
             <button class="btn btn-ghost" onclick="checkAllSources()" style="font-size:12px; padding:4px 14px; border:1px solid var(--border); border-radius:6px; cursor:pointer; background:var(--bg);">
-                🔍 检查失效源
+                🔍检查有效性
             </button>
         </div>
     `;
