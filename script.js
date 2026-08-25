@@ -561,12 +561,15 @@ function esc(s) {
 //  API
 // ============================================================
 async function fetchProxy(url, timeout = FETCH_TIMEOUT) {
-    // 取消上一个请求
-    if (state.currentController) {
+    // 只取消同类型的上一个请求（通过 url 前缀判断）
+    const urlKey = url.split('?')[0]; // 取 API 地址作为 key
+    if (state.currentController && state.currentController._urlKey === urlKey) {
         state.currentController.abort();
+        state.currentController = null;
     }
     
     const controller = new AbortController();
+    controller._urlKey = urlKey; // 标记这个请求的类型
     state.currentController = controller;
     
     const timer = setTimeout(() => controller.abort(), timeout);
@@ -579,7 +582,7 @@ async function fetchProxy(url, timeout = FETCH_TIMEOUT) {
         return await resp.json();
     } catch (e) {
         if (e.name === 'AbortError') {
-            console.log('📌 请求已取消');
+            // 静默处理，不打印日志
             return null;
         }
         throw e;
