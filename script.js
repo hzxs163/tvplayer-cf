@@ -1535,9 +1535,9 @@ function startPlayer(url, title) {
         if (window.Hls && Hls.isSupported()) {
             const hls = new Hls({
                 enableWorker: true,
-                maxBufferLength: 60,
-                maxMaxBufferLength: 120,
-                maxBufferSize: 120 * 1000 * 1000,
+                maxBufferLength: 180,
+                maxMaxBufferLength: 360,
+                maxBufferSize: 360 * 1000 * 1000,
                 lowLatencyMode: false,
                 abrEwmaFastLive: 2,
                 abrEwmaSlowLive: 6,
@@ -1581,7 +1581,7 @@ function startPlayer(url, title) {
 }
 
 // ============================================================
-//  代理播放（备用）- 完整支持森林资源（二级 m3u8 + 分片代理）
+//  代理播放（备用）- 完整支持森林资源（二级 m3u8 + 分片代理）- 缓冲 180 秒
 // ============================================================
 function startPlayerWithProxy(url, title) {
     // ============================================
@@ -1696,13 +1696,14 @@ function startPlayerWithProxy(url, title) {
                 
                 const hls = new Hls({
                     enableWorker: true,
-                    maxBufferLength: 60,
-                    maxMaxBufferLength: 120,
-                    maxBufferSize: 120 * 1000 * 1000,
+                    maxBufferLength: 180,
+                    maxMaxBufferLength: 360,
+                    maxBufferSize: 360 * 1000 * 1000,
                     lowLatencyMode: false,
                     abrEwmaFastLive: 2,
                     abrEwmaSlowLive: 6,
                 });
+                state.hlsInstance = hls;
                 hls.loadSource(blobUrl);
                 hls.attachMedia(video);
                 
@@ -1716,7 +1717,7 @@ function startPlayerWithProxy(url, title) {
                         dom.playerLoading.classList.remove('show');
                     }, 400);
                     video.play().catch(function() {});
-                    console.log('✅ 代理播放成功');
+                    console.log('✅ 代理播放成功（缓冲 180 秒）');
                 });
                 
                 hls.on(Hls.Events.ERROR, function(e, data) {
