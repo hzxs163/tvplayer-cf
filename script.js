@@ -423,6 +423,7 @@ function loadExample() {
 //  一键检查失效源（控制台版逻辑）
 // ============================================================
 async function checkAllSources() {
+    // 检测所有源（包括隐藏源），不过滤
     const sources = getStoredSources() || [];
     if (!sources.length) {
         toast('没有源需要检查', 'info');
