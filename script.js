@@ -206,7 +206,7 @@ function renderSourceList() {
                 ${invalidSources.length > 0 ? `<span style="font-size:13px; color:#c62828;">🔴失效 ${invalidSources.length} 个</span>` : ''}
             </div>
             <button class="btn btn-ghost" onclick="checkAllSources()" style="font-size:12px; padding:4px 14px; border:1px solid var(--border); border-radius:6px; cursor:pointer; background:var(--bg);">
-                🔍检查有效性
+                🔍检测
             </button>
         </div>
     `;
