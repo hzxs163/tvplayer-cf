@@ -1533,7 +1533,15 @@ function startPlayer(url, title) {
 
         // 非直连 m3u8（带参数等），直接用 hls.js
         if (window.Hls && Hls.isSupported()) {
-            const hls = new Hls({ enableWorker: true });
+            const hls = new Hls({
+                enableWorker: true,
+                maxBufferLength: 60,
+                maxMaxBufferLength: 120,
+                maxBufferSize: 120 * 1000 * 1000,
+                lowLatencyMode: false,
+                abrEwmaFastLive: 2,
+                abrEwmaSlowLive: 6,
+            });
             state.hlsInstance = hls;
             hls.loadSource(url);
             hls.attachMedia(video);
@@ -1686,8 +1694,15 @@ function startPlayerWithProxy(url, title) {
                     state.hlsInstance = null;
                 }
                 
-                const hls = new Hls({ enableWorker: true });
-                state.hlsInstance = hls;
+                const hls = new Hls({
+                    enableWorker: true,
+                    maxBufferLength: 60,
+                    maxMaxBufferLength: 120,
+                    maxBufferSize: 120 * 1000 * 1000,
+                    lowLatencyMode: false,
+                    abrEwmaFastLive: 2,
+                    abrEwmaSlowLive: 6,
+                });
                 hls.loadSource(blobUrl);
                 hls.attachMedia(video);
                 
