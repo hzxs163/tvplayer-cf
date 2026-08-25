@@ -412,7 +412,7 @@ function loadExample() {
 }
 
 // ============================================================
-//  一键检查失效源
+//  一键检查失效源（宽松版）
 // ============================================================
 async function checkAllSources() {
     const sources = getStoredSources() || [];
@@ -426,7 +426,6 @@ async function checkAllSources() {
     let checked = 0;
     const results = { valid: [], invalid: [] };
 
-    // 修改按钮文字
     if (checkBtn) {
         checkBtn.textContent = '⏳ 0/' + total;
         checkBtn.disabled = true;
@@ -436,30 +435,47 @@ async function checkAllSources() {
 
     function checkSource(source) {
         return new Promise((resolve) => {
-            const proxyUrl = '/api/proxy?url=' + encodeURIComponent(source.api + '?ac=list');
-            fetch(proxyUrl, { signal: AbortSignal.timeout(8000) })
-                .then(r => {
-                    if (!r.ok) throw new Error('HTTP ' + r.status);
-                    return r.text();
-                })
-                .then(text => {
-                    const isJSON = text.trimStart().startsWith('{') || text.trimStart().startsWith('[');
-                    const hasList = text.includes('"list"') || text.includes('"class"') || text.includes('"code"');
-                    if (isJSON && (hasList || text.length > 50)) {
-                        resolve({ valid: true, source });
-                    } else if (text.includes('<!DOCTYPE') || text.includes('<html')) {
-                        resolve({ valid: false, source, reason: '返回 HTML' });
-                    } else {
-                        resolve({ valid: false, source, reason: '数据异常' });
-                    }
-                })
-                .catch(err => {
-                    resolve({ valid: false, source, reason: err.message });
-                });
+            const apis = [
+                source.api + '?ac=list',
+                source.api + '?ac=videolist',
+                source.api + '?ac=videolist&pg=1'
+            ];
+            
+            let index = 0;
+            let found = false;
+
+            function tryNext() {
+                if (index >= apis.length) {
+                    resolve({ valid: false, source, reason: '所有接口均失败' });
+                    return;
+                }
+                const url = apis[index];
+                const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
+                fetch(proxyUrl, { signal: AbortSignal.timeout(6000) })
+                    .then(r => {
+                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                        return r.text();
+                    })
+                    .then(text => {
+                        const isJSON = text.trimStart().startsWith('{') || text.trimStart().startsWith('[');
+                        const hasList = text.includes('"list"') || text.includes('"class"') || text.includes('"code"');
+                        if (isJSON && hasList) {
+                            resolve({ valid: true, source });
+                        } else {
+                            index++;
+                            tryNext();
+                        }
+                    })
+                    .catch(() => {
+                        index++;
+                        tryNext();
+                    });
+            }
+            tryNext();
         });
     }
 
-    const batchSize = 8;
+    const batchSize = 6;
     for (let i = 0; i < total; i += batchSize) {
         const batch = sources.slice(i, i + batchSize);
         const batchResults = await Promise.all(batch.map(s => checkSource(s)));
@@ -479,7 +495,6 @@ async function checkAllSources() {
         }
     }
 
-    // 恢复按钮
     if (checkBtn) {
         checkBtn.textContent = '🔍 检查失效源';
         checkBtn.disabled = false;
@@ -493,7 +508,7 @@ async function checkAllSources() {
         return;
     }
 
-    // 标记失效源
+    // 标记失效源（仅标记，不删除）
     let modified = false;
     const newSources = sources.map(s => {
         const found = results.invalid.find(inv => inv.key === s.key);
