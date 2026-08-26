@@ -2109,6 +2109,7 @@ function closePlayer() {
 
     hidePlayerLoading();
     restoreAllContent();
+    setStatus('就绪');
 }
 
 // ============================================================
