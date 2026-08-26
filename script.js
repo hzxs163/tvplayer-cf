@@ -1422,7 +1422,6 @@ async function playMovie(vod, source) {
                         window._iqiyiHls = null;
                     }
                     
-                    // 🚀 硬编码 180 秒配置
                     const hls = new Hls({
                         enableWorker: true,
                         maxBufferLength: 180,
@@ -1686,7 +1685,6 @@ function renderEpisodesPanel(episodes) {
                             window._iqiyiHls = null;
                         }
                         
-                        // 🚀 硬编码 180 秒配置
                         const hls = new Hls({
                             enableWorker: true,
                             maxBufferLength: 180,
@@ -1774,6 +1772,9 @@ function renderEpisodesPanel(episodes) {
     });
 }
 
+// ============================================================
+//  startPlayer - 直接播放 m3u8，不走代理
+// ============================================================
 function startPlayer(url, title) {
     if (!url || !url.trim()) {
         toast('播放地址为空', 'error');
@@ -1818,81 +1819,11 @@ function startPlayer(url, title) {
         return;
     }
 
+    // ============================================================
+    // 🚀 直接播放 m3u8，不走代理
+    // ============================================================
     if (url.includes('.m3u8') || url.includes('.m3u8?')) {
-        const isDirectM3u8 = url.includes('.m3u8') && !url.includes('#') && url.startsWith('http');
-
-        if (isDirectM3u8) {
-            if (url.includes('huyall.com') || url.includes('baisiweiting.com')) {
-                console.log('🔵 虎牙资源，直接走代理');
-                showPlayer();
-                dom.playerLoading.classList.remove('hidden');
-                dom.playerLoading.classList.add('show');
-                startPlayerWithProxy(url, title);
-                return;
-            }
-
-            showPlayer();
-            dom.playerLoading.classList.remove('hidden');
-            dom.playerLoading.classList.add('show');
-
-            let fallbackTimer = null;
-            let isFallbackUsed = false;
-
-            const cleanup = function() {
-                if (fallbackTimer) {
-                    clearTimeout(fallbackTimer);
-                    fallbackTimer = null;
-                }
-                video.removeEventListener('canplay', onSuccess);
-                video.removeEventListener('loadedmetadata', onSuccess);
-                video.removeEventListener('error', onError);
-            };
-
-            const onSuccess = function() {
-                if (isFallbackUsed) return;
-                cleanup();
-                dom.playerLoading.classList.add('hidden');
-                setTimeout(function() {
-                    dom.playerLoading.classList.remove('show');
-                }, 400);
-                video.play().catch(function() {});
-                dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                console.log('✅ 直连播放成功');
-            };
-
-            const onError = function() {
-                if (isFallbackUsed) return;
-                isFallbackUsed = true;
-                cleanup();
-                console.warn('⚠️ 直连失败，切换到代理模式');
-                dom.playerLoading.classList.remove('hidden');
-                dom.playerLoading.classList.add('show');
-                startPlayerWithProxy(url, title);
-            };
-
-            video.addEventListener('canplay', onSuccess, { once: true });
-            video.addEventListener('loadedmetadata', onSuccess, { once: true });
-            video.addEventListener('error', onError, { once: true });
-
-            fallbackTimer = setTimeout(function() {
-                if (isFallbackUsed) return;
-                isFallbackUsed = true;
-                cleanup();
-                console.warn('⏱️ 直连超时，切换到代理模式');
-                dom.playerLoading.classList.remove('hidden');
-                dom.playerLoading.classList.add('show');
-                startPlayerWithProxy(url, title);
-            }, 9000);
-
-            video.src = url;
-            video.load();
-            video.play().catch(function() {});
-            dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            return;
-        }
-
         if (window.Hls && Hls.isSupported()) {
-            // 🚀 硬编码 180 秒配置
             const hls = new Hls({
                 enableWorker: true,
                 maxBufferLength: 180,
@@ -1939,10 +1870,12 @@ function startPlayer(url, title) {
                     dom.playerLoading.classList.remove('show');
                 }, 400);
                 video.play().catch(function() {});
+                console.log('✅ 直连 HLS 播放成功');
             });
 
             hls.on(Hls.Events.ERROR, function(e, data) {
                 video.style.minHeight = '';
+                console.warn('⚠️ HLS 错误:', data.details);
                 if (data.fatal) {
                     toast('HLS 播放失败，尝试嵌入', 'error');
                     startPlayerInIframe(url, title);
@@ -1958,6 +1891,7 @@ function startPlayer(url, title) {
         return;
     }
 
+    // 非 m3u8 视频直链
     video.src = url;
     video.play().catch(function() {
         toast('无法直接播放，尝试嵌入', 'error');
@@ -1965,6 +1899,9 @@ function startPlayer(url, title) {
     });
 }
 
+// ============================================================
+//  startPlayerWithProxy - 仅用于特殊源（虎牙、wgsl等）
+// ============================================================
 function startPlayerWithProxy(url, title) {
     state.isPlaying = true;
     dom.playerSection.classList.add('open');
@@ -2087,7 +2024,6 @@ function startPlayerWithProxy(url, title) {
                     state.hlsInstance = null;
                 }
                 
-                // 🚀 硬编码 180 秒配置
                 const hls = new Hls({
                     enableWorker: true,
                     maxBufferLength: 180,
@@ -2137,7 +2073,7 @@ function startPlayerWithProxy(url, title) {
                         dom.playerLoading.classList.remove('show');
                     }, 400);
                     video.play().catch(function() {});
-                    console.log('✅ 代理播放成功（缓冲 180 秒）');
+                    console.log('✅ 代理播放成功');
                 });
                 
                 hls.on(Hls.Events.ERROR, function(e, data) {
