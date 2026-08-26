@@ -130,6 +130,17 @@
 
         <!-- 已有源列表 -->
         <div class="source-section">
+            <!-- 固定表头 -->
+            <div class="source-header-fixed">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <span class="label">📋 已有源列表</span>
+                    <span class="count" id="importCount">0 个</span>
+                    <button class="btn btn-ghost" onclick="checkAllSources()" style="font-size:12px; padding:2px 12px; border:1px solid var(--border); border-radius:6px; cursor:pointer; background:var(--bg);">
+                        🔍 检查失效源
+                    </button>
+                </div>
+            </div>
+            <!-- 源列表容器（两列卡片） -->
             <div class="source-list" id="sourceList">
                 <div class="empty-hint">📭 暂无源，请导入</div>
             </div>
