@@ -119,17 +119,35 @@
         <div class="import-section">
             <div class="section-label">📄 导入 JSON</div>
             <textarea id="importTextarea" placeholder='请粘贴 JSON 格式的源列表，点击「加载示例」查看格式'></textarea>
+            
+            <!-- 🆕 远程导入 -->
+            <div class="remote-import-row">
+                <input type="text" id="remoteUrlInput" placeholder="输入远程源地址，如 https://example.com/sources.json" />
+                <button class="btn btn-ghost" onclick="fetchRemoteSources()">📥 远程导入</button>
+            </div>
+            
             <div class="import-actions">
-                <button class="btn btn-ghost" onclick="loadExample()" style="font-size:12px;">💡 加载示例</button>
-                <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">📂 选择文件</button>
-                <button class="btn btn-primary" onclick="importSources()">📤 导入</button>
-                <button class="btn btn-cancel" onclick="closeImportModal()">取消</button>
+                <button class="btn btn-ghost" onclick="loadExample()">💡 加载示例</button>
+                <button class="btn btn-ghost" onclick="document.getElementById('fileInput').click()">📂 选择文件</button>
+                <button class="btn btn-ghost" onclick="importSources()">📤 导入</button>
+                <button class="btn btn-ghost" onclick="closeImportModal()">取消</button>
                 <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importFromFile(event)" />
             </div>
         </div>
 
         <!-- 已有源列表 -->
         <div class="source-section">
+            <!-- 固定表头 -->
+            <div class="source-header-fixed">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <span class="label">📋 已有源列表</span>
+                    <span class="count" id="importCount">0 个</span>
+                    <button class="btn btn-ghost" onclick="checkAllSources()" style="font-size:12px; padding:2px 12px; border:1px solid var(--border); border-radius:6px; cursor:pointer; background:var(--bg);">
+                        🔍 检查失效源
+                    </button>
+                </div>
+            </div>
+            <!-- 源列表容器 -->
             <div class="source-list" id="sourceList">
                 <div class="empty-hint">📭 暂无源，请导入</div>
             </div>
