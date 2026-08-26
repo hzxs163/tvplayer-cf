@@ -313,12 +313,14 @@ function showImportModal() {
     if (!state.editingKey) {
         dom.importTextarea.value = '';
     }
+    document.body.style.overflow = 'hidden';
 }
 
 function closeImportModal() {
     dom.importModal.classList.remove('open');
     state.editingKey = null;
     dom.importTextarea.value = '';
+    document.body.style.overflow = '';
 }
 
 function importSources() {
