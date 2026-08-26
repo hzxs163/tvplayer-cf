@@ -1046,6 +1046,159 @@ footer span {
     margin: 0 4px;
 }
 
+/* ===== 固定表头（在源列表上方） ===== */
+.source-header-fixed {
+    position: sticky;
+    top: 0;
+    background: var(--bg2);
+    z-index: 10;
+    padding: 8px 0 10px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.source-header-fixed .label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.source-header-fixed .count {
+    font-size: 13px;
+    color: var(--text2);
+    background: var(--bg);
+    padding: 2px 12px;
+    border-radius: 12px;
+}
+
+/* ===== 源列表 - 两列卡片 ===== */
+.source-list {
+    max-height: 340px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding-right: 4px;
+}
+
+.source-list::-webkit-scrollbar {
+    width: 4px;
+}
+.source-list::-webkit-scrollbar-thumb {
+    background: var(--text3);
+    border-radius: 4px;
+}
+
+/* 分组标签（占满两列） */
+.source-list .group-label {
+    grid-column: 1 / -1;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    padding: 6px 0 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.source-list .group-label .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.source-list .group-label .dot.stable {
+    background: var(--green);
+}
+.source-list .group-label .dot.normal {
+    background: var(--primary);
+}
+.source-list .group-label .dot.backup {
+    background: var(--gold);
+}
+
+/* 源卡片 */
+.source-list .source-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    gap: 6px;
+    transition: 0.2s;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    min-height: 68px;
+}
+
+.source-list .source-item:hover {
+    background: var(--card-hover);
+    border-color: var(--primary);
+}
+
+.source-list .source-item .s-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.source-list .source-item .s-info .s-name {
+    color: var(--text);
+    font-weight: 500;
+    font-size: 13px;
+}
+.source-list .source-item .s-info .s-key {
+    font-size: 11px;
+    color: var(--text3);
+    word-break: break-all;
+}
+
+.source-list .source-item .s-actions {
+    display: flex;
+    gap: 6px;
+}
+.source-list .source-item .s-actions button {
+    padding: 3px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    transition: 0.2s;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+.source-list .source-item .s-actions .edit-btn {
+    color: var(--primary);
+    background: var(--primary-dim);
+}
+.source-list .source-item .s-actions .edit-btn:hover {
+    background: var(--primary);
+    color: #fff;
+}
+.source-list .source-item .s-actions .del-btn {
+    color: #c0392b;
+    background: rgba(192, 57, 43, 0.08);
+}
+.source-list .source-item .s-actions .del-btn:hover {
+    background: #c0392b;
+    color: #fff;
+}
+
+.source-list .empty-hint {
+    grid-column: 1 / -1;
+    color: var(--text3);
+    font-size: 13px;
+    padding: 20px 0;
+    text-align: center;
+}
+
+
 /* ============================================================
            响应式
            ============================================================ */
