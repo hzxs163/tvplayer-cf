@@ -404,11 +404,9 @@ function importFromFile(event) {
 
 function loadExample() {
     const example = [
-        { key: 'feifan', name: '非凡资源', api: 'http://ffzy5.tv/api.php/provide/vod', type: 0, searchable: 1,
+        { key: 'feifan', name: '**资源', api: 'http://***.tv/api.php/provide/vod', type: 0, searchable: 1,
             filterable: 1, playerType: 1, group: 'stable' },
-        { key: 'wolong', name: '卧龙资源', api: 'https://wolongzyw.com/api.php/provide/vod', type: 0, searchable: 1,
-            filterable: 1, playerType: 1, group: 'stable' },
-        { key: 'zuida', name: '最大资源', api: 'https://api.zuidapi.com/api.php/provide/vod', type: 0, searchable: 1,
+        { key: 'zuida', name: '**资源', api: 'https://api.***.com/api.php/provide/vod', type: 0, searchable: 1,
             filterable: 1, playerType: 1, group: 'stable' }
     ];
     dom.importTextarea.value = JSON.stringify(example, null, 2);
