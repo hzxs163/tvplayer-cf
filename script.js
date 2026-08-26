@@ -1314,7 +1314,7 @@ async function loadBrowse(source) {
 }
 
 // ============================================================
-//  loadMovies - 修复：使用 smartApiRequest 自动适配
+//  loadMovies - 修复：使用 smartApiRequest 自动适配.
 // ============================================================
 async function loadMovies() {
     const s = state.source;
