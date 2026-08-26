@@ -1434,7 +1434,20 @@ async function playMovie(vod, source) {
                     
                     const hls = new Hls({
                         enableWorker: true,
-                        maxBufferLength: 30,
+                        maxBufferLength: 60,
+                        maxMaxBufferLength: 120,
+                        maxBufferSize: 60 * 1000 * 1000,
+                        maxBufferHole: 0.5,
+                        lowLatencyMode: false,
+                        backbufferLength: 30,
+                        progressive: true,
+                        abrEwmaFastLive: 0.5,
+                        abrEwmaSlowLive: 3,
+                        abrEwmaDefaultEstimate: 1e6,
+                        abrBandWidthUpFactor: 0.8,
+                        fragLoadingMaxRetry: 6,
+                        fragLoadingRetryDelay: 1000,
+                        fragLoadingMaxRetryTimeout: 64000,
                     });
                     window._iqiyiHls = hls;
                     
@@ -1667,7 +1680,20 @@ function renderEpisodesPanel(episodes) {
                         
                         const hls = new Hls({
                             enableWorker: true,
-                            maxBufferLength: 30,
+                            maxBufferLength: 60,
+                            maxMaxBufferLength: 120,
+                            maxBufferSize: 60 * 1000 * 1000,
+                            maxBufferHole: 0.5,
+                            lowLatencyMode: false,
+                            backbufferLength: 30,
+                            progressive: true,
+                            abrEwmaFastLive: 0.5,
+                            abrEwmaSlowLive: 3,
+                            abrEwmaDefaultEstimate: 1e6,
+                            abrBandWidthUpFactor: 0.8,
+                            fragLoadingMaxRetry: 6,
+                            fragLoadingRetryDelay: 1000,
+                            fragLoadingMaxRetryTimeout: 64000,
                         });
                         window._iqiyiHls = hls;
                         
@@ -1841,12 +1867,23 @@ function startPlayer(url, title) {
         if (window.Hls && Hls.isSupported()) {
             const hls = new Hls({
                 enableWorker: true,
-                maxBufferLength: 180,
-                maxMaxBufferLength: 360,
-                maxBufferSize: 360 * 1000 * 1000,
+                maxBufferLength: 60,
+                maxMaxBufferLength: 120,
+                maxBufferSize: 60 * 1000 * 1000,
+                maxBufferHole: 0.5,
                 lowLatencyMode: false,
-                abrEwmaFastLive: 2,
-                abrEwmaSlowLive: 6,
+                backbufferLength: 30,
+                liveBackBufferLength: 30,
+                progressive: true,
+                abrEwmaFastLive: 0.5,
+                abrEwmaSlowLive: 3,
+                abrEwmaFastVoD: 0.5,
+                abrEwmaSlowVoD: 3,
+                abrEwmaDefaultEstimate: 1e6,
+                abrBandWidthUpFactor: 0.8,
+                fragLoadingMaxRetry: 6,
+                fragLoadingRetryDelay: 1000,
+                fragLoadingMaxRetryTimeout: 64000,
             });
             state.hlsInstance = hls;
             hls.loadSource(url);
@@ -2009,12 +2046,23 @@ function startPlayerWithProxy(url, title) {
                 
                 const hls = new Hls({
                     enableWorker: true,
-                    maxBufferLength: 180,
-                    maxMaxBufferLength: 360,
-                    maxBufferSize: 360 * 1000 * 1000,
+                    maxBufferLength: 60,
+                    maxMaxBufferLength: 120,
+                    maxBufferSize: 60 * 1000 * 1000,
+                    maxBufferHole: 0.5,
                     lowLatencyMode: false,
-                    abrEwmaFastLive: 2,
-                    abrEwmaSlowLive: 6,
+                    backbufferLength: 30,
+                    liveBackBufferLength: 30,
+                    progressive: true,
+                    abrEwmaFastLive: 0.5,
+                    abrEwmaSlowLive: 3,
+                    abrEwmaFastVoD: 0.5,
+                    abrEwmaSlowVoD: 3,
+                    abrEwmaDefaultEstimate: 1e6,
+                    abrBandWidthUpFactor: 0.8,
+                    fragLoadingMaxRetry: 6,
+                    fragLoadingRetryDelay: 1000,
+                    fragLoadingMaxRetryTimeout: 64000,
                 });
                 state.hlsInstance = hls;
                 hls.loadSource(blobUrl);
