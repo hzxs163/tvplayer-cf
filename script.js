@@ -195,7 +195,12 @@ function renderSourceList() {
         return;
     }
 
-    const visibleSources = sources.filter(s => s.enabled !== false);
+    // 🆕 根据 showHiddenSources 决定是否显示隐藏源（和首页逻辑一致）
+    let visibleSources = sources;
+    if (!showHiddenSources) {
+        visibleSources = sources.filter(s => s.enabled !== false);
+    }
+
     const validSources = visibleSources.filter(s => s.disabled !== true);
     const invalidSources = visibleSources.filter(s => s.disabled === true);
 
