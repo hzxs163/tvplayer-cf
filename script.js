@@ -178,7 +178,7 @@ function toggleShowHiddenSources() {
 }
 
 // ============================================================
-//  源列表渲染（弹窗内）
+//  源列表渲染（弹窗内）- 固定表头 + 两列卡片
 // ============================================================
 function renderSourceList() {
     const container = dom.sourceList;
@@ -197,23 +197,14 @@ function renderSourceList() {
     const validSources = visibleSources.filter(s => s.disabled !== true);
     const invalidSources = visibleSources.filter(s => s.disabled === true);
 
-    let html = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
-            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                <span style="font-size:14px; font-weight:600; color:var(--text);">📋 已有源列表</span>
-                <span style="font-size:13px; color:var(--text2);">共 ${visibleSources.length} 个</span>
-                <span style="font-size:13px; color:#2e7d32;">🟢 有效 ${validSources.length} 个</span>
-                ${invalidSources.length > 0 ? `<span style="font-size:13px; color:#c62828;">🔴 失效 ${invalidSources.length} 个</span>` : ''}
-            </div>
-            <button class="btn btn-ghost" onclick="checkAllSources()" style="font-size:12px; padding:4px 14px; border:1px solid var(--border); border-radius:6px; cursor:pointer; background:var(--bg);">
-                🔍 检查失效源
-            </button>
-        </div>
-    `;
+    // 更新计数（在固定表头中显示）
+    dom.importCount.textContent = visibleSources.length + ' 个';
+
+    let html = '';
 
     // 有效源分组
     if (validSources.length) {
-        html += `<div class="group-label"><span class="dot stable"></span> 🟢 有效</div>`;
+        html += `<div class="group-label"><span class="dot stable"></span> 🟢 有效 (${validSources.length})</div>`;
         validSources.forEach(s => {
             const isEditing = state.editingKey === s.key;
             html += `
@@ -233,14 +224,13 @@ function renderSourceList() {
 
     // 失效源分组
     if (invalidSources.length) {
-        html += `<div style="margin-top:12px; padding-top:8px; border-top:1px solid var(--border);"></div>`;
-        html += `<div class="group-label"><span class="dot backup"></span> 🔴 失效（${invalidSources.length} 个）</div>`;
+        html += `<div class="group-label"><span class="dot backup"></span> 🔴 失效 (${invalidSources.length})</div>`;
         invalidSources.forEach(s => {
             const isEditing = state.editingKey === s.key;
             html += `
                 <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''} opacity:0.7;">
                     <div class="s-info">
-                        <span class="s-name" style="color:var(--text3);">🔴 ${esc(s.name)} <span style="font-size:11px; color:var(--text3);">(失效)</span></span>
+                        <span class="s-name" style="color:var(--text3);">🔴 ${esc(s.name)}</span>
                         <span class="s-key">${esc(s.key)}</span>
                     </div>
                     <div class="s-actions">
@@ -253,7 +243,6 @@ function renderSourceList() {
     }
 
     container.innerHTML = html;
-    // dom.importCount.textContent = sources.length + ' 个';
 }
 
 // ============================================================
