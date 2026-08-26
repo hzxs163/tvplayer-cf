@@ -1,4 +1,88 @@
 // ============================================================
+//  设备检测
+// ============================================================
+const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile/i.test(navigator.userAgent);
+
+// ============================================================
+//  HLS 配置（PC / 移动端自适应）
+// ============================================================
+function getHlsConfig() {
+    if (isMobile) {
+        // 🚀 移动端配置（缓冲 75 秒，保守 ABR）
+        return {
+            enableWorker: true,
+            maxBufferLength: 75,
+            maxMaxBufferLength: 150,
+            maxBufferSize: 75 * 1000 * 1000,
+            maxBufferHole: 0.5,
+            lowLatencyMode: false,
+            backbufferLength: 30,
+            liveBackBufferLength: 30,
+            progressive: true,
+            abrEwmaFastLive: 1.0,
+            abrEwmaSlowLive: 4,
+            abrEwmaDefaultEstimate: 1.5e6,
+            abrBandWidthFactor: 0.8,
+            abrBandWidthUpFactor: 0.7,
+            fragLoadingMaxRetry: 15,
+            fragLoadingRetryDelay: 500,
+            fragLoadingMaxRetryTimeout: 120000,
+            manifestLoadingMaxRetry: 10,
+            manifestLoadingRetryDelay: 500,
+            levelLoadingMaxRetry: 10,
+            levelLoadingRetryDelay: 500,
+            startFragPrefetch: true,
+            testBandwidth: false,
+            xhrSetup: function(xhr, xhrUrl) {
+                try {
+                    const urlObj = new URL(xhrUrl);
+                    xhr.setRequestHeader('Referer', urlObj.origin + '/');
+                    xhr.setRequestHeader('Origin', urlObj.origin);
+                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+                } catch (e) {}
+            }
+        };
+    } else {
+        // 🚀 PC 端配置（缓冲 180 秒，激进 ABR）
+        return {
+            enableWorker: true,
+            maxBufferLength: 180,
+            maxMaxBufferLength: 300,
+            maxBufferSize: 300 * 1000 * 1000,
+            maxBufferHole: 1.0,
+            lowLatencyMode: false,
+            backbufferLength: 120,
+            liveBackBufferLength: 120,
+            progressive: true,
+            abrEwmaFastLive: 0.1,
+            abrEwmaSlowLive: 1,
+            abrEwmaFastVoD: 0.1,
+            abrEwmaSlowVoD: 1,
+            abrEwmaDefaultEstimate: 5e6,
+            abrBandWidthFactor: 0.7,
+            abrBandWidthUpFactor: 0.95,
+            fragLoadingMaxRetry: 20,
+            fragLoadingRetryDelay: 200,
+            fragLoadingMaxRetryTimeout: 180000,
+            manifestLoadingMaxRetry: 10,
+            manifestLoadingRetryDelay: 500,
+            levelLoadingMaxRetry: 10,
+            levelLoadingRetryDelay: 500,
+            startFragPrefetch: true,
+            testBandwidth: false,
+            xhrSetup: function(xhr, xhrUrl) {
+                try {
+                    const urlObj = new URL(xhrUrl);
+                    xhr.setRequestHeader('Referer', urlObj.origin + '/');
+                    xhr.setRequestHeader('Origin', urlObj.origin);
+                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+                } catch (e) {}
+            }
+        };
+    }
+}
+
+// ============================================================
 //  CONFIG
 // ============================================================
 const PROXY = (url) => '/api/proxy?url=' + encodeURIComponent(url);
@@ -1432,42 +1516,8 @@ async function playMovie(vod, source) {
                         window._iqiyiHls = null;
                     }
                     
-                    // 🚀 终极激进版 HLS 配置
-                    const hls = new Hls({
-                        enableWorker: true,
-                        maxBufferLength: 180,
-                        maxMaxBufferLength: 300,
-                        maxBufferSize: 300 * 1000 * 1000,
-                        maxBufferHole: 1.0,
-                        lowLatencyMode: false,
-                        backbufferLength: 120,
-                        liveBackBufferLength: 120,
-                        abrEwmaFastLive: 0.1,
-                        abrEwmaSlowLive: 1,
-                        abrEwmaFastVoD: 0.1,
-                        abrEwmaSlowVoD: 1,
-                        abrEwmaDefaultEstimate: 5e6,
-                        abrBandWidthFactor: 0.7,
-                        abrBandWidthUpFactor: 0.95,
-                        fragLoadingMaxRetry: 20,
-                        fragLoadingRetryDelay: 200,
-                        fragLoadingMaxRetryTimeout: 180000,
-                        manifestLoadingMaxRetry: 10,
-                        manifestLoadingRetryDelay: 500,
-                        levelLoadingMaxRetry: 10,
-                        levelLoadingRetryDelay: 500,
-                        startFragPrefetch: true,
-                        testBandwidth: false,
-                        progressive: true,
-                        xhrSetup: function(xhr, xhrUrl) {
-                            try {
-                                const urlObj = new URL(xhrUrl);
-                                xhr.setRequestHeader('Referer', urlObj.origin + '/');
-                                xhr.setRequestHeader('Origin', urlObj.origin);
-                                xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
-                            } catch (e) {}
-                        }
-                    });
+                    // 🚀 使用自适应 HLS 配置
+                    const hls = new Hls(getHlsConfig());
                     window._iqiyiHls = hls;
                     
                     hls.loadSource(m3u8Url);
@@ -1697,42 +1747,8 @@ function renderEpisodesPanel(episodes) {
                             window._iqiyiHls = null;
                         }
                         
-                        // 🚀 终极激进版 HLS 配置
-                        const hls = new Hls({
-                            enableWorker: true,
-                            maxBufferLength: 180,
-                            maxMaxBufferLength: 300,
-                            maxBufferSize: 300 * 1000 * 1000,
-                            maxBufferHole: 1.0,
-                            lowLatencyMode: false,
-                            backbufferLength: 120,
-                            liveBackBufferLength: 120,
-                            abrEwmaFastLive: 0.1,
-                            abrEwmaSlowLive: 1,
-                            abrEwmaFastVoD: 0.1,
-                            abrEwmaSlowVoD: 1,
-                            abrEwmaDefaultEstimate: 5e6,
-                            abrBandWidthFactor: 0.7,
-                            abrBandWidthUpFactor: 0.95,
-                            fragLoadingMaxRetry: 20,
-                            fragLoadingRetryDelay: 200,
-                            fragLoadingMaxRetryTimeout: 180000,
-                            manifestLoadingMaxRetry: 10,
-                            manifestLoadingRetryDelay: 500,
-                            levelLoadingMaxRetry: 10,
-                            levelLoadingRetryDelay: 500,
-                            startFragPrefetch: true,
-                            testBandwidth: false,
-                            progressive: true,
-                            xhrSetup: function(xhr, xhrUrl) {
-                                try {
-                                    const urlObj = new URL(xhrUrl);
-                                    xhr.setRequestHeader('Referer', urlObj.origin + '/');
-                                    xhr.setRequestHeader('Origin', urlObj.origin);
-                                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
-                                } catch (e) {}
-                            }
-                        });
+                        // 🚀 使用自适应 HLS 配置
+                        const hls = new Hls(getHlsConfig());
                         window._iqiyiHls = hls;
                         
                         hls.loadSource(m3u8Url);
@@ -1903,42 +1919,8 @@ function startPlayer(url, title) {
         }
 
         if (window.Hls && Hls.isSupported()) {
-            // 🚀 终极激进版 HLS 配置
-            const hls = new Hls({
-                enableWorker: true,
-                maxBufferLength: 180,
-                maxMaxBufferLength: 300,
-                maxBufferSize: 300 * 1000 * 1000,
-                maxBufferHole: 1.0,
-                lowLatencyMode: false,
-                backbufferLength: 120,
-                liveBackBufferLength: 120,
-                abrEwmaFastLive: 0.1,
-                abrEwmaSlowLive: 1,
-                abrEwmaFastVoD: 0.1,
-                abrEwmaSlowVoD: 1,
-                abrEwmaDefaultEstimate: 5e6,
-                abrBandWidthFactor: 0.7,
-                abrBandWidthUpFactor: 0.95,
-                fragLoadingMaxRetry: 20,
-                fragLoadingRetryDelay: 200,
-                fragLoadingMaxRetryTimeout: 180000,
-                manifestLoadingMaxRetry: 10,
-                manifestLoadingRetryDelay: 500,
-                levelLoadingMaxRetry: 10,
-                levelLoadingRetryDelay: 500,
-                startFragPrefetch: true,
-                testBandwidth: false,
-                progressive: true,
-                xhrSetup: function(xhr, xhrUrl) {
-                    try {
-                        const urlObj = new URL(xhrUrl);
-                        xhr.setRequestHeader('Referer', urlObj.origin + '/');
-                        xhr.setRequestHeader('Origin', urlObj.origin);
-                        xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
-                    } catch (e) {}
-                }
-            });
+            // 🚀 使用自适应 HLS 配置
+            const hls = new Hls(getHlsConfig());
             state.hlsInstance = hls;
             hls.loadSource(url);
             hls.attachMedia(video);
@@ -2098,42 +2080,8 @@ function startPlayerWithProxy(url, title) {
                     state.hlsInstance = null;
                 }
                 
-                // 🚀 终极激进版 HLS 配置
-                const hls = new Hls({
-                    enableWorker: true,
-                    maxBufferLength: 180,
-                    maxMaxBufferLength: 300,
-                    maxBufferSize: 300 * 1000 * 1000,
-                    maxBufferHole: 1.0,
-                    lowLatencyMode: false,
-                    backbufferLength: 120,
-                    liveBackBufferLength: 120,
-                    abrEwmaFastLive: 0.1,
-                    abrEwmaSlowLive: 1,
-                    abrEwmaFastVoD: 0.1,
-                    abrEwmaSlowVoD: 1,
-                    abrEwmaDefaultEstimate: 5e6,
-                    abrBandWidthFactor: 0.7,
-                    abrBandWidthUpFactor: 0.95,
-                    fragLoadingMaxRetry: 20,
-                    fragLoadingRetryDelay: 200,
-                    fragLoadingMaxRetryTimeout: 180000,
-                    manifestLoadingMaxRetry: 10,
-                    manifestLoadingRetryDelay: 500,
-                    levelLoadingMaxRetry: 10,
-                    levelLoadingRetryDelay: 500,
-                    startFragPrefetch: true,
-                    testBandwidth: false,
-                    progressive: true,
-                    xhrSetup: function(xhr, xhrUrl) {
-                        try {
-                            const urlObj = new URL(xhrUrl);
-                            xhr.setRequestHeader('Referer', urlObj.origin + '/');
-                            xhr.setRequestHeader('Origin', urlObj.origin);
-                            xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
-                        } catch (e) {}
-                    }
-                });
+                // 🚀 使用自适应 HLS 配置
+                const hls = new Hls(getHlsConfig());
                 state.hlsInstance = hls;
                 hls.loadSource(blobUrl);
                 hls.attachMedia(video);
