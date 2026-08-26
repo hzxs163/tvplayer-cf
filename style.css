@@ -1402,7 +1402,7 @@ footer span {
     }
     /* 🆕 移动端隐藏取消按钮 */
     .import-actions .btn-cancel {
-        display: none;
+        display: none !important;
     }
 }
 
