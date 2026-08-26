@@ -123,13 +123,13 @@
             <!-- 🆕 远程导入 -->
             <div class="remote-import-row">
                 <input type="text" id="remoteUrlInput" placeholder="输入远程源地址，如 https://example.com/sources.json" />
-                <button class="btn btn-ghost" onclick="fetchRemoteSources()">📥 远程导入</button>
+                <button class="btn btn-ghost" onclick="fetchRemoteSources()">📥远程导入</button>
             </div>
             
             <div class="import-actions">
-                <button class="btn btn-ghost" onclick="loadExample()">💡 加载示例</button>
-                <button class="btn btn-ghost" onclick="document.getElementById('fileInput').click()">📂 选择文件</button>
-                <button class="btn btn-ghost" onclick="importSources()">📤 本地导入</button>
+                <button class="btn btn-ghost" onclick="loadExample()">💡加载示例</button>
+                <button class="btn btn-ghost" onclick="document.getElementById('fileInput').click()">📂选择文件</button>
+                <button class="btn btn-ghost" onclick="importSources()">📤本地导入</button>
                 <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importFromFile(event)" />
             </div>
         </div>
