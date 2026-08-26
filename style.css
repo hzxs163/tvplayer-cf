@@ -959,33 +959,36 @@ main {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: 6px 12px;
     border-radius: 8px;
     font-size: 13px;
-    gap: 8px;
+    gap: 10px;
     transition: 0.2s;
     background: var(--bg);
-    margin-bottom: 4px;
-    border: 1px solid transparent;
+    border: 1px solid var(--border);
+    min-height: 40px;
 }
 .source-list .source-item:hover {
     background: var(--card-hover);
-    border-color: var(--border);
+    border-color: var(--primary);
 }
 .source-list .source-item .s-info {
     display: flex;
-    flex-direction: column;
-    gap: 1px;
+    align-items: center;
+    gap: 10px;
     flex: 1;
     min-width: 0;
 }
 .source-list .source-item .s-info .s-name {
     color: var(--text);
     font-weight: 500;
+    font-size: 13px;
+    white-space: nowrap;
 }
 .source-list .source-item .s-info .s-key {
     font-size: 11px;
     color: var(--text3);
+    white-space: nowrap;
 }
 .source-list .source-item .s-actions {
     display: flex;
@@ -993,13 +996,29 @@ main {
     flex-shrink: 0;
 }
 .source-list .source-item .s-actions button {
-    padding: 3px 12px;
+    padding: 2px 12px;
     font-size: 12px;
     border-radius: 4px;
     transition: 0.2s;
     border: none;
     cursor: pointer;
     font-weight: 500;
+}
+.source-list .source-item .s-actions .edit-btn {
+    color: var(--primary);
+    background: var(--primary-dim);
+}
+.source-list .source-item .s-actions .edit-btn:hover {
+    background: var(--primary);
+    color: #fff;
+}
+.source-list .source-item .s-actions .del-btn {
+    color: #c0392b;
+    background: rgba(192, 57, 43, 0.08);
+}
+.source-list .source-item .s-actions .del-btn:hover {
+    background: #c0392b;
+    color: #fff;
 }
 .source-list .source-item .s-actions .edit-btn {
     color: var(--primary);
