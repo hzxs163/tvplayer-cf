@@ -1650,6 +1650,7 @@ function startPlayer(url, title) {
 
 // ============================================================
 //  代理播放（备用）- 完整支持森林资源（二级 m3u8 + 分片代理）- 缓冲 180 秒
+//  支持 wgsl 源自动过滤失效分片（ts1.yhzybf.com）
 // ============================================================
 function startPlayerWithProxy(url, title) {
     // ============================================
@@ -1694,6 +1695,43 @@ function startPlayerWithProxy(url, title) {
                 return r.text();
             })
             .then(function(mainM3u8) {
+                // ============================================
+                // 🆕 步骤1.5：过滤 wgsl 源的失效分片
+                // ============================================
+                const isWgsl = url.includes('wgslsw.com') || url.includes('wgsl');
+                
+                if (isWgsl) {
+                    console.log('🔍 检测到 wgsl 源，进行分片过滤...');
+                    const lines = mainM3u8.split('\n');
+                    const filteredLines = [];
+                    let filteredCount = 0;
+                    
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i];
+                        
+                        // 检测失效分片（ts1.yhzybf.com）
+                        if (line.includes('ts1.yhzybf.com')) {
+                            // 如果上一行是 #EXTINF，也要删除
+                            if (filteredLines.length > 0 && 
+                                filteredLines[filteredLines.length - 1].trim().startsWith('#EXTINF')) {
+                                filteredLines.pop();
+                            }
+                            filteredCount++;
+                            continue;
+                        }
+                        
+                        filteredLines.push(line);
+                    }
+                    
+                    if (filteredCount > 0) {
+                        mainM3u8 = filteredLines.join('\n');
+                        console.log('✅ 过滤了 ' + filteredCount + ' 个失效分片');
+                        console.log('📄 剩余分片数:', mainM3u8.match(/\.ts/g)?.length || 0);
+                    } else {
+                        console.log('✅ 未发现失效分片');
+                    }
+                }
+                
                 // ============================================
                 // 步骤2：解析主 m3u8 中的二级 m3u8 地址
                 // ============================================
