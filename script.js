@@ -178,7 +178,7 @@ function toggleShowHiddenSources() {
 }
 
 // ============================================================
-//  源列表渲染（弹窗内）
+//  源列表渲染（弹窗内）- 一行显示
 // ============================================================
 function renderSourceList() {
     const container = dom.sourceList;
@@ -190,30 +190,16 @@ function renderSourceList() {
         return;
     }
 
-    // 1. 先过滤掉隐藏源（enabled: false）
     const visibleSources = sources.filter(s => s.enabled !== false);
-
-    // 2. 再分组：有效源（disabled !== true）和失效源（disabled === true）
     const validSources = visibleSources.filter(s => s.disabled !== true);
     const invalidSources = visibleSources.filter(s => s.disabled === true);
 
-    let html = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
-            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                <span style="font-size:14px; font-weight:600; color:var(--text);">📋 已有源列表</span>
-                <span style="font-size:13px; color:var(--text2);">共 ${visibleSources.length} 个</span>
-                <span style="font-size:13px; color:#2e7d32;">🟢 有效 ${validSources.length} 个</span>
-                ${invalidSources.length > 0 ? `<span style="font-size:13px; color:#c62828;">🔴 失效 ${invalidSources.length} 个</span>` : ''}
-            </div>
-            <button class="btn btn-ghost" onclick="checkAllSources()" style="font-size:12px; padding:4px 14px; border:1px solid var(--border); border-radius:6px; cursor:pointer; background:var(--bg);">
-                🔍 检查失效源
-            </button>
-        </div>
-    `;
+    dom.importCount.textContent = visibleSources.length + ' 个';
 
-    // 有效源分组
+    let html = '';
+
     if (validSources.length) {
-        html += `<div class="group-label"><span class="dot stable"></span> 🟢 有效</div>`;
+        html += `<div class="group-label"><span class="dot stable"></span> 🟢 有效 (${validSources.length})</div>`;
         validSources.forEach(s => {
             const isEditing = state.editingKey === s.key;
             html += `
@@ -231,16 +217,14 @@ function renderSourceList() {
         });
     }
 
-    // 失效源分组
     if (invalidSources.length) {
-        html += `<div style="margin-top:12px; padding-top:8px; border-top:1px solid var(--border);"></div>`;
-        html += `<div class="group-label"><span class="dot backup"></span> 🔴 失效（${invalidSources.length} 个）</div>`;
+        html += `<div class="group-label"><span class="dot backup"></span> 🔴 失效 (${invalidSources.length})</div>`;
         invalidSources.forEach(s => {
             const isEditing = state.editingKey === s.key;
             html += `
                 <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''} opacity:0.7;">
                     <div class="s-info">
-                        <span class="s-name" style="color:var(--text3);">🔴 ${esc(s.name)} <span style="font-size:11px; color:var(--text3);">(失效)</span></span>
+                        <span class="s-name" style="color:var(--text3);">🔴 ${esc(s.name)}</span>
                         <span class="s-key">${esc(s.key)}</span>
                     </div>
                     <div class="s-actions">
@@ -253,7 +237,6 @@ function renderSourceList() {
     }
 
     container.innerHTML = html;
-    // dom.importCount.textContent = sources.length + ' 个';
 }
 
 // ============================================================
@@ -339,7 +322,9 @@ function importSources() {
         }
 
         let currentSources = getStoredSources() || [];
+        
         if (state.editingKey) {
+            // 编辑模式：替换单个源
             const idx = currentSources.findIndex(s => s.key === state.editingKey);
             if (idx > -1) {
                 currentSources[idx] = data[0];
@@ -350,17 +335,34 @@ function importSources() {
             setStoredSources(currentSources);
             toast('✅ 更新成功', 'success');
         } else {
-            setStoredSources(data);
-            toast('✅ 导入成功，' + data.length + ' 个源', 'success');
+            // 导入模式：增量合并（按 key 去重）
+            let addedCount = 0;
+            let skippedCount = 0;
+            
+            data.forEach(newItem => {
+                const exists = currentSources.some(ex => ex.key === newItem.key);
+                if (!exists) {
+                    currentSources.push(newItem);
+                    addedCount++;
+                } else {
+                    skippedCount++;
+                }
+            });
+            
+            setStoredSources(currentSources);
+            toast(`✅ 导入完成：新增 ${addedCount} 个，跳过 ${skippedCount} 个重复源`, 'success');
         }
 
         state.sources = getStoredSources() || [];
         closeImportModal();
         populateSelect();
-        const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
-        if (first) {
-            dom.sourceSelect.value = first.key;
-            loadBrowse(first);
+        
+        if (state.sources.length) {
+            const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
+            if (first) {
+                dom.sourceSelect.value = first.key;
+                loadBrowse(first);
+            }
         } else {
             renderEmptyState();
         }
@@ -384,9 +386,24 @@ function importFromFile(event) {
                     throw new Error('每个源必须包含 key, name, api 字段');
                 }
             }
-            setStoredSources(data);
-            state.sources = data;
-            toast('✅ 导入成功，' + data.length + ' 个源', 'success');
+            
+            let currentSources = getStoredSources() || [];
+            let addedCount = 0;
+            let skippedCount = 0;
+            
+            data.forEach(newItem => {
+                const exists = currentSources.some(ex => ex.key === newItem.key);
+                if (!exists) {
+                    currentSources.push(newItem);
+                    addedCount++;
+                } else {
+                    skippedCount++;
+                }
+            });
+            
+            setStoredSources(currentSources);
+            state.sources = currentSources;
+            toast(`✅ 导入完成：新增 ${addedCount} 个，跳过 ${skippedCount} 个重复源`, 'success');
             closeImportModal();
             populateSelect();
             const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
@@ -406,17 +423,156 @@ function importFromFile(event) {
 
 function loadExample() {
     const example = [
-        { key: 'feifan', name: '**资源', api: 'http://***.tv/api.php/provide/vod', type: 0, searchable: 1,
-            filterable: 1, playerType: 1, group: 'stable' },
-        { key: 'zuida', name: '**资源', api: 'https://api.***.com/api.php/provide/vod', type: 0, searchable: 1,
-            filterable: 1, playerType: 1, group: 'stable' }
+        {
+            "_comment": "这是示例源，请替换成你自己的源",
+            "key": "my_source",
+            "name": "我的源名称",
+            "api": "https://你的域名.com/api.php/provide/vod",
+            "type": 0,
+            "searchable": 1,
+            "filterable": 1,
+            "playerType": 1,
+            "group": "stable"
+        }
     ];
     dom.importTextarea.value = JSON.stringify(example, null, 2);
     state.editingKey = null;
     renderSourceList();
     dom.importTextarea.focus();
     dom.importTextarea.scrollTop = 0;
-    toast('示例已填入，点击「导入」即可', 'info');
+    toast('📝 示例格式已填入，替换成你自己的源即可', 'info');
+}
+
+// ============================================================
+//  自动修正源格式（支持远程导入）
+// ============================================================
+
+function normalizeSource(source) {
+    // 如果传入的是单个源对象，转为数组
+    if (source && !Array.isArray(source) && source.id && source.baseUrl) {
+        return [source];
+    }
+    
+    // 如果是数组，逐个修正
+    if (Array.isArray(source)) {
+        return source.map(item => {
+            // 兼容不同字段名：id → key, baseUrl → api
+            const normalized = {
+                key: item.key || item.id || '',
+                name: item.name || item.title || '',
+                api: item.api || item.baseUrl || item.url || '',
+                type: item.type !== undefined ? item.type : 0,
+                searchable: item.searchable !== undefined ? item.searchable : 1,
+                filterable: item.filterable !== undefined ? item.filterable : 1,
+                playerType: item.playerType !== undefined ? item.playerType : 1,
+                enabled: item.enabled !== undefined ? item.enabled : true,
+                disabled: item.disabled !== undefined ? item.disabled : false,
+                group: item.group || 'stable',
+            };
+            
+            // 如果 key 为空，用 name 生成
+            if (!normalized.key) {
+                normalized.key = normalized.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            }
+            
+            // 如果 api 为空，跳过这个源
+            if (!normalized.api) {
+                console.warn('⚠️ 跳过无效源（缺少 api）:', item);
+                return null;
+            }
+            
+            return normalized;
+        }).filter(item => item !== null);
+    }
+    
+    return [];
+}
+
+// ============================================================
+//  远程导入源
+// ============================================================
+
+async function fetchRemoteSources() {
+    const input = document.getElementById('remoteUrlInput');
+    const url = input.value.trim();
+    
+    if (!url) {
+        toast('请输入远程源地址', 'error');
+        return;
+    }
+    
+    try {
+        new URL(url);
+    } catch (e) {
+        toast('请输入有效的 URL 地址', 'error');
+        return;
+    }
+    
+    toast('⏳ 正在获取远程源...', 'info');
+    input.disabled = true;
+    
+    try {
+        const response = await fetch('/api/proxy?url=' + encodeURIComponent(url));
+        
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+        }
+        
+        let data;
+        try {
+            data = await response.json();
+        } catch (e) {
+            const text = await response.text();
+            try {
+                data = JSON.parse(text);
+            } catch (e2) {
+                throw new Error('远程数据不是有效的 JSON 格式');
+            }
+        }
+        
+        const normalized = normalizeSource(data);
+        
+        if (!normalized.length) {
+            throw new Error('未找到有效的源数据，请检查格式');
+        }
+        
+        const existing = getStoredSources() || [];
+        let addedCount = 0;
+        let skippedCount = 0;
+        
+        normalized.forEach(newItem => {
+            const exists = existing.some(ex => ex.key === newItem.key);
+            if (!exists) {
+                existing.push(newItem);
+                addedCount++;
+            } else {
+                skippedCount++;
+            }
+        });
+        
+        setStoredSources(existing);
+        state.sources = existing;
+        
+        renderSourceList();
+        populateSelect();
+        input.value = '';
+        
+        toast(`✅ 远程导入成功：新增 ${addedCount} 个，跳过 ${skippedCount} 个重复源，共 ${existing.length} 个`, 'success');
+        
+        if (existing.length && !dom.sourceSelect.value) {
+            const first = existing.find(s => s.group === 'stable') || existing[0];
+            if (first) {
+                dom.sourceSelect.value = first.key;
+                loadBrowse(first);
+            }
+        }
+        
+    } catch (error) {
+        console.error('远程导入失败:', error);
+        toast('❌ 远程导入失败: ' + error.message, 'error');
+    } finally {
+        input.disabled = false;
+    }
 }
 
 // ============================================================
@@ -809,6 +965,17 @@ if (showHiddenSources) {
     dom.status.style.color = '#2e7d32';
     dom.status.style.fontWeight = '500';
 }
+
+    // ===== 远程导入输入框回车触发 =====
+    const remoteInput = document.getElementById('remoteUrlInput');
+    if (remoteInput) {
+        remoteInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                fetchRemoteSources();
+            }
+        });
+    }
 
     setTimeout(showDisclaimer, 500);
 }
