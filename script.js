@@ -782,21 +782,33 @@ async function init() {
         hidePlayerLoading();
     });
 
-    // ===== 连续点击状态栏 8 次切换隐藏源显示 =====
-    let statusClickCount = 0;
-    let statusClickTimer = null;
+// ===== 连续点击状态栏 8 次切换隐藏源显示 =====
+let statusClickCount = 0;
+let statusClickTimer = null;
 
-    dom.status.addEventListener('click', () => {
-        statusClickCount++;
-        clearTimeout(statusClickTimer);
-        statusClickTimer = setTimeout(() => {
-            if (statusClickCount >= 8) {
-                toggleShowHiddenSources();
-                toast(showHiddenSources ? '🔓 已显示特殊源' : '🔒 已隐藏特殊源', 'info');
-            }
-            statusClickCount = 0;
-        }, 500);
-    });
+dom.status.addEventListener('click', () => {
+    statusClickCount++;
+    clearTimeout(statusClickTimer);
+    statusClickTimer = setTimeout(() => {
+        if (statusClickCount >= 8) {
+            toggleShowHiddenSources();
+            // 特殊源显示时红色，隐藏时绿色，不显示任何文字提示
+            dom.status.style.color = showHiddenSources ? '#e74c3c' : '#2e7d32';
+            dom.status.style.fontWeight = showHiddenSources ? '700' : '500';
+            console.log(showHiddenSources ? '🔓 特殊源已显示' : '🔒 特殊源已隐藏');
+        }
+        statusClickCount = 0;
+    }, 500);
+});
+
+// 初始化状态文字颜色（在 populateSelect() 之后）
+if (showHiddenSources) {
+    dom.status.style.color = '#e74c3c';
+    dom.status.style.fontWeight = '700';
+} else {
+    dom.status.style.color = '#2e7d32';
+    dom.status.style.fontWeight = '500';
+}
 
     setTimeout(showDisclaimer, 500);
 }
