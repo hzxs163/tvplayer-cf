@@ -64,6 +64,82 @@ const _adapterCache = new Map();
 // ============================================================
 const _classCache = new Map();
 
+// ============================================================
+//  分类缓存 - localStorage 持久化（永久有效）  ← 从这里开始插入
+// ============================================================
+const CLASS_CACHE_KEY = 'tv_class_cache';
+
+function getClassCache(api) {
+    try {
+        const raw = localStorage.getItem(CLASS_CACHE_KEY);
+        if (!raw) return null;
+        const cache = JSON.parse(raw);
+        const item = cache[api];
+        if (!item) return null;
+        return item.data;
+    } catch (e) {
+        return null;
+    }
+}
+
+function setClassCache(api, classes) {
+    try {
+        const raw = localStorage.getItem(CLASS_CACHE_KEY);
+        const cache = raw ? JSON.parse(raw) : {};
+        cache[api] = {
+            data: classes,
+            time: Date.now()
+        };
+        localStorage.setItem(CLASS_CACHE_KEY, JSON.stringify(cache));
+    } catch (e) {}
+}
+
+function clearClassCache() {
+    if (confirm('确定要清空所有分类缓存吗？')) {
+        localStorage.removeItem(CLASS_CACHE_KEY);
+        if (typeof _classCache !== 'undefined') {
+            _classCache.clear();
+        }
+        toast('✅ 分类缓存已清空', 'success');
+        if (state.source) {
+            loadBrowse(state.source);
+        }
+    }
+}
+
+window.clearClassCache = clearClassCache;
+
+// ============================================================
+//  查看缓存信息（新增）
+// ============================================================
+function showClassCache() {
+    try {
+        const raw = localStorage.getItem(CLASS_CACHE_KEY);
+        if (!raw) {
+            toast('📭 分类缓存为空', 'info');
+            console.log('📭 分类缓存为空');
+            return;
+        }
+        const cache = JSON.parse(raw);
+        const keys = Object.keys(cache);
+        let msg = `📦 已缓存 ${keys.length} 个源的分类\n`;
+        keys.forEach(key => {
+            const item = cache[key];
+            const time = new Date(item.time).toLocaleString();
+            const count = item.data?.length || 0;
+            const name = key.replace(/^https?:\/\//, '').replace(/\/api\.php.*$/, '').substring(0, 30);
+            msg += `\n  ${name}: ${count} 个分类 (${time})`;
+        });
+        console.log(msg);
+        toast(`📦 已缓存 ${keys.length} 个源的分类`, 'info');
+    } catch (e) {
+        toast('查看缓存失败', 'error');
+        console.warn(e);
+    }
+}
+
+window.showClassCache = showClassCache;
+
 async function detectAdapter(api) {
     if (_adapterCache.has(api)) return _adapterCache.get(api);
     
@@ -375,6 +451,18 @@ function renderSourceList() {
             `;
         });
     }
+
+    // ✅ 添加清空缓存按钮
+    html += `
+        <div style="display:flex; gap:10px; margin-top:12px; padding-top:10px; border-top:1px solid var(--border); flex-wrap:wrap;">
+            <button class="btn btn-ghost" onclick="clearClassCache()" style="font-size:12px; color:#c0392b; border:1px solid #c0392b; padding:4px 14px; border-radius:4px; cursor:pointer; background:transparent;">
+                🗑️ 清空分类缓存
+            </button>
+            <button class="btn btn-ghost" onclick="showClassCache()" style="font-size:12px; color:var(--text2); border:1px solid var(--border); padding:4px 14px; border-radius:4px; cursor:pointer; background:transparent;">
+                📦 查看缓存
+            </button>
+        </div>
+    `;
 
     container.innerHTML = html;
 }
@@ -1173,11 +1261,12 @@ function populateSelect() {
 async function loadCategoriesInBackground(source) {
     const cacheKey = source.api;
     
-    if (_classCache.has(cacheKey)) {
-        const cached = _classCache.get(cacheKey);
+    // ✅ 先从 localStorage 读取
+    const cached = getClassCache(cacheKey);
+    if (cached && cached.length) {
         state.categories = cached;
         renderCategories(cached);
-        console.log('📦 分类从缓存加载:', source.name);
+        console.log('📦 分类从缓存加载:', source.name, cached.length);
         return;
     }
 
@@ -1191,10 +1280,10 @@ async function loadCategoriesInBackground(source) {
         }
         
         if (classes && classes.length) {
-            _classCache.set(cacheKey, classes);
+            setClassCache(cacheKey, classes);  // ← 存入 localStorage
             state.categories = classes;
             renderCategories(classes);
-            console.log('✅ 分类后台加载完成:', source.name, classes.length);
+            console.log('✅ 分类加载并缓存:', source.name, classes.length);
         }
     } catch (e) {
         console.warn('分类加载失败:', source.name);
