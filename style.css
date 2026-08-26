@@ -1400,19 +1400,20 @@ footer span {
     .source-list .source-item .s-name {
         min-width: 60px;
     }
-    /* 🆕 移动端导入按钮强制一行 */
+    /* 🆕 移动端导入按钮自适应铺满 */
     .import-actions {
         display: flex !important;
         flex-wrap: nowrap !important;
-        gap: 4px !important;
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch !important;
+        gap: 6px !important;
     }
     .import-actions .btn {
-        flex: 0 0 auto !important;
-        font-size: 11px !important;
-        padding: 4px 10px !important;
+        flex: 1 !important;
+        justify-content: center !important;
+        font-size: 12px !important;
+        padding: 6px 4px !important;
         white-space: nowrap !important;
+        text-align: center !important;
+        min-width: 0 !important;
     }
 }
 
