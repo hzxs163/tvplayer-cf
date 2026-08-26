@@ -190,19 +190,14 @@ function renderSourceList() {
         return;
     }
 
-    // 1. 先过滤掉隐藏源（enabled: false）
     const visibleSources = sources.filter(s => s.enabled !== false);
-
-    // 2. 再分组：有效源（disabled !== true）和失效源（disabled === true）
     const validSources = visibleSources.filter(s => s.disabled !== true);
     const invalidSources = visibleSources.filter(s => s.disabled === true);
 
-    // 更新计数（在固定表头中显示）
     dom.importCount.textContent = visibleSources.length + ' 个';
 
     let html = '';
 
-    // 有效源分组
     if (validSources.length) {
         html += `<div class="group-label"><span class="dot stable"></span> 🟢 有效 (${validSources.length})</div>`;
         validSources.forEach(s => {
@@ -222,7 +217,6 @@ function renderSourceList() {
         });
     }
 
-    // 失效源分组
     if (invalidSources.length) {
         html += `<div class="group-label"><span class="dot backup"></span> 🔴 失效 (${invalidSources.length})</div>`;
         invalidSources.forEach(s => {
