@@ -1174,8 +1174,30 @@ async function loadBrowse(source) {
     setStatus('加载中…', true);
     dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">加载分类…</span>';
 
+    // ✅ 先用 ac=list 获取分类
+    try {
+        const classData = await fetchProxy(source.api + '?ac=list');
+        if (classData && classData.class && classData.class.length) {
+            state.categories = classData.class;
+            renderCategories(state.categories);
+            console.log('✅ 分类加载完成:', state.categories.length);
+        } else {
+            console.log('⚠️ ac=list 没有返回分类，尝试备用方式');
+            const data = await fetchProxy(source.api + '?ac=videolist&pg=1');
+            if (data && data.class && data.class.length) {
+                state.categories = data.class;
+                renderCategories(state.categories);
+                console.log('✅ 分类从 videolist 加载完成:', state.categories.length);
+            }
+        }
+    } catch (e) {
+        console.warn('分类加载失败:', e);
+        dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">分类加载失败</span>';
+    }
+
+    // ✅ 再加载列表（用 ac=videolist）
     await loadMovies();
-    
+
     setStatus('就绪');
     state.isLoading = false;
 }
@@ -1190,7 +1212,6 @@ async function loadMovies() {
     dom.browseGrid.innerHTML = '<div class="empty-grid"><span class="spinner"></span> 加载中…</div>';
 
     try {
-        // ✅ 强制使用 ac=videolist（因为你的 API 需要这个参数才有完整数据）
         const url = state.category ?
             `${s.api}?ac=videolist&t=${state.category}&pg=${state.page}` :
             `${s.api}?ac=videolist&pg=${state.page}`;
@@ -1205,12 +1226,6 @@ async function loadMovies() {
         updatePager();
         dom.browseInfo.textContent = `${list.length} 部`;
         dom.browseBadge.textContent = `共 ${state.totalPages} 页`;
-        
-        const classes = data.class || [];
-        if (classes && classes.length) {
-            state.categories = classes;
-            renderCategories(classes);
-        }
     } catch (e) {
         dom.browseGrid.innerHTML = `<div class="empty-grid">❌ ${esc(e.message)}</div>`;
         toast('加载失败: ' + e.message, 'error');
@@ -1254,8 +1269,6 @@ function renderMovies(list) {
 }
 
 function renderCategories(classes) {
-    const top = classes.filter(c => String(c.type_pid) === '0');
-    const kids = classes.filter(c => String(c.type_pid) !== '0');
     const nav = dom.categoryNav;
     nav.innerHTML = '';
 
@@ -1271,32 +1284,59 @@ function renderCategories(classes) {
     };
     nav.appendChild(all);
 
-    top.forEach(c => {
-        const btn = document.createElement('span');
-        btn.className = 'cat';
-        btn.textContent = c.type_name;
-        btn.onclick = () => {
-            document.querySelectorAll('.category-nav .cat').forEach(c => c.classList.remove('active'));
-            btn.classList.add('active');
-            state.category = c.type_id;
-            state.page = 1;
-            loadMovies();
-        };
-        nav.appendChild(btn);
-        kids.filter(k => String(k.type_pid) === String(c.type_id)).forEach(k => {
-            const kb = document.createElement('span');
-            kb.className = 'cat kid';
-            kb.textContent = '└ ' + k.type_name;
-            kb.onclick = () => {
+    if (!classes || !classes.length) return;
+
+    // ✅ 自动检测是否有 type_pid 字段
+    const hasPid = classes.some(c => c.type_pid !== undefined);
+    
+    if (!hasPid) {
+        // 红牛风格：扁平结构
+        classes.forEach(c => {
+            const btn = document.createElement('span');
+            btn.className = 'cat';
+            btn.textContent = c.type_name;
+            btn.onclick = () => {
                 document.querySelectorAll('.category-nav .cat').forEach(c => c.classList.remove('active'));
-                kb.classList.add('active');
-                state.category = k.type_id;
+                btn.classList.add('active');
+                state.category = c.type_id;
                 state.page = 1;
                 loadMovies();
             };
-            nav.appendChild(kb);
+            nav.appendChild(btn);
         });
-    });
+    } else {
+        // 树形结构：有 type_pid
+        const top = classes.filter(c => String(c.type_pid) === '0');
+        const kids = classes.filter(c => String(c.type_pid) !== '0');
+        
+        top.forEach(c => {
+            const btn = document.createElement('span');
+            btn.className = 'cat';
+            btn.textContent = c.type_name;
+            btn.onclick = () => {
+                document.querySelectorAll('.category-nav .cat').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                state.category = c.type_id;
+                state.page = 1;
+                loadMovies();
+            };
+            nav.appendChild(btn);
+            kids.filter(k => String(k.type_pid) === String(c.type_id)).forEach(k => {
+                const kb = document.createElement('span');
+                kb.className = 'cat kid';
+                kb.textContent = '└ ' + k.type_name;
+                kb.onclick = () => {
+                    document.querySelectorAll('.category-nav .cat').forEach(c => c.classList.remove('active'));
+                    kb.classList.add('active');
+                    state.category = k.type_id;
+                    state.page = 1;
+                    loadMovies();
+                };
+                nav.appendChild(kb);
+            });
+        });
+    }
+    
     dom.browseTitle.textContent = state.source ? state.source.name : '热门推荐';
 }
 
