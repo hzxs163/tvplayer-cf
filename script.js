@@ -1238,40 +1238,107 @@ async function playMovie(vod, source) {
             setStatus('播放中');
             return;
         }
-        // ============================================
 
         // ============================================
-        // ly166 源（爱奇艺解析）：使用 iframe 播放
+        // ly166 源（爱奇艺解析）：移动端用 HLS.js，PC 端用 iframe
         // ============================================
         if (source.name.includes('爱奇艺') || source.key.includes('iqiyi') || firstUrl.includes('ly166.com') || firstUrl.includes('iqiyizyjx.com')) {
-            console.log('🔵 检测到 ly166/爱奇艺源，使用 iframe 播放');
+            console.log('🔵 检测到 ly166/爱奇艺源');
             
             // 解析第一集的 m3u8 地址
             const episodes = parseEpisodes(firstUrl);
             const firstEp = episodes[0];
             const m3u8Url = normalizeUrl(firstEp.url);
             
-            // 构造播放器地址
-            const playerUrl = 'https://www.iqiyizyjx.com/?url=' + encodeURIComponent(m3u8Url);
+            // 检测是否移动端
+            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile/i.test(navigator.userAgent);
             
-            showPlayer();
-            dom.playerLoading.classList.remove('hidden');
-            dom.playerLoading.classList.add('show');
-            
-            // 用 iframe 播放
-            dom.playerIframe.style.display = 'block';
-            dom.playerIframe.src = playerUrl;
-            dom.player.style.display = 'none';
-            
-            dom.playerLoading.classList.add('hidden');
-            setTimeout(function() {
-                dom.playerLoading.classList.remove('show');
-            }, 400);
-            
-            renderEpisodesPanel(episodes);
-            setStatus('播放中');
-            return;
+            if (isMobile) {
+                // ============================================
+                // 移动端：直接用 HLS.js 播放 m3u8
+                // ============================================
+                console.log('📱 移动端检测，使用 HLS.js 播放');
+                
+                showPlayer();
+                dom.playerLoading.classList.remove('hidden');
+                dom.playerLoading.classList.add('show');
+                
+                // 确保 iframe 隐藏
+                dom.playerIframe.style.display = 'none';
+                dom.playerIframe.src = '';
+                dom.player.style.display = 'block';
+                
+                // 用 HLS.js 播放
+                if (window.Hls && Hls.isSupported()) {
+                    if (window._iqiyiHls) {
+                        window._iqiyiHls.destroy();
+                        window._iqiyiHls = null;
+                    }
+                    
+                    const hls = new Hls({
+                        enableWorker: true,
+                        maxBufferLength: 30,
+                    });
+                    window._iqiyiHls = hls;
+                    
+                    hls.loadSource(m3u8Url);
+                    hls.attachMedia(dom.player);
+                    
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        dom.playerLoading.classList.add('hidden');
+                        setTimeout(function() {
+                            dom.playerLoading.classList.remove('show');
+                        }, 400);
+                        dom.player.play().catch(function() {});
+                        console.log('✅ 爱奇艺源 HLS.js 播放成功（移动端）');
+                    });
+                    
+                    hls.on(Hls.Events.ERROR, function(e, data) {
+                        dom.playerLoading.classList.add('hidden');
+                        console.warn('⚠️ HLS 错误:', data.details);
+                        if (data.fatal) {
+                            toast('HLS 播放失败，尝试直连', 'error');
+                            dom.player.src = m3u8Url;
+                            dom.player.play().catch(function() {});
+                        }
+                    });
+                } else {
+                    // HLS.js 不支持，直连
+                    dom.player.src = m3u8Url;
+                    dom.player.play().catch(function() {});
+                }
+                
+                renderEpisodesPanel(episodes);
+                setStatus('播放中');
+                return;
+                
+            } else {
+                // ============================================
+                // PC 端：使用 iframe 播放
+                // ============================================
+                console.log('💻 PC 端，使用 iframe 播放');
+                
+                const playerUrl = 'https://www.iqiyizyjx.com/?url=' + encodeURIComponent(m3u8Url);
+                
+                showPlayer();
+                dom.playerLoading.classList.remove('hidden');
+                dom.playerLoading.classList.add('show');
+                
+                dom.playerIframe.style.display = 'block';
+                dom.playerIframe.src = playerUrl;
+                dom.player.style.display = 'none';
+                
+                dom.playerLoading.classList.add('hidden');
+                setTimeout(function() {
+                    dom.playerLoading.classList.remove('show');
+                }, 400);
+                
+                renderEpisodesPanel(episodes);
+                setStatus('播放中');
+                return;
+            }
         }
+        
         // ============================================
 
         const episodes = parseEpisodes(firstUrl);
@@ -1444,21 +1511,82 @@ function renderEpisodesPanel(episodes) {
                 }
                 return;
             }
-            // ============================================
-            // ly166/爱奇艺源选集：使用 iframe 播放
-            // ============================================
-            if (state.currentSource?.name.includes('爱奇艺') || state.currentSource?.key.includes('iqiyi') || ep.url.includes('ly166.com') || ep.url.includes('iqiyizyjx.com')) {
-                const m3u8Url = normalizeUrl(ep.url);
+        // ============================================
+        // ly166/爱奇艺源选集：移动端用 HLS.js，PC 端用 iframe
+        // ============================================
+        if (state.currentSource?.name.includes('爱奇艺') || state.currentSource?.key.includes('iqiyi') || ep.url.includes('ly166.com') || ep.url.includes('iqiyizyjx.com')) {
+            const m3u8Url = normalizeUrl(ep.url);
+            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                // ============================================
+                // 移动端：HLS.js 播放
+                // ============================================
+                console.log('📱 选集移动端，使用 HLS.js 播放');
+                dom.playerIframe.style.display = 'none';
+                dom.playerIframe.src = '';
+                dom.player.style.display = 'block';
+                
+                // 显示加载中
+                dom.playerLoading.classList.remove('hidden');
+                dom.playerLoading.classList.add('show');
+                
+                // 用 HLS.js 播放
+                if (window.Hls && Hls.isSupported()) {
+                    if (window._iqiyiHls) {
+                        window._iqiyiHls.destroy();
+                        window._iqiyiHls = null;
+                    }
+                    
+                    const hls = new Hls({
+                        enableWorker: true,
+                        maxBufferLength: 30,
+                    });
+                    window._iqiyiHls = hls;
+                    
+                    hls.loadSource(m3u8Url);
+                    hls.attachMedia(dom.player);
+                    
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        dom.playerLoading.classList.add('hidden');
+                        setTimeout(function() {
+                            dom.playerLoading.classList.remove('show');
+                        }, 400);
+                        dom.player.play().catch(function() {});
+                        console.log('✅ 选集 HLS.js 播放成功（移动端）');
+                    });
+                    
+                    hls.on(Hls.Events.ERROR, function(e, data) {
+                        dom.playerLoading.classList.add('hidden');
+                        console.warn('⚠️ HLS 错误:', data.details);
+                        if (data.fatal) {
+                            toast('HLS 播放失败，尝试直连', 'error');
+                            dom.player.src = m3u8Url;
+                            dom.player.play().catch(function() {});
+                        }
+                    });
+                } else {
+                    dom.player.src = m3u8Url;
+                    dom.player.play().catch(function() {});
+                }
+                
+            } else {
+                // ============================================
+                // PC 端：iframe 播放
+                // ============================================
+                console.log('💻 选集 PC 端，使用 iframe 播放');
                 const playerUrl = 'https://www.iqiyizyjx.com/?url=' + encodeURIComponent(m3u8Url);
                 dom.playerIframe.style.display = 'block';
                 dom.playerIframe.src = playerUrl;
                 dom.player.style.display = 'none';
-                dom.episodesPanel.classList.remove('open');
-                if (state.currentVod && state.currentSource) {
-                    addHistory(state.currentVod, state.currentSource, ep.name);
-                }
-                return;
             }
+            
+            dom.episodesPanel.classList.remove('open');
+            if (state.currentVod && state.currentSource) {
+                addHistory(state.currentVod, state.currentSource, ep.name);
+            }
+            return;
+        }
             // ============================================
             startPlayer(ep.url, (state.currentVod?.vod_name || '') + ' ' + ep.name);
             dom.episodesPanel.classList.remove('open');
