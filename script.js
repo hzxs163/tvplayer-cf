@@ -935,6 +935,8 @@ function switchPlayerLine(index) {
     state.currentEpisodes = episodes;
     renderEpisodesPanel(episodes);
     
+    const currentUrl = lines[index].url;
+    
     if (state.currentSource?.key === 'dbm3u8' || state.currentSource?.name.includes('百度') || state.currentSource?.name.includes('iqiyizyjx')) {
         const firstEp = episodes[0];
         const m3u8Url = normalizeUrl(firstEp.url);
@@ -950,7 +952,7 @@ function switchPlayerLine(index) {
         return;
     }
 
-    if (state.currentSource?.name.includes('爱奇艺') || state.currentSource?.key.includes('iqiyi') || firstUrl.includes('ly166.com') || firstUrl.includes('iqiyizyjx.com')) {
+    if (state.currentSource?.name.includes('爱奇艺') || state.currentSource?.key.includes('iqiyi') || currentUrl.includes('ly166.com') || currentUrl.includes('iqiyizyjx.com')) {
         const firstEp = episodes[0];
         const m3u8Url = normalizeUrl(firstEp.url);
         const playerUrl = 'https://www.iqiyizyjx.com/?url=' + encodeURIComponent(m3u8Url);
@@ -1161,7 +1163,7 @@ function populateSelect() {
 }
 
 // ============================================================
-//  BROWSE
+//  BROWSE - 修复：使用适配器，分类和列表一起获取
 // ============================================================
 async function loadBrowse(source) {
     if (!source || state.isLoading) return;
@@ -1172,31 +1174,15 @@ async function loadBrowse(source) {
     setStatus('加载中…', true);
     dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">加载分类…</span>';
 
-    // ✅ 加载列表，分类会由 loadMovies 中的适配器自动提取并渲染
     await loadMovies();
 
-    // ✅ 移除多余的 ac=list 请求，分类已经在 loadMovies 中处理
-    // 如果 loadMovies 没有成功提取分类，这里作为备用
-    if (!state.categories || !state.categories.length) {
-        try {
-            // 备用：尝试用 ac=list 获取分类（兼容某些站点）
-            const data = await fetchProxy(source.api + '?ac=list');
-            if (data !== null) {
-                const classes = data.class || [];
-                if (classes.length) {
-                    state.categories = classes;
-                    renderCategories(classes);
-                }
-            }
-        } catch (e) {
-            // 静默失败，分类为空不影响浏览
-        }
-    }
-    
     setStatus('就绪');
     state.isLoading = false;
 }
 
+// ============================================================
+//  loadMovies - 修复：使用 smartApiRequest 自动适配
+// ============================================================
 async function loadMovies() {
     const s = state.source;
     if (!s) return;
@@ -1219,8 +1205,9 @@ async function loadMovies() {
         dom.browseInfo.textContent = `${list.length} 部`;
         dom.browseBadge.textContent = `共 ${state.totalPages} 页`;
         
+        // ✅ 从适配器提取分类并渲染
         const classes = result.class || [];
-        if (classes.length) {
+        if (classes && classes.length) {
             state.categories = classes;
             renderCategories(classes);
         }
@@ -1326,7 +1313,7 @@ function pageNext() { if (state.page < state.totalPages) { state.page++;
         loadMovies(); } }
 
 // ============================================================
-//  SEARCH
+//  SEARCH - 修复：使用 ac=list&wd=
 // ============================================================
 async function doSearch() {
     if (!hasSources()) {
@@ -1395,29 +1382,29 @@ async function doSearch() {
             `找到 ${results.length} 个结果 · 完成 ${done}/${targets.length} 个源`;
     };
 
-        async function worker() {
-            while (pool.length && mySeq === state.searchSeq) {
-                const s = pool.shift();
-                try {
-                    // ✅ 修改为 ac=list&wd= 支持红牛API搜索
-                    const url = s.api + '?ac=list&wd=' + encodeURIComponent(q);
-                    const data = await fetchProxy(url);
-                    if (data === null) continue;
-                    const rawList = data.list || [];
-                    const keyword = q.toLowerCase();
-                    rawList.forEach(v => {
-                        if (v && v.vod_id && v.vod_name) {
-                            const name = (v.vod_name || '').toLowerCase();
-                            if (name.includes(keyword) && !results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
-                                results.push({ v, s });
-                            }
+    async function worker() {
+        while (pool.length && mySeq === state.searchSeq) {
+            const s = pool.shift();
+            try {
+                // ✅ 修复：使用 ac=list&wd= 进行搜索
+                const url = s.api + '?ac=list&wd=' + encodeURIComponent(q);
+                const data = await fetchProxy(url);
+                if (data === null) continue;
+                const rawList = data.list || [];
+                const keyword = q.toLowerCase();
+                rawList.forEach(v => {
+                    if (v && v.vod_id && v.vod_name) {
+                        const name = (v.vod_name || '').toLowerCase();
+                        if (name.includes(keyword) && !results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
+                            results.push({ v, s });
                         }
-                    });
-                } catch (e) { /* skip */ }
-                done++;
-                render();
-            }
+                    }
+                });
+            } catch (e) { /* skip */ }
+            done++;
+            render();
         }
+    }
 
     const workers = Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker);
     await Promise.all(workers);
@@ -1453,9 +1440,8 @@ function restoreAllContent() {
 }
 
 // ============================================================
-//  HLS 180秒硬编码配置（PC / 手机通用）
+//  playMovie - 修复：使用 smartApiRequest 获取详情
 // ============================================================
-
 async function playMovie(vod, source) {
     state.currentVod = vod;
     state.currentSource = source;
@@ -1465,20 +1451,21 @@ async function playMovie(vod, source) {
     hideAllContent();
     showPlayerLoading();
 
-        try {
-            const result = await smartApiRequest(source, 'detail', { id: vod.vod_id });
-            if (!result) return;
-            const detail = result.list?.[0] || vod;
-        
-            let froms = [],
-                urls = [];
-            const playFrom = detail.vod_play_from || '';
-            const playUrl = detail.vod_play_url || '';
-        
-            if (playFrom && playUrl) {
-                froms = playFrom.split('$$$').filter(Boolean);
-                urls = playUrl.split('$$$').filter(Boolean);
-            }
+    try {
+        // ✅ 修复：使用 smartApiRequest 获取详情
+        const result = await smartApiRequest(source, 'detail', { id: vod.vod_id });
+        if (!result) return;
+        const detail = result.list?.[0] || vod;
+
+        let froms = [],
+            urls = [];
+        const playFrom = detail.vod_play_from || '';
+        const playUrl = detail.vod_play_url || '';
+
+        if (playFrom && playUrl) {
+            froms = playFrom.split('$$$').filter(Boolean);
+            urls = playUrl.split('$$$').filter(Boolean);
+        }
 
         if (!froms.length) {
             const keys = Object.keys(detail).filter(k => k.startsWith('vod_play_from'));
