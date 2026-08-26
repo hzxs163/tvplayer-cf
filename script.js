@@ -9,6 +9,129 @@ const STORAGE_SOURCES_KEY = 'tv_sources';
 const STORAGE_DISCLAIMER_KEY = 'tv_disclaimer_agreed';
 
 // ============================================================
+//  API 适配器 - 自动探测不同影视站点的参数格式
+// ============================================================
+const API_ADAPTERS = {
+    // 红牛/苹果CMS风格：ac=videolist
+    'videolist': {
+        detect: (data) => data && data.list && data.class && data.pagecount,
+        list: (api, page, category) => {
+            let url = `${api}?ac=videolist&pg=${page}`;
+            if (category) url += `&t=${category}`;
+            return url;
+        },
+        search: (api, keyword) => `${api}?ac=list&wd=${encodeURIComponent(keyword)}`,
+        detail: (api, id) => `${api}?ac=detail&ids=${id}`,
+        extractClass: (data) => data.class || [],
+        extractList: (data) => data.list || [],
+        extractPageCount: (data) => parseInt(data.pagecount) || 1,
+    },
+    // 通用风格：ac=list
+    'list': {
+        detect: (data) => data && data.list && data.code === 1 && !data.class,
+        list: (api, page, category) => {
+            let url = `${api}?ac=list&pg=${page}`;
+            if (category) url += `&t=${category}`;
+            return url;
+        },
+        search: (api, keyword) => `${api}?ac=search&wd=${encodeURIComponent(keyword)}`,
+        detail: (api, id) => `${api}?ac=detail&ids=${id}`,
+        extractClass: (data) => data.class || [],
+        extractList: (data) => data.list || [],
+        extractPageCount: (data) => parseInt(data.pagecount) || 1,
+    },
+    // 默认适配器（自动适配）
+    'auto': {
+        detect: () => true,
+        list: (api, page, category) => {
+            return `${api}?ac=videolist&pg=${page}`;
+        },
+        search: (api, keyword) => `${api}?ac=list&wd=${encodeURIComponent(keyword)}`,
+        detail: (api, id) => `${api}?ac=detail&ids=${id}`,
+        extractClass: (data) => data.class || [],
+        extractList: (data) => data.list || [],
+        extractPageCount: (data) => parseInt(data.pagecount) || parseInt(data.total) || 1,
+    }
+};
+
+// ============================================================
+//  探测缓存
+// ============================================================
+const _adapterCache = new Map();
+
+async function detectAdapter(api) {
+    if (_adapterCache.has(api)) return _adapterCache.get(api);
+    
+    // 先尝试 ac=videolist
+    try {
+        const data = await fetchProxy(`${api}?ac=videolist&pg=1`);
+        if (data) {
+            for (const [name, adapter] of Object.entries(API_ADAPTERS)) {
+                if (name !== 'auto' && adapter.detect(data)) {
+                    _adapterCache.set(api, adapter);
+                    console.log(`✅ 探测到适配器: ${name}`);
+                    return adapter;
+                }
+            }
+        }
+    } catch (e) {}
+    
+    // 再尝试 ac=list
+    try {
+        const data = await fetchProxy(`${api}?ac=list&pg=1`);
+        if (data) {
+            for (const [name, adapter] of Object.entries(API_ADAPTERS)) {
+                if (name !== 'auto' && adapter.detect(data)) {
+                    _adapterCache.set(api, adapter);
+                    console.log(`✅ 探测到适配器: ${name}`);
+                    return adapter;
+                }
+            }
+        }
+    } catch (e) {}
+    
+    // 默认自动适配器
+    console.log('⚠️ 使用自动适配器');
+    _adapterCache.set(api, API_ADAPTERS.auto);
+    return API_ADAPTERS.auto;
+}
+
+// ============================================================
+//  智能 API 请求
+// ============================================================
+async function smartApiRequest(source, action, params = {}) {
+    const { api } = source;
+    const { page = 1, category = null, keyword = null, id = null } = params;
+    
+    const adapter = await detectAdapter(api);
+    
+    let url = '';
+    switch (action) {
+        case 'list':
+            url = adapter.list(api, page, category);
+            break;
+        case 'search':
+            url = adapter.search(api, keyword);
+            break;
+        case 'detail':
+            url = adapter.detail(api, id);
+            break;
+        default:
+            url = `${api}?ac=videolist&pg=${page}`;
+    }
+    
+    const data = await fetchProxy(url);
+    if (!data) return null;
+    
+    return {
+        list: adapter.extractList(data),
+        class: adapter.extractClass(data),
+        pagecount: adapter.extractPageCount(data),
+        raw: data,
+    };
+}
+
+// ============================================================
 //  STATE
 // ============================================================
 const state = {
@@ -1049,17 +1172,27 @@ async function loadBrowse(source) {
     setStatus('加载中…', true);
     dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">加载分类…</span>';
 
+    // ✅ 加载列表，分类会由 loadMovies 中的适配器自动提取并渲染
     await loadMovies();
 
-    try {
-        const data = await fetchProxy(source.api + '?ac=list');
-        if (data === null) return;
-        const classes = data.class || [];
-        state.categories = classes;
-        renderCategories(classes);
-    } catch (e) {
-        dom.categoryNav.innerHTML = '';
+    // ✅ 移除多余的 ac=list 请求，分类已经在 loadMovies 中处理
+    // 如果 loadMovies 没有成功提取分类，这里作为备用
+    if (!state.categories || !state.categories.length) {
+        try {
+            // 备用：尝试用 ac=list 获取分类（兼容某些站点）
+            const data = await fetchProxy(source.api + '?ac=list');
+            if (data !== null) {
+                const classes = data.class || [];
+                if (classes.length) {
+                    state.categories = classes;
+                    renderCategories(classes);
+                }
+            }
+        } catch (e) {
+            // 静默失败，分类为空不影响浏览
+        }
     }
+    
     setStatus('就绪');
     state.isLoading = false;
 }
@@ -1067,22 +1200,30 @@ async function loadBrowse(source) {
 async function loadMovies() {
     const s = state.source;
     if (!s) return;
-    const url = state.category ?
-        `${s.api}?ac=videolist&t=${state.category}&pg=${state.page}` :
-        `${s.api}?ac=videolist&pg=${state.page}`;
 
     dom.browseGrid.innerHTML = '<div class="empty-grid"><span class="spinner"></span> 加载中…</div>';
 
     try {
-        const data = await fetchProxy(url);
-        if (data === null) return;
-        const list = data.list || [];
-        state.totalPages = Math.max(1, parseInt(data.pagecount) || 1);
+        const result = await smartApiRequest(s, 'list', {
+            page: state.page,
+            category: state.category,
+        });
+        
+        if (!result) return;
+        
+        const list = result.list || [];
+        state.totalPages = Math.max(1, result.pagecount || 1);
         state.movies = list;
         renderMovies(list);
         updatePager();
         dom.browseInfo.textContent = `${list.length} 部`;
         dom.browseBadge.textContent = `共 ${state.totalPages} 页`;
+        
+        const classes = result.class || [];
+        if (classes.length) {
+            state.categories = classes;
+            renderCategories(classes);
+        }
     } catch (e) {
         dom.browseGrid.innerHTML = `<div class="empty-grid">❌ ${esc(e.message)}</div>`;
         toast('加载失败: ' + e.message, 'error');
@@ -1254,28 +1395,29 @@ async function doSearch() {
             `找到 ${results.length} 个结果 · 完成 ${done}/${targets.length} 个源`;
     };
 
-    async function worker() {
-        while (pool.length && mySeq === state.searchSeq) {
-            const s = pool.shift();
-            try {
-                const url = s.api + '?ac=detail&wd=' + encodeURIComponent(q);
-                const data = await fetchProxy(url);
-                if (data === null) continue;
-                const rawList = data.list || [];
-                const keyword = q.toLowerCase();
-                rawList.forEach(v => {
-                    if (v && v.vod_id && v.vod_name) {
-                        const name = (v.vod_name || '').toLowerCase();
-                        if (name.includes(keyword) && !results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
-                            results.push({ v, s });
+        async function worker() {
+            while (pool.length && mySeq === state.searchSeq) {
+                const s = pool.shift();
+                try {
+                    // ✅ 修改为 ac=list&wd= 支持红牛API搜索
+                    const url = s.api + '?ac=list&wd=' + encodeURIComponent(q);
+                    const data = await fetchProxy(url);
+                    if (data === null) continue;
+                    const rawList = data.list || [];
+                    const keyword = q.toLowerCase();
+                    rawList.forEach(v => {
+                        if (v && v.vod_id && v.vod_name) {
+                            const name = (v.vod_name || '').toLowerCase();
+                            if (name.includes(keyword) && !results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
+                                results.push({ v, s });
+                            }
                         }
-                    }
-                });
-            } catch (e) { /* skip */ }
-            done++;
-            render();
+                    });
+                } catch (e) { /* skip */ }
+                done++;
+                render();
+            }
         }
-    }
 
     const workers = Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker);
     await Promise.all(workers);
@@ -1323,20 +1465,20 @@ async function playMovie(vod, source) {
     hideAllContent();
     showPlayerLoading();
 
-    try {
-        const data = await fetchProxy(source.api + '?ac=detail&ids=' + vod.vod_id);
-        if (data === null) return;
-        const detail = data.list?.[0] || vod;
-
-        let froms = [],
-            urls = [];
-        const playFrom = detail.vod_play_from || '';
-        const playUrl = detail.vod_play_url || '';
-
-        if (playFrom && playUrl) {
-            froms = playFrom.split('$$$').filter(Boolean);
-            urls = playUrl.split('$$$').filter(Boolean);
-        }
+        try {
+            const result = await smartApiRequest(source, 'detail', { id: vod.vod_id });
+            if (!result) return;
+            const detail = result.list?.[0] || vod;
+        
+            let froms = [],
+                urls = [];
+            const playFrom = detail.vod_play_from || '';
+            const playUrl = detail.vod_play_url || '';
+        
+            if (playFrom && playUrl) {
+                froms = playFrom.split('$$$').filter(Boolean);
+                urls = playUrl.split('$$$').filter(Boolean);
+            }
 
         if (!froms.length) {
             const keys = Object.keys(detail).filter(k => k.startsWith('vod_play_from'));
