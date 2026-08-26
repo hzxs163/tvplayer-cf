@@ -1324,8 +1324,8 @@ async function loadMovies() {
 
     try {
         const url = state.category ?
-            `${s.api}?ac=videolist&t=${state.category}&pg=${state.page}` :
-            `${s.api}?ac=videolist&pg=${state.page}`;
+            `${s.api}?ac=videolist&t=${state.category}&pg=${state.page}&limit=24` :
+            `${s.api}?ac=videolist&pg=${state.page}&limit=24`;
         
         const data = await fetchProxy(url);
         if (!data) return;
