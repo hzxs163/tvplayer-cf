@@ -1175,7 +1175,7 @@ async function loadBrowse(source) {
     dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">加载分类…</span>';
 
     await loadMovies();
-
+    
     setStatus('就绪');
     state.isLoading = false;
 }
@@ -1190,23 +1190,23 @@ async function loadMovies() {
     dom.browseGrid.innerHTML = '<div class="empty-grid"><span class="spinner"></span> 加载中…</div>';
 
     try {
-        const result = await smartApiRequest(s, 'list', {
-            page: state.page,
-            category: state.category,
-        });
+        // ✅ 强制使用 ac=videolist（因为你的 API 需要这个参数才有完整数据）
+        const url = state.category ?
+            `${s.api}?ac=videolist&t=${state.category}&pg=${state.page}` :
+            `${s.api}?ac=videolist&pg=${state.page}`;
         
-        if (!result) return;
+        const data = await fetchProxy(url);
+        if (!data) return;
         
-        const list = result.list || [];
-        state.totalPages = Math.max(1, result.pagecount || 1);
+        const list = data.list || [];
+        state.totalPages = Math.max(1, parseInt(data.pagecount) || 1);
         state.movies = list;
         renderMovies(list);
         updatePager();
         dom.browseInfo.textContent = `${list.length} 部`;
         dom.browseBadge.textContent = `共 ${state.totalPages} 页`;
         
-        // ✅ 从适配器提取分类并渲染
-        const classes = result.class || [];
+        const classes = data.class || [];
         if (classes && classes.length) {
             state.categories = classes;
             renderCategories(classes);
