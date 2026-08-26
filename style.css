@@ -763,7 +763,7 @@ main {
     background: var(--bg2);
     border-radius: 16px;
     padding: 24px 28px;
-    max-width: 700px;
+    max-width: 500px;
     width: 94%;
     max-height: 90vh;
     overflow-y: auto;
