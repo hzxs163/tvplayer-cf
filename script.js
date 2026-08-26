@@ -4,85 +4,6 @@
 const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile/i.test(navigator.userAgent);
 
 // ============================================================
-//  HLS 配置（PC / 移动端自适应）
-// ============================================================
-function getHlsConfig() {
-    if (isMobile) {
-        // 🚀 移动端配置（缓冲 75 秒，保守 ABR）
-        return {
-            enableWorker: true,
-            maxBufferLength: 75,
-            maxMaxBufferLength: 150,
-            maxBufferSize: 75 * 1000 * 1000,
-            maxBufferHole: 0.5,
-            lowLatencyMode: false,
-            backbufferLength: 30,
-            liveBackBufferLength: 30,
-            progressive: true,
-            abrEwmaFastLive: 1.0,
-            abrEwmaSlowLive: 4,
-            abrEwmaDefaultEstimate: 1.5e6,
-            abrBandWidthFactor: 0.8,
-            abrBandWidthUpFactor: 0.7,
-            fragLoadingMaxRetry: 15,
-            fragLoadingRetryDelay: 500,
-            fragLoadingMaxRetryTimeout: 120000,
-            manifestLoadingMaxRetry: 10,
-            manifestLoadingRetryDelay: 500,
-            levelLoadingMaxRetry: 10,
-            levelLoadingRetryDelay: 500,
-            startFragPrefetch: true,
-            testBandwidth: false,
-            xhrSetup: function(xhr, xhrUrl) {
-                try {
-                    const urlObj = new URL(xhrUrl);
-                    xhr.setRequestHeader('Referer', urlObj.origin + '/');
-                    xhr.setRequestHeader('Origin', urlObj.origin);
-                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
-                } catch (e) {}
-            }
-        };
-    } else {
-        // 🚀 PC 端配置（缓冲 180 秒，激进 ABR）
-        return {
-            enableWorker: true,
-            maxBufferLength: 180,
-            maxMaxBufferLength: 300,
-            maxBufferSize: 300 * 1000 * 1000,
-            maxBufferHole: 1.0,
-            lowLatencyMode: false,
-            backbufferLength: 120,
-            liveBackBufferLength: 120,
-            progressive: true,
-            abrEwmaFastLive: 0.1,
-            abrEwmaSlowLive: 1,
-            abrEwmaFastVoD: 0.1,
-            abrEwmaSlowVoD: 1,
-            abrEwmaDefaultEstimate: 5e6,
-            abrBandWidthFactor: 0.7,
-            abrBandWidthUpFactor: 0.95,
-            fragLoadingMaxRetry: 20,
-            fragLoadingRetryDelay: 200,
-            fragLoadingMaxRetryTimeout: 180000,
-            manifestLoadingMaxRetry: 10,
-            manifestLoadingRetryDelay: 500,
-            levelLoadingMaxRetry: 10,
-            levelLoadingRetryDelay: 500,
-            startFragPrefetch: true,
-            testBandwidth: false,
-            xhrSetup: function(xhr, xhrUrl) {
-                try {
-                    const urlObj = new URL(xhrUrl);
-                    xhr.setRequestHeader('Referer', urlObj.origin + '/');
-                    xhr.setRequestHeader('Origin', urlObj.origin);
-                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
-                } catch (e) {}
-            }
-        };
-    }
-}
-
-// ============================================================
 //  CONFIG
 // ============================================================
 const PROXY = (url) => '/api/proxy?url=' + encodeURIComponent(url);
@@ -271,7 +192,6 @@ function renderSourceList() {
     if (!sources.length) {
         container.innerHTML = '<div class="empty-hint">📭 暂无源，请导入</div>';
         dom.importCount.textContent = '0 个';
-        // 🆕 重置有效/无效计数
         const validEl = document.getElementById('validCount');
         const invalidEl = document.getElementById('invalidCount');
         if (validEl) validEl.textContent = '🟢 0';
@@ -279,7 +199,6 @@ function renderSourceList() {
         return;
     }
 
-    // 🆕 根据 showHiddenSources 决定是否显示隐藏源（和首页逻辑一致）
     let visibleSources = sources;
     if (!showHiddenSources) {
         visibleSources = sources.filter(s => s.enabled !== false);
@@ -289,7 +208,6 @@ function renderSourceList() {
     const invalidSources = visibleSources.filter(s => s.disabled === true);
 
     dom.importCount.textContent = visibleSources.length + ' 个';
-    // 🆕 更新有效/无效计数
     const validEl = document.getElementById('validCount');
     const invalidEl = document.getElementById('invalidCount');
     if (validEl) validEl.textContent = '🟢 ' + validSources.length;
@@ -423,7 +341,6 @@ function importSources() {
         let currentSources = getStoredSources() || [];
         
         if (state.editingKey) {
-            // 编辑模式：替换单个源
             const idx = currentSources.findIndex(s => s.key === state.editingKey);
             if (idx > -1) {
                 currentSources[idx] = data[0];
@@ -434,7 +351,6 @@ function importSources() {
             setStoredSources(currentSources);
             toast('✅ 更新成功', 'success');
         } else {
-            // 导入模式：增量合并（按 key 去重）
             let addedCount = 0;
             let skippedCount = 0;
             
@@ -545,17 +461,13 @@ function loadExample() {
 // ============================================================
 //  自动修正源格式（支持远程导入）
 // ============================================================
-
 function normalizeSource(source) {
-    // 如果传入的是单个源对象，转为数组
     if (source && !Array.isArray(source) && source.id && source.baseUrl) {
         return [source];
     }
     
-    // 如果是数组，逐个修正
     if (Array.isArray(source)) {
         return source.map(item => {
-            // 兼容不同字段名：id → key, baseUrl → api
             const normalized = {
                 key: item.key || item.id || '',
                 name: item.name || item.title || '',
@@ -569,12 +481,10 @@ function normalizeSource(source) {
                 group: item.group || 'stable',
             };
             
-            // 如果 key 为空，用 name 生成
             if (!normalized.key) {
                 normalized.key = normalized.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
             }
             
-            // 如果 api 为空，跳过这个源
             if (!normalized.api) {
                 console.warn('⚠️ 跳过无效源（缺少 api）:', item);
                 return null;
@@ -590,7 +500,6 @@ function normalizeSource(source) {
 // ============================================================
 //  远程导入源
 // ============================================================
-
 async function fetchRemoteSources() {
     const input = document.getElementById('remoteUrlInput');
     const url = input.value.trim();
@@ -1406,6 +1315,83 @@ function restoreAllContent() {
     if (dom.emptyState) dom.emptyState.style.display = '';
 }
 
+// ============================================================
+//  HLS 配置（PC: 180秒 / 手机: 75秒）
+// ============================================================
+function getMobileHlsConfig() {
+    return {
+        enableWorker: true,
+        maxBufferLength: 75,
+        maxMaxBufferLength: 150,
+        maxBufferSize: 75 * 1000 * 1000,
+        maxBufferHole: 0.5,
+        lowLatencyMode: false,
+        backbufferLength: 30,
+        liveBackBufferLength: 30,
+        progressive: true,
+        abrEwmaFastLive: 1.0,
+        abrEwmaSlowLive: 4,
+        abrEwmaDefaultEstimate: 1.5e6,
+        abrBandWidthFactor: 0.8,
+        abrBandWidthUpFactor: 0.7,
+        fragLoadingMaxRetry: 15,
+        fragLoadingRetryDelay: 500,
+        fragLoadingMaxRetryTimeout: 120000,
+        manifestLoadingMaxRetry: 10,
+        manifestLoadingRetryDelay: 500,
+        levelLoadingMaxRetry: 10,
+        levelLoadingRetryDelay: 500,
+        startFragPrefetch: true,
+        testBandwidth: false,
+        xhrSetup: function(xhr, xhrUrl) {
+            try {
+                const urlObj = new URL(xhrUrl);
+                xhr.setRequestHeader('Referer', urlObj.origin + '/');
+                xhr.setRequestHeader('Origin', urlObj.origin);
+                xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+            } catch (e) {}
+        }
+    };
+}
+
+function getPcHlsConfig() {
+    return {
+        enableWorker: true,
+        maxBufferLength: 180,
+        maxMaxBufferLength: 300,
+        maxBufferSize: 300 * 1000 * 1000,
+        maxBufferHole: 1.0,
+        lowLatencyMode: false,
+        backbufferLength: 120,
+        liveBackBufferLength: 120,
+        progressive: true,
+        abrEwmaFastLive: 0.1,
+        abrEwmaSlowLive: 1,
+        abrEwmaFastVoD: 0.1,
+        abrEwmaSlowVoD: 1,
+        abrEwmaDefaultEstimate: 5e6,
+        abrBandWidthFactor: 0.7,
+        abrBandWidthUpFactor: 0.95,
+        fragLoadingMaxRetry: 20,
+        fragLoadingRetryDelay: 200,
+        fragLoadingMaxRetryTimeout: 180000,
+        manifestLoadingMaxRetry: 10,
+        manifestLoadingRetryDelay: 500,
+        levelLoadingMaxRetry: 10,
+        levelLoadingRetryDelay: 500,
+        startFragPrefetch: true,
+        testBandwidth: false,
+        xhrSetup: function(xhr, xhrUrl) {
+            try {
+                const urlObj = new URL(xhrUrl);
+                xhr.setRequestHeader('Referer', urlObj.origin + '/');
+                xhr.setRequestHeader('Origin', urlObj.origin);
+                xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+            } catch (e) {}
+        }
+    };
+}
+
 async function playMovie(vod, source) {
     state.currentVod = vod;
     state.currentSource = source;
@@ -1497,8 +1483,6 @@ async function playMovie(vod, source) {
             const firstEp = episodes[0];
             const m3u8Url = normalizeUrl(firstEp.url);
             
-            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile/i.test(navigator.userAgent);
-            
             if (isMobile) {
                 console.log('📱 移动端检测，使用 HLS.js 播放');
                 
@@ -1516,8 +1500,8 @@ async function playMovie(vod, source) {
                         window._iqiyiHls = null;
                     }
                     
-                    // 🚀 使用自适应 HLS 配置
-                    const hls = new Hls(getHlsConfig());
+                    // 手机端用 75 秒配置
+                    const hls = new Hls(getMobileHlsConfig());
                     window._iqiyiHls = hls;
                     
                     hls.loadSource(m3u8Url);
@@ -1730,7 +1714,6 @@ function renderEpisodesPanel(episodes) {
             }
             if (state.currentSource?.name.includes('爱奇艺') || state.currentSource?.key.includes('iqiyi') || ep.url.includes('ly166.com') || ep.url.includes('iqiyizyjx.com')) {
                 const m3u8Url = normalizeUrl(ep.url);
-                const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile/i.test(navigator.userAgent);
                 
                 if (isMobile) {
                     console.log('📱 选集移动端，使用 HLS.js 播放');
@@ -1747,8 +1730,8 @@ function renderEpisodesPanel(episodes) {
                             window._iqiyiHls = null;
                         }
                         
-                        // 🚀 使用自适应 HLS 配置
-                        const hls = new Hls(getHlsConfig());
+                        // 手机端用 75 秒配置
+                        const hls = new Hls(getMobileHlsConfig());
                         window._iqiyiHls = hls;
                         
                         hls.loadSource(m3u8Url);
@@ -1919,8 +1902,8 @@ function startPlayer(url, title) {
         }
 
         if (window.Hls && Hls.isSupported()) {
-            // 🚀 使用自适应 HLS 配置
-            const hls = new Hls(getHlsConfig());
+            // PC 用 180 秒，手机用 75 秒
+            const hls = new Hls(isMobile ? getMobileHlsConfig() : getPcHlsConfig());
             state.hlsInstance = hls;
             hls.loadSource(url);
             hls.attachMedia(video);
@@ -2080,8 +2063,8 @@ function startPlayerWithProxy(url, title) {
                     state.hlsInstance = null;
                 }
                 
-                // 🚀 使用自适应 HLS 配置
-                const hls = new Hls(getHlsConfig());
+                // PC 用 180 秒，手机用 75 秒
+                const hls = new Hls(isMobile ? getMobileHlsConfig() : getPcHlsConfig());
                 state.hlsInstance = hls;
                 hls.loadSource(blobUrl);
                 hls.attachMedia(video);
@@ -2096,7 +2079,7 @@ function startPlayerWithProxy(url, title) {
                         dom.playerLoading.classList.remove('show');
                     }, 400);
                     video.play().catch(function() {});
-                    console.log('✅ 代理播放成功（缓冲 180 秒）');
+                    console.log('✅ 代理播放成功');
                 });
                 
                 hls.on(Hls.Events.ERROR, function(e, data) {
