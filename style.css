@@ -1400,10 +1400,6 @@ footer span {
     .source-list .source-item .s-name {
         min-width: 60px;
     }
-    /* 🆕 移动端隐藏取消按钮 */
-    .import-actions .btn-cancel {
-        display: none !important;
-    }
 }
 
 @media (max-width: 400px) {
