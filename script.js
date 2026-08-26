@@ -187,6 +187,11 @@ function renderSourceList() {
     if (!sources.length) {
         container.innerHTML = '<div class="empty-hint">📭 暂无源，请导入</div>';
         dom.importCount.textContent = '0 个';
+        // 🆕 重置有效/无效计数
+        const validEl = document.getElementById('validCount');
+        const invalidEl = document.getElementById('invalidCount');
+        if (validEl) validEl.textContent = '🟢 0';
+        if (invalidEl) invalidEl.textContent = '🔴 0';
         return;
     }
 
@@ -195,6 +200,11 @@ function renderSourceList() {
     const invalidSources = visibleSources.filter(s => s.disabled === true);
 
     dom.importCount.textContent = visibleSources.length + ' 个';
+    // 🆕 更新有效/无效计数
+    const validEl = document.getElementById('validCount');
+    const invalidEl = document.getElementById('invalidCount');
+    if (validEl) validEl.textContent = '🟢 ' + validSources.length;
+    if (invalidEl) invalidEl.textContent = '🔴 ' + invalidSources.length;
 
     let html = '';
 
@@ -576,23 +586,22 @@ async function fetchRemoteSources() {
 }
 
 // ============================================================
-//  一键检查失效源（控制台版逻辑）
+//  🆕 一键检查失效源（显示进度）
 // ============================================================
 async function checkAllSources() {
-    // 检测所有源（包括隐藏源），不过滤
     const sources = state.sources || [];
     if (!sources.length) {
         toast('没有源需要检查', 'info');
         return;
     }
 
-    const checkBtn = document.querySelector('#sourceList .btn-ghost');
+    const checkBtn = document.getElementById('checkBtn');
     const total = sources.length;
     let checked = 0;
     const results = { valid: [], invalid: [] };
 
     if (checkBtn) {
-        checkBtn.textContent = '⏳ 0/' + total;
+        checkBtn.textContent = '⏳ 检测中 0/' + total;
         checkBtn.disabled = true;
     }
 
@@ -633,7 +642,7 @@ async function checkAllSources() {
                 results.invalid.push(result.source);
             }
             if (checkBtn) {
-                checkBtn.textContent = '⏳ ' + checked + '/' + total;
+                checkBtn.textContent = '⏳ 检测中 ' + checked + '/' + total;
             }
         });
         if (i + batchSize < total) {
@@ -642,7 +651,7 @@ async function checkAllSources() {
     }
 
     if (checkBtn) {
-        checkBtn.textContent = '🔍 检查失效源';
+        checkBtn.textContent = '🔍 检测源';
         checkBtn.disabled = false;
     }
 
@@ -654,7 +663,6 @@ async function checkAllSources() {
         return;
     }
 
-    // 标记失效源：先重置所有 disabled，再标记失效的
     const newSources = sources.map(s => {
         const found = results.invalid.find(inv => inv.key === s.key);
         if (found) {
@@ -702,15 +710,14 @@ function esc(s) {
 //  API
 // ============================================================
 async function fetchProxy(url, timeout = FETCH_TIMEOUT) {
-    // 只取消同类型的上一个请求（通过 url 前缀判断）
-    const urlKey = url.split('?')[0]; // 取 API 地址作为 key
+    const urlKey = url.split('?')[0];
     if (state.currentController && state.currentController._urlKey === urlKey) {
         state.currentController.abort();
         state.currentController = null;
     }
     
     const controller = new AbortController();
-    controller._urlKey = urlKey; // 标记这个请求的类型
+    controller._urlKey = urlKey;
     state.currentController = controller;
     
     const timer = setTimeout(() => controller.abort(), timeout);
@@ -723,7 +730,6 @@ async function fetchProxy(url, timeout = FETCH_TIMEOUT) {
         return await resp.json();
     } catch (e) {
         if (e.name === 'AbortError') {
-            // 静默处理，不打印日志
             return null;
         }
         throw e;
@@ -813,9 +819,6 @@ function switchPlayerLine(index) {
     state.currentEpisodes = episodes;
     renderEpisodesPanel(episodes);
     
-    // ============================================
-    // 百度源：使用 iframe 播放
-    // ============================================
     if (state.currentSource?.key === 'dbm3u8' || state.currentSource?.name.includes('百度') || state.currentSource?.name.includes('iqiyizyjx')) {
         const firstEp = episodes[0];
         const m3u8Url = normalizeUrl(firstEp.url);
@@ -830,11 +833,7 @@ function switchPlayerLine(index) {
         toast('已切换: ' + lines[index].name, 'info');
         return;
     }
-    // ============================================
 
-    // ============================================
-    // ly166 源（爱奇艺解析）：使用 iframe 播放
-    // ============================================
     if (state.currentSource?.name.includes('爱奇艺') || state.currentSource?.key.includes('iqiyi') || firstUrl.includes('ly166.com') || firstUrl.includes('iqiyizyjx.com')) {
         const firstEp = episodes[0];
         const m3u8Url = normalizeUrl(firstEp.url);
@@ -849,7 +848,6 @@ function switchPlayerLine(index) {
         toast('已切换: ' + lines[index].name, 'info');
         return;
     }
-    // ============================================
     
     if (episodes.length) {
         const first = episodes[0];
@@ -938,33 +936,31 @@ async function init() {
         hidePlayerLoading();
     });
 
-// ===== 连续点击状态栏 8 次切换隐藏源显示 =====
-let statusClickCount = 0;
-let statusClickTimer = null;
+    // ===== 连续点击状态栏 8 次切换隐藏源显示 =====
+    let statusClickCount = 0;
+    let statusClickTimer = null;
 
-dom.status.addEventListener('click', () => {
-    statusClickCount++;
-    clearTimeout(statusClickTimer);
-    statusClickTimer = setTimeout(() => {
-        if (statusClickCount >= 8) {
-            toggleShowHiddenSources();
-            // 特殊源显示时红色，隐藏时绿色，不显示任何文字提示
-            dom.status.style.color = showHiddenSources ? '#e74c3c' : '#2e7d32';
-            dom.status.style.fontWeight = showHiddenSources ? '700' : '500';
-            console.log(showHiddenSources ? '🔓 特殊源已显示' : '🔒 特殊源已隐藏');
-        }
-        statusClickCount = 0;
-    }, 500);
-});
+    dom.status.addEventListener('click', () => {
+        statusClickCount++;
+        clearTimeout(statusClickTimer);
+        statusClickTimer = setTimeout(() => {
+            if (statusClickCount >= 8) {
+                toggleShowHiddenSources();
+                dom.status.style.color = showHiddenSources ? '#e74c3c' : '#2e7d32';
+                dom.status.style.fontWeight = showHiddenSources ? '700' : '500';
+                console.log(showHiddenSources ? '🔓 特殊源已显示' : '🔒 特殊源已隐藏');
+            }
+            statusClickCount = 0;
+        }, 500);
+    });
 
-// 初始化状态文字颜色（在 populateSelect() 之后）
-if (showHiddenSources) {
-    dom.status.style.color = '#e74c3c';
-    dom.status.style.fontWeight = '700';
-} else {
-    dom.status.style.color = '#2e7d32';
-    dom.status.style.fontWeight = '500';
-}
+    if (showHiddenSources) {
+        dom.status.style.color = '#e74c3c';
+        dom.status.style.fontWeight = '700';
+    } else {
+        dom.status.style.color = '#2e7d32';
+        dom.status.style.fontWeight = '500';
+    }
 
     // ===== 远程导入输入框回车触发 =====
     const remoteInput = document.getElementById('remoteUrlInput');
@@ -999,7 +995,6 @@ function populateSelect() {
         return;
     }
 
-    // 根据 showHiddenSources 决定是否显示隐藏源
     let sources = state.sources;
     if (!showHiddenSources) {
         sources = sources.filter(s => s.enabled !== false);
@@ -1011,13 +1006,11 @@ function populateSelect() {
         return;
     }
 
-    // 分组：有效源 和 失效源
     const validSources = sources.filter(s => s.disabled !== true);
     const invalidSources = sources.filter(s => s.disabled === true);
 
     let hasOptions = false;
 
-    // 有效源分组
     if (validSources.length) {
         const og = document.createElement('optgroup');
         og.label = '🟢 有效';
@@ -1031,7 +1024,6 @@ function populateSelect() {
         sel.appendChild(og);
     }
 
-    // 失效源分组
     if (invalidSources.length) {
         const og = document.createElement('optgroup');
         og.label = '🔴 失效';
@@ -1211,19 +1203,17 @@ async function doSearch() {
     const q = dom.searchInput.value.trim();
     if (!q) { toast('请输入片名', 'error'); return; }
 
-    // ===== 根据模式决定搜索范围 =====
     let targets = state.sources;
     if (!showHiddenSources) {
-        targets = targets.filter(s => s.enabled !== false);  // 过滤隐藏源
+        targets = targets.filter(s => s.enabled !== false);
     }
-    targets = targets.filter(s => s.disabled !== true);  // 过滤失效源
+    targets = targets.filter(s => s.disabled !== true);
 
     if (!targets.length) {
         toast(showHiddenSources ? '没有可用源（含隐藏）' : '没有可用源', 'error');
         return;
     }
 
-    // 切换到搜索页
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     dom.pageSearch.classList.add('active');
 
@@ -1283,7 +1273,6 @@ async function doSearch() {
                 rawList.forEach(v => {
                     if (v && v.vod_id && v.vod_name) {
                         const name = (v.vod_name || '').toLowerCase();
-                        // 包含匹配：adn 只匹配包含 adn 的标题
                         if (name.includes(keyword) && !results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
                             results.push({ v, s });
                         }
@@ -1385,25 +1374,19 @@ async function playMovie(vod, source) {
 
         const firstUrl = lines[0].url;
 
-        // ============================================
-        // 百度源 (dbm3u8) 特殊处理：使用 iframe 播放
-        // ============================================
         if (source.key === 'dbm3u8' || source.name.includes('百度') || firstUrl.includes('b3.bdzybf22.com')) {
             console.log('🔵 检测到百度源，使用 iframe 播放');
             
-            // 解析第一集的 m3u8 地址
             const episodes = parseEpisodes(firstUrl);
             const firstEp = episodes[0];
             const m3u8Url = normalizeUrl(firstEp.url);
             
-            // 构造百度播放器地址
             const baiduPlayerUrl = 'https://jx.jxbdzyw.com/m3u8/?url=' + encodeURIComponent(m3u8Url);
             
             showPlayer();
             dom.playerLoading.classList.remove('hidden');
             dom.playerLoading.classList.add('show');
             
-            // 用 iframe 播放
             dom.playerIframe.style.display = 'block';
             dom.playerIframe.src = baiduPlayerUrl;
             dom.player.style.display = 'none';
@@ -1418,36 +1401,26 @@ async function playMovie(vod, source) {
             return;
         }
 
-        // ============================================
-        // ly166 源（爱奇艺解析）：移动端用 HLS.js，PC 端用 iframe
-        // ============================================
         if (source.name.includes('爱奇艺') || source.key.includes('iqiyi') || firstUrl.includes('ly166.com') || firstUrl.includes('iqiyizyjx.com')) {
             console.log('🔵 检测到 ly166/爱奇艺源');
             
-            // 解析第一集的 m3u8 地址
             const episodes = parseEpisodes(firstUrl);
             const firstEp = episodes[0];
             const m3u8Url = normalizeUrl(firstEp.url);
             
-            // 检测是否移动端
             const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile/i.test(navigator.userAgent);
             
             if (isMobile) {
-                // ============================================
-                // 移动端：直接用 HLS.js 播放 m3u8
-                // ============================================
                 console.log('📱 移动端检测，使用 HLS.js 播放');
                 
                 showPlayer();
                 dom.playerLoading.classList.remove('hidden');
                 dom.playerLoading.classList.add('show');
                 
-                // 确保 iframe 隐藏
                 dom.playerIframe.style.display = 'none';
                 dom.playerIframe.src = '';
                 dom.player.style.display = 'block';
                 
-                // 用 HLS.js 播放
                 if (window.Hls && Hls.isSupported()) {
                     if (window._iqiyiHls) {
                         window._iqiyiHls.destroy();
@@ -1482,7 +1455,6 @@ async function playMovie(vod, source) {
                         }
                     });
                 } else {
-                    // HLS.js 不支持，直连
                     dom.player.src = m3u8Url;
                     dom.player.play().catch(function() {});
                 }
@@ -1492,9 +1464,6 @@ async function playMovie(vod, source) {
                 return;
                 
             } else {
-                // ============================================
-                // PC 端：使用 iframe 播放
-                // ============================================
                 console.log('💻 PC 端，使用 iframe 播放');
                 
                 const playerUrl = 'https://www.iqiyizyjx.com/?url=' + encodeURIComponent(m3u8Url);
@@ -1517,17 +1486,11 @@ async function playMovie(vod, source) {
                 return;
             }
         }
-        
-        // ============================================
 
         const episodes = parseEpisodes(firstUrl);
 
-        // ============================================
-        // 虎牙资源特殊处理：直接走代理播放
-        // ============================================
         if (firstUrl.includes('huyall.com') || firstUrl.includes('baisiweiting.com')) {
             console.log('🔵 检测到虎牙资源，使用专用播放逻辑');
-            // 先解析出真正的第一集地址
             const episodes = parseEpisodes(firstUrl);
             const firstEp = episodes[0];
             const fullUrl = normalizeUrl(firstEp.url);
@@ -1539,7 +1502,6 @@ async function playMovie(vod, source) {
             setStatus('播放中');
             return;
         }
-        // ============================================
 
         if (episodes.length) {
             state.currentEpisodes = episodes;
@@ -1590,9 +1552,6 @@ function normalizeUrl(url) {
     return result;
 }
 
-// ============================================================
-//  显示播放器
-// ============================================================
 function showPlayer() {
     state.isPlaying = true;
     dom.playerSection.classList.add('open');
@@ -1626,9 +1585,6 @@ function renderPlayerLines(lines) {
     });
 }
 
-// ============================================================
-//  选集面板
-// ============================================================
 function toggleEpisodesPanel() {
     dom.episodesPanel.classList.toggle('open');
     if (dom.episodesPanel.classList.contains('open')) {
@@ -1649,7 +1605,6 @@ function renderEpisodesPanel(episodes) {
         return;
     }
 
-    // 判断是否为直链播放（只有一集且名字叫"播放"）
     if (episodes.length === 1 && episodes[0].name === '播放') {
         const el = document.createElement('span');
         el.className = 'ep';
@@ -1667,7 +1622,6 @@ function renderEpisodesPanel(episodes) {
         return;
     }
 
-    // 多集正常显示
     episodes.forEach((ep, idx) => {
         const el = document.createElement('span');
         el.className = 'ep';
@@ -1675,9 +1629,6 @@ function renderEpisodesPanel(episodes) {
         el.onclick = () => {
             document.querySelectorAll('#episodes-list .ep').forEach(e => e.classList.remove('active'));
             el.classList.add('active');
-            // ============================================
-            // 百度源选集：使用 iframe 播放
-            // ============================================
             if (state.currentSource?.key === 'dbm3u8' || state.currentSource?.name.includes('百度')) {
                 const m3u8Url = normalizeUrl(ep.url);
                 const baiduPlayerUrl = 'https://jx.jxbdzyw.com/m3u8/?url=' + encodeURIComponent(m3u8Url);
@@ -1690,83 +1641,71 @@ function renderEpisodesPanel(episodes) {
                 }
                 return;
             }
-        // ============================================
-        // ly166/爱奇艺源选集：移动端用 HLS.js，PC 端用 iframe
-        // ============================================
-        if (state.currentSource?.name.includes('爱奇艺') || state.currentSource?.key.includes('iqiyi') || ep.url.includes('ly166.com') || ep.url.includes('iqiyizyjx.com')) {
-            const m3u8Url = normalizeUrl(ep.url);
-            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile/i.test(navigator.userAgent);
-            
-            if (isMobile) {
-                // ============================================
-                // 移动端：HLS.js 播放
-                // ============================================
-                console.log('📱 选集移动端，使用 HLS.js 播放');
-                dom.playerIframe.style.display = 'none';
-                dom.playerIframe.src = '';
-                dom.player.style.display = 'block';
+            if (state.currentSource?.name.includes('爱奇艺') || state.currentSource?.key.includes('iqiyi') || ep.url.includes('ly166.com') || ep.url.includes('iqiyizyjx.com')) {
+                const m3u8Url = normalizeUrl(ep.url);
+                const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile/i.test(navigator.userAgent);
                 
-                // 显示加载中
-                dom.playerLoading.classList.remove('hidden');
-                dom.playerLoading.classList.add('show');
-                
-                // 用 HLS.js 播放
-                if (window.Hls && Hls.isSupported()) {
-                    if (window._iqiyiHls) {
-                        window._iqiyiHls.destroy();
-                        window._iqiyiHls = null;
+                if (isMobile) {
+                    console.log('📱 选集移动端，使用 HLS.js 播放');
+                    dom.playerIframe.style.display = 'none';
+                    dom.playerIframe.src = '';
+                    dom.player.style.display = 'block';
+                    
+                    dom.playerLoading.classList.remove('hidden');
+                    dom.playerLoading.classList.add('show');
+                    
+                    if (window.Hls && Hls.isSupported()) {
+                        if (window._iqiyiHls) {
+                            window._iqiyiHls.destroy();
+                            window._iqiyiHls = null;
+                        }
+                        
+                        const hls = new Hls({
+                            enableWorker: true,
+                            maxBufferLength: 30,
+                        });
+                        window._iqiyiHls = hls;
+                        
+                        hls.loadSource(m3u8Url);
+                        hls.attachMedia(dom.player);
+                        
+                        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                            dom.playerLoading.classList.add('hidden');
+                            setTimeout(function() {
+                                dom.playerLoading.classList.remove('show');
+                            }, 400);
+                            dom.player.play().catch(function() {});
+                            console.log('✅ 选集 HLS.js 播放成功（移动端）');
+                        });
+                        
+                        hls.on(Hls.Events.ERROR, function(e, data) {
+                            dom.playerLoading.classList.add('hidden');
+                            console.warn('⚠️ HLS 错误:', data.details);
+                            if (data.fatal) {
+                                toast('HLS 播放失败，尝试直连', 'error');
+                                dom.player.src = m3u8Url;
+                                dom.player.play().catch(function() {});
+                            }
+                        });
+                    } else {
+                        dom.player.src = m3u8Url;
+                        dom.player.play().catch(function() {});
                     }
                     
-                    const hls = new Hls({
-                        enableWorker: true,
-                        maxBufferLength: 30,
-                    });
-                    window._iqiyiHls = hls;
-                    
-                    hls.loadSource(m3u8Url);
-                    hls.attachMedia(dom.player);
-                    
-                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                        dom.playerLoading.classList.add('hidden');
-                        setTimeout(function() {
-                            dom.playerLoading.classList.remove('show');
-                        }, 400);
-                        dom.player.play().catch(function() {});
-                        console.log('✅ 选集 HLS.js 播放成功（移动端）');
-                    });
-                    
-                    hls.on(Hls.Events.ERROR, function(e, data) {
-                        dom.playerLoading.classList.add('hidden');
-                        console.warn('⚠️ HLS 错误:', data.details);
-                        if (data.fatal) {
-                            toast('HLS 播放失败，尝试直连', 'error');
-                            dom.player.src = m3u8Url;
-                            dom.player.play().catch(function() {});
-                        }
-                    });
                 } else {
-                    dom.player.src = m3u8Url;
-                    dom.player.play().catch(function() {});
+                    console.log('💻 选集 PC 端，使用 iframe 播放');
+                    const playerUrl = 'https://www.iqiyizyjx.com/?url=' + encodeURIComponent(m3u8Url);
+                    dom.playerIframe.style.display = 'block';
+                    dom.playerIframe.src = playerUrl;
+                    dom.player.style.display = 'none';
                 }
                 
-            } else {
-                // ============================================
-                // PC 端：iframe 播放
-                // ============================================
-                console.log('💻 选集 PC 端，使用 iframe 播放');
-                const playerUrl = 'https://www.iqiyizyjx.com/?url=' + encodeURIComponent(m3u8Url);
-                dom.playerIframe.style.display = 'block';
-                dom.playerIframe.src = playerUrl;
-                dom.player.style.display = 'none';
+                dom.episodesPanel.classList.remove('open');
+                if (state.currentVod && state.currentSource) {
+                    addHistory(state.currentVod, state.currentSource, ep.name);
+                }
+                return;
             }
-            
-            dom.episodesPanel.classList.remove('open');
-            if (state.currentVod && state.currentSource) {
-                addHistory(state.currentVod, state.currentSource, ep.name);
-            }
-            return;
-        }
-            // ============================================
             startPlayer(ep.url, (state.currentVod?.vod_name || '') + ' ' + ep.name);
             dom.episodesPanel.classList.remove('open');
             if (state.currentVod && state.currentSource) {
@@ -1777,9 +1716,6 @@ function renderEpisodesPanel(episodes) {
     });
 }
 
-// ============================================================
-//  核心播放引擎（直连优先 → 失败走代理 → 最后 iframe）
-// ============================================================
 function startPlayer(url, title) {
     if (!url || !url.trim()) {
         toast('播放地址为空', 'error');
@@ -1816,8 +1752,6 @@ function startPlayer(url, title) {
         state.hlsInstance = null;
     }
 
-    // 先判断是否为流媒体直链，再判断是否为 HTML 页面
-    // 修复：vv.jisuzyv.com/play/xxx/index.m3u8 这类地址含 /play/ 但本质是 m3u8，不能误判为 HTML
     const isMedia = /\.(m3u8|mp4|ts|flv|mkv|mp3|aac|webm|m4s)(\?[^#]*)?(#.*)?$/i.test(url);
     const isHtml = !isMedia && (url.includes('.html') || url.includes('/play/') || url.includes('/vod/') || url.includes('/show/') || url.includes('/detail/'));
 
@@ -1826,14 +1760,10 @@ function startPlayer(url, title) {
         return;
     }
 
-    // ===== m3u8 播放 =====
     if (url.includes('.m3u8') || url.includes('.m3u8?')) {
         const isDirectM3u8 = url.includes('.m3u8') && !url.includes('#') && url.startsWith('http');
 
         if (isDirectM3u8) {
-            // ============================================
-            // 虎牙资源直接走代理，跳过直连
-            // ============================================
             if (url.includes('huyall.com') || url.includes('baisiweiting.com')) {
                 console.log('🔵 虎牙资源，直接走代理');
                 showPlayer();
@@ -1842,7 +1772,6 @@ function startPlayer(url, title) {
                 startPlayerWithProxy(url, title);
                 return;
             }
-            // ============================================
 
             showPlayer();
             dom.playerLoading.classList.remove('hidden');
@@ -1887,7 +1816,6 @@ function startPlayer(url, title) {
             video.addEventListener('loadedmetadata', onSuccess, { once: true });
             video.addEventListener('error', onError, { once: true });
 
-            // 9秒超时切代理
             fallbackTimer = setTimeout(function() {
                 if (isFallbackUsed) return;
                 isFallbackUsed = true;
@@ -1898,7 +1826,6 @@ function startPlayer(url, title) {
                 startPlayerWithProxy(url, title);
             }, 9000);
 
-            // 开始直连
             video.src = url;
             video.load();
             video.play().catch(function() {});
@@ -1906,7 +1833,6 @@ function startPlayer(url, title) {
             return;
         }
 
-        // 非直连 m3u8（带参数等），直接用 hls.js
         if (window.Hls && Hls.isSupported()) {
             const hls = new Hls({
                 enableWorker: true,
@@ -1947,7 +1873,6 @@ function startPlayer(url, title) {
         return;
     }
 
-    // ===== 普通视频直链 =====
     video.src = url;
     video.play().catch(function() {
         toast('无法直接播放，尝试嵌入', 'error');
@@ -1955,14 +1880,7 @@ function startPlayer(url, title) {
     });
 }
 
-// ============================================================
-//  代理播放（备用）- 完整支持森林资源（二级 m3u8 + 分片代理）- 缓冲 180 秒
-//  支持 wgsl 源自动过滤失效分片（ts1.yhzybf.com）
-// ============================================================
 function startPlayerWithProxy(url, title) {
-    // ============================================
-    // 确保播放器显示在最上层（和 showPlayer 一致）
-    // ============================================
     state.isPlaying = true;
     dom.playerSection.classList.add('open');
     dom.playerSection.style.display = 'block';
@@ -1985,15 +1903,11 @@ function startPlayerWithProxy(url, title) {
     dom.player.style.background = '#000';
     
     dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    // ============================================
     
     const video = dom.player;
     const baseUrl = window.location.origin;
 
     if (window.Hls && Hls.isSupported()) {
-        // ============================================
-        // 步骤1：通过代理获取主 m3u8
-        // ============================================
         const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
         
         fetch(proxyUrl)
@@ -2002,9 +1916,6 @@ function startPlayerWithProxy(url, title) {
                 return r.text();
             })
             .then(function(mainM3u8) {
-                // ============================================
-                // 🆕 步骤1.5：过滤 wgsl 源的失效分片
-                // ============================================
                 const isWgsl = url.includes('wgslsw.com') || url.includes('wgsl');
                 
                 if (isWgsl) {
@@ -2016,9 +1927,7 @@ function startPlayerWithProxy(url, title) {
                     for (let i = 0; i < lines.length; i++) {
                         const line = lines[i];
                         
-                        // 检测失效分片（ts1.yhzybf.com）
                         if (line.includes('ts1.yhzybf.com')) {
-                            // 如果上一行是 #EXTINF，也要删除
                             if (filteredLines.length > 0 && 
                                 filteredLines[filteredLines.length - 1].trim().startsWith('#EXTINF')) {
                                 filteredLines.pop();
@@ -2039,14 +1948,10 @@ function startPlayerWithProxy(url, title) {
                     }
                 }
                 
-                // ============================================
-                // 步骤2：解析主 m3u8 中的二级 m3u8 地址
-                // ============================================
                 const targetOrigin = new URL(url).origin;
                 const subMatch = mainM3u8.match(/(\/[^\s]+\.m3u8)/);
                 
                 if (subMatch) {
-                    // 有二级 m3u8（森林资源等）
                     const subUrl = targetOrigin + subMatch[1];
                     console.log('📡 检测到二级 m3u8，请求:', subUrl);
                     return fetch('/api/proxy?url=' + encodeURIComponent(subUrl))
@@ -2055,12 +1960,8 @@ function startPlayerWithProxy(url, title) {
                             return r.text();
                         })
                         .then(function(subM3u8) {
-                            // ============================================
-                            // 步骤3：替换二级 m3u8 中的 Key 和分片为代理地址
-                            // ============================================
                             let modified = subM3u8;
                             
-                            // 替换 Key (URI="xxx")
                             modified = modified.replace(
                                 /(URI=")([^"]+)(")/g,
                                 function(match, p1, p2, p3) {
@@ -2071,7 +1972,6 @@ function startPlayerWithProxy(url, title) {
                                 }
                             );
                             
-                            // 替换分片 (.ts)
                             modified = modified.replace(
                                 /(\/[^\s]+\.ts)/g,
                                 function(match) {
@@ -2083,7 +1983,6 @@ function startPlayerWithProxy(url, title) {
                             return modified;
                         });
                 } else {
-                    // 没有二级 m3u8（普通源），直接处理主 m3u8
                     console.log('📡 单层 m3u8，直接处理');
                     let modified = mainM3u8;
                     const keyUrl = url.replace('/index.m3u8', '/enc.key');
@@ -2095,13 +1994,9 @@ function startPlayerWithProxy(url, title) {
                 }
             })
             .then(function(modifiedM3u8) {
-                // ============================================
-                // 步骤4：创建 blob 并播放
-                // ============================================
                 const blob = new Blob([modifiedM3u8], { type: 'application/vnd.apple.mpegurl' });
                 const blobUrl = URL.createObjectURL(blob);
                 
-                // 清理旧 hls 实例
                 if (state.hlsInstance) {
                     state.hlsInstance.destroy();
                     state.hlsInstance = null;
@@ -2160,9 +2055,6 @@ function startPlayerWithProxy(url, title) {
     }
 }
 
-// ============================================================
-//  从 HTML 提取 m3u8
-// ============================================================
 async function extractM3u8FromHtml(pageUrl, title) {
     setStatus('解析中…', true);
 
@@ -2179,7 +2071,6 @@ async function extractM3u8FromHtml(pageUrl, title) {
         if (resp === null) return;
         const html = typeof resp === 'string' ? resp : JSON.stringify(resp);
 
-        // 防御：若内容本身就是 m3u8 播放列表（#EXTM3U 开头），说明 URL 是直链但被误判为页面，直接播放原地址
         if (String(html).trimStart().startsWith('#EXTM3U')) {
             toast('✅ 识别为 m3u8 直链', 'success');
             setStatus('就绪');
@@ -2229,9 +2120,6 @@ async function extractM3u8FromHtml(pageUrl, title) {
     }
 }
 
-// ============================================================
-//  iframe 备选
-// ============================================================
 function startPlayerInIframe(url, title) {
     dom.playerSection.classList.add('open');
     dom.playerControls.classList.add('open');
@@ -2246,9 +2134,6 @@ function startPlayerInIframe(url, title) {
     dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ============================================================
-//  播放器控制
-// ============================================================
 function closePlayer() {
     state.isPlaying = false;
     dom.playerSection.classList.remove('open');
@@ -2279,9 +2164,6 @@ function closePlayer() {
     setStatus('就绪');
 }
 
-// ============================================================
-//  复制链接
-// ============================================================
 function copyLink() {
     const input = dom.m3u8Link;
     if (!input || !input.value) {
@@ -2302,9 +2184,6 @@ function copyLink() {
     }
 }
 
-// ============================================================
-//  KEYBOARD
-// ============================================================
 function handleKeydown(e) {
     const tag = e.target.tagName;
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
@@ -2337,13 +2216,9 @@ function handleKeydown(e) {
     }
 }
 
-// ============================================================
-//  DISCLAIMER
-// ============================================================
 let disclaimerShown = false;
 
 function showDisclaimer() {
-    // 检查是否已经同意过
     const agreed = localStorage.getItem(STORAGE_DISCLAIMER_KEY);
     if (agreed === 'true') return;
 
@@ -2365,7 +2240,4 @@ function showDisclaimer() {
     }
 }
 
-// ============================================================
-//  BOOT
-// ============================================================
 document.addEventListener('DOMContentLoaded', init);
