@@ -59,6 +59,11 @@ const API_ADAPTERS = {
 // ============================================================
 const _adapterCache = new Map();
 
+// ============================================================
+//  分类缓存（新增）
+// ============================================================
+const _classCache = new Map();
+
 async function detectAdapter(api) {
     if (_adapterCache.has(api)) return _adapterCache.get(api);
     
@@ -1163,6 +1168,41 @@ function populateSelect() {
 }
 
 // ============================================================
+//  loadCategoriesInBackground - 后台加载分类（新增）
+// ============================================================
+async function loadCategoriesInBackground(source) {
+    const cacheKey = source.api;
+    
+    if (_classCache.has(cacheKey)) {
+        const cached = _classCache.get(cacheKey);
+        state.categories = cached;
+        renderCategories(cached);
+        console.log('📦 分类从缓存加载:', source.name);
+        return;
+    }
+
+    try {
+        let classData = await fetchProxy(source.api + '?ac=list');
+        let classes = classData?.class || [];
+        
+        if (!classes.length) {
+            const data = await fetchProxy(source.api + '?ac=videolist&pg=1');
+            classes = data?.class || [];
+        }
+        
+        if (classes && classes.length) {
+            _classCache.set(cacheKey, classes);
+            state.categories = classes;
+            renderCategories(classes);
+            console.log('✅ 分类后台加载完成:', source.name, classes.length);
+        }
+    } catch (e) {
+        console.warn('分类加载失败:', source.name);
+    }
+}
+
+
+// ============================================================
 //  BROWSE - 修复：使用适配器，分类和列表一起获取
 // ============================================================
 async function loadBrowse(source) {
@@ -1174,29 +1214,11 @@ async function loadBrowse(source) {
     setStatus('加载中…', true);
     dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">加载分类…</span>';
 
-    // ✅ 先用 ac=list 获取分类
-    try {
-        const classData = await fetchProxy(source.api + '?ac=list');
-        if (classData && classData.class && classData.class.length) {
-            state.categories = classData.class;
-            renderCategories(state.categories);
-            console.log('✅ 分类加载完成:', state.categories.length);
-        } else {
-            console.log('⚠️ ac=list 没有返回分类，尝试备用方式');
-            const data = await fetchProxy(source.api + '?ac=videolist&pg=1');
-            if (data && data.class && data.class.length) {
-                state.categories = data.class;
-                renderCategories(state.categories);
-                console.log('✅ 分类从 videolist 加载完成:', state.categories.length);
-            }
-        }
-    } catch (e) {
-        console.warn('分类加载失败:', e);
-        dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">分类加载失败</span>';
-    }
-
-    // ✅ 再加载列表（用 ac=videolist）
+    // ✅ 先加载卡片（秒开）
     await loadMovies();
+    
+    // ✅ 分类后台加载（不阻塞）
+    loadCategoriesInBackground(source);
 
     setStatus('就绪');
     state.isLoading = false;
