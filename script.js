@@ -1432,22 +1432,41 @@ async function playMovie(vod, source) {
                         window._iqiyiHls = null;
                     }
                     
+                    // 🚀 终极激进版 HLS 配置
                     const hls = new Hls({
                         enableWorker: true,
-                        maxBufferLength: 60,
-                        maxMaxBufferLength: 120,
-                        maxBufferSize: 60 * 1000 * 1000,
-                        maxBufferHole: 0.5,
+                        maxBufferLength: 180,
+                        maxMaxBufferLength: 300,
+                        maxBufferSize: 300 * 1000 * 1000,
+                        maxBufferHole: 1.0,
                         lowLatencyMode: false,
-                        backbufferLength: 30,
+                        backbufferLength: 120,
+                        liveBackBufferLength: 120,
+                        abrEwmaFastLive: 0.1,
+                        abrEwmaSlowLive: 1,
+                        abrEwmaFastVoD: 0.1,
+                        abrEwmaSlowVoD: 1,
+                        abrEwmaDefaultEstimate: 5e6,
+                        abrBandWidthFactor: 0.7,
+                        abrBandWidthUpFactor: 0.95,
+                        fragLoadingMaxRetry: 20,
+                        fragLoadingRetryDelay: 200,
+                        fragLoadingMaxRetryTimeout: 180000,
+                        manifestLoadingMaxRetry: 10,
+                        manifestLoadingRetryDelay: 500,
+                        levelLoadingMaxRetry: 10,
+                        levelLoadingRetryDelay: 500,
+                        startFragPrefetch: true,
+                        testBandwidth: false,
                         progressive: true,
-                        abrEwmaFastLive: 0.5,
-                        abrEwmaSlowLive: 3,
-                        abrEwmaDefaultEstimate: 1e6,
-                        abrBandWidthUpFactor: 0.8,
-                        fragLoadingMaxRetry: 6,
-                        fragLoadingRetryDelay: 1000,
-                        fragLoadingMaxRetryTimeout: 64000,
+                        xhrSetup: function(xhr, xhrUrl) {
+                            try {
+                                const urlObj = new URL(xhrUrl);
+                                xhr.setRequestHeader('Referer', urlObj.origin + '/');
+                                xhr.setRequestHeader('Origin', urlObj.origin);
+                                xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+                            } catch (e) {}
+                        }
                     });
                     window._iqiyiHls = hls;
                     
@@ -1678,22 +1697,41 @@ function renderEpisodesPanel(episodes) {
                             window._iqiyiHls = null;
                         }
                         
+                        // 🚀 终极激进版 HLS 配置
                         const hls = new Hls({
                             enableWorker: true,
-                            maxBufferLength: 60,
-                            maxMaxBufferLength: 120,
-                            maxBufferSize: 60 * 1000 * 1000,
-                            maxBufferHole: 0.5,
+                            maxBufferLength: 180,
+                            maxMaxBufferLength: 300,
+                            maxBufferSize: 300 * 1000 * 1000,
+                            maxBufferHole: 1.0,
                             lowLatencyMode: false,
-                            backbufferLength: 30,
+                            backbufferLength: 120,
+                            liveBackBufferLength: 120,
+                            abrEwmaFastLive: 0.1,
+                            abrEwmaSlowLive: 1,
+                            abrEwmaFastVoD: 0.1,
+                            abrEwmaSlowVoD: 1,
+                            abrEwmaDefaultEstimate: 5e6,
+                            abrBandWidthFactor: 0.7,
+                            abrBandWidthUpFactor: 0.95,
+                            fragLoadingMaxRetry: 20,
+                            fragLoadingRetryDelay: 200,
+                            fragLoadingMaxRetryTimeout: 180000,
+                            manifestLoadingMaxRetry: 10,
+                            manifestLoadingRetryDelay: 500,
+                            levelLoadingMaxRetry: 10,
+                            levelLoadingRetryDelay: 500,
+                            startFragPrefetch: true,
+                            testBandwidth: false,
                             progressive: true,
-                            abrEwmaFastLive: 0.5,
-                            abrEwmaSlowLive: 3,
-                            abrEwmaDefaultEstimate: 1e6,
-                            abrBandWidthUpFactor: 0.8,
-                            fragLoadingMaxRetry: 6,
-                            fragLoadingRetryDelay: 1000,
-                            fragLoadingMaxRetryTimeout: 64000,
+                            xhrSetup: function(xhr, xhrUrl) {
+                                try {
+                                    const urlObj = new URL(xhrUrl);
+                                    xhr.setRequestHeader('Referer', urlObj.origin + '/');
+                                    xhr.setRequestHeader('Origin', urlObj.origin);
+                                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+                                } catch (e) {}
+                            }
                         });
                         window._iqiyiHls = hls;
                         
@@ -1865,25 +1903,41 @@ function startPlayer(url, title) {
         }
 
         if (window.Hls && Hls.isSupported()) {
+            // 🚀 终极激进版 HLS 配置
             const hls = new Hls({
                 enableWorker: true,
-                maxBufferLength: 60,
-                maxMaxBufferLength: 120,
-                maxBufferSize: 60 * 1000 * 1000,
-                maxBufferHole: 0.5,
+                maxBufferLength: 180,
+                maxMaxBufferLength: 300,
+                maxBufferSize: 300 * 1000 * 1000,
+                maxBufferHole: 1.0,
                 lowLatencyMode: false,
-                backbufferLength: 30,
-                liveBackBufferLength: 30,
+                backbufferLength: 120,
+                liveBackBufferLength: 120,
+                abrEwmaFastLive: 0.1,
+                abrEwmaSlowLive: 1,
+                abrEwmaFastVoD: 0.1,
+                abrEwmaSlowVoD: 1,
+                abrEwmaDefaultEstimate: 5e6,
+                abrBandWidthFactor: 0.7,
+                abrBandWidthUpFactor: 0.95,
+                fragLoadingMaxRetry: 20,
+                fragLoadingRetryDelay: 200,
+                fragLoadingMaxRetryTimeout: 180000,
+                manifestLoadingMaxRetry: 10,
+                manifestLoadingRetryDelay: 500,
+                levelLoadingMaxRetry: 10,
+                levelLoadingRetryDelay: 500,
+                startFragPrefetch: true,
+                testBandwidth: false,
                 progressive: true,
-                abrEwmaFastLive: 0.5,
-                abrEwmaSlowLive: 3,
-                abrEwmaFastVoD: 0.5,
-                abrEwmaSlowVoD: 3,
-                abrEwmaDefaultEstimate: 1e6,
-                abrBandWidthUpFactor: 0.8,
-                fragLoadingMaxRetry: 6,
-                fragLoadingRetryDelay: 1000,
-                fragLoadingMaxRetryTimeout: 64000,
+                xhrSetup: function(xhr, xhrUrl) {
+                    try {
+                        const urlObj = new URL(xhrUrl);
+                        xhr.setRequestHeader('Referer', urlObj.origin + '/');
+                        xhr.setRequestHeader('Origin', urlObj.origin);
+                        xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+                    } catch (e) {}
+                }
             });
             state.hlsInstance = hls;
             hls.loadSource(url);
@@ -2044,25 +2098,41 @@ function startPlayerWithProxy(url, title) {
                     state.hlsInstance = null;
                 }
                 
+                // 🚀 终极激进版 HLS 配置
                 const hls = new Hls({
                     enableWorker: true,
-                    maxBufferLength: 60,
-                    maxMaxBufferLength: 120,
-                    maxBufferSize: 60 * 1000 * 1000,
-                    maxBufferHole: 0.5,
+                    maxBufferLength: 180,
+                    maxMaxBufferLength: 300,
+                    maxBufferSize: 300 * 1000 * 1000,
+                    maxBufferHole: 1.0,
                     lowLatencyMode: false,
-                    backbufferLength: 30,
-                    liveBackBufferLength: 30,
+                    backbufferLength: 120,
+                    liveBackBufferLength: 120,
+                    abrEwmaFastLive: 0.1,
+                    abrEwmaSlowLive: 1,
+                    abrEwmaFastVoD: 0.1,
+                    abrEwmaSlowVoD: 1,
+                    abrEwmaDefaultEstimate: 5e6,
+                    abrBandWidthFactor: 0.7,
+                    abrBandWidthUpFactor: 0.95,
+                    fragLoadingMaxRetry: 20,
+                    fragLoadingRetryDelay: 200,
+                    fragLoadingMaxRetryTimeout: 180000,
+                    manifestLoadingMaxRetry: 10,
+                    manifestLoadingRetryDelay: 500,
+                    levelLoadingMaxRetry: 10,
+                    levelLoadingRetryDelay: 500,
+                    startFragPrefetch: true,
+                    testBandwidth: false,
                     progressive: true,
-                    abrEwmaFastLive: 0.5,
-                    abrEwmaSlowLive: 3,
-                    abrEwmaFastVoD: 0.5,
-                    abrEwmaSlowVoD: 3,
-                    abrEwmaDefaultEstimate: 1e6,
-                    abrBandWidthUpFactor: 0.8,
-                    fragLoadingMaxRetry: 6,
-                    fragLoadingRetryDelay: 1000,
-                    fragLoadingMaxRetryTimeout: 64000,
+                    xhrSetup: function(xhr, xhrUrl) {
+                        try {
+                            const urlObj = new URL(xhrUrl);
+                            xhr.setRequestHeader('Referer', urlObj.origin + '/');
+                            xhr.setRequestHeader('Origin', urlObj.origin);
+                            xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+                        } catch (e) {}
+                    }
                 });
                 state.hlsInstance = hls;
                 hls.loadSource(blobUrl);
