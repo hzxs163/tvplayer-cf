@@ -1400,6 +1400,20 @@ footer span {
     .source-list .source-item .s-name {
         min-width: 60px;
     }
+    /* 🆕 移动端导入按钮强制一行 */
+    .import-actions {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 4px !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .import-actions .btn {
+        flex: 0 0 auto !important;
+        font-size: 11px !important;
+        padding: 4px 10px !important;
+        white-space: nowrap !important;
+    }
 }
 
 @media (max-width: 400px) {
