@@ -840,21 +840,22 @@ main {
     align-items: center;
 }
 .import-box .import-actions .btn {
-    padding: 7px 18px;
+    padding: 6px 16px;
     border-radius: 6px;
     font-weight: 500;
     font-size: 13px;
     transition: 0.2s;
     white-space: nowrap;
-    border: none;
+    border: 1px solid var(--border);
     cursor: pointer;
+    background: var(--bg);
+    color: var(--text2);
 }
-.import-box .import-actions .btn-primary {
-    background: var(--primary);
-    color: #fff;
-}
-.import-box .import-actions .btn-primary:hover {
-    background: var(--primary-hover);
+
+.import-box .import-actions .btn:hover {
+    background: var(--card-hover);
+    color: var(--text);
+    border-color: var(--primary);
 }
 .import-box .import-actions .btn-ghost {
     background: var(--bg);
