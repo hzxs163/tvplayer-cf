@@ -1290,6 +1290,35 @@ async function loadCategoriesInBackground(source) {
     }
 }
 
+// ============================================================
+//  loadCategoriesInBackground - 后台加载分类（不阻塞卡片）
+// ============================================================
+async function loadCategoriesInBackground(source) {
+    try {
+        // 先尝试从 ac=videolist 拿分类（和列表同一个接口）
+        const data = await fetchProxy(source.api + '?ac=videolist&pg=1');
+        let classes = data?.class || [];
+        
+        // 如果 ac=videolist 没有分类，尝试 ac=list
+        if (!classes.length) {
+            const classData = await fetchProxy(source.api + '?ac=list');
+            classes = classData?.class || [];
+        }
+        
+        if (classes && classes.length) {
+            state.categories = classes;
+            renderCategories(classes);
+            console.log('✅ 分类后台加载完成:', source.name, classes.length);
+        } else {
+            console.log('⚠️ 没有分类数据:', source.name);
+            // 没有分类时，只显示"全部"
+            dom.categoryNav.innerHTML = '<span class="cat active">全部</span>';
+        }
+    } catch (e) {
+        console.warn('分类加载失败:', source.name);
+        dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">分类加载失败</span>';
+    }
+}
 
 // ============================================================
 //  BROWSE - 修复：使用适配器，分类和列表一起获取
@@ -1301,10 +1330,15 @@ async function loadBrowse(source) {
     state.category = null;
     state.page = 1;
     setStatus('加载中…', true);
-    dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">加载分类…</span>';
+    
+    // 先显示"加载分类…"
+    dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">⏳ 加载分类…</span>';
 
-    // ✅ 只请求一次，分类和列表一起拿
+    // ✅ 先加载卡片（优先）
     await loadMovies();
+
+    // ✅ 分类后台加载（不阻塞）
+    loadCategoriesInBackground(source);
 
     setStatus('就绪');
     state.isLoading = false;
