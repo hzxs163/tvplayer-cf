@@ -1,1438 +1,1608 @@
-/* ============================================================
-           文人书房风 · Scholar's Study Aesthetic
-           ============================================================ */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-:root {
-    --bg: #f5f0e8;
-    --bg2: #faf8f4;
-    --card: #faf8f4;
-    --card-hover: #f0e8de;
-    --border: #e6ddd0;
-    --text: #3c3a36;
-    --text2: #8a7e72;
-    --text3: #b0a494;
-    --primary: #b76e4a;
-    --primary-dim: rgba(183, 110, 74, 0.12);
-    --primary-hover: #a85d3a;
-    --green: #5d7a6b;
-    --gold: #c49b6c;
-    --radius: 8px;
-    --shadow: 0 4px 24px rgba(60, 58, 54, 0.08);
+// ============================================================
+//  CONFIG
+// ============================================================
+const PROXY = (url) => '/api/proxy?url=' + encodeURIComponent(url);
+const CONCURRENCY = 6;
+const FETCH_TIMEOUT = 15000;
+const STORAGE_KEY = 'tv_data';
+const STORAGE_SOURCES_KEY = 'tv_sources';
+const STORAGE_DISCLAIMER_KEY = 'tv_disclaimer_agreed';
+
+// ============================================================
+//  STATE
+// ============================================================
+const state = {
+    sources: [],
+    source: null,
+    category: null,
+    page: 1,
+    totalPages: 1,
+    categories: [],
+    movies: [],
+    searchResults: [],
+    searchSeq: 0,
+    currentVod: null,
+    currentSource: null,
+    currentLines: [],
+    currentLineIndex: 0,
+    currentEpisodes: [],
+    currentUrl: '',
+    favorites: [],
+    history: [],
+    isPlaying: false,
+    isLoading: false,
+    editingKey: null,
+    hlsInstance: null,
+};
+
+// ============================================================
+//  DOM REFS
+// ============================================================
+const $ = (id) => document.getElementById(id);
+const dom = {
+    sourceSelect: $('sourceSelect'),
+    searchInput: $('searchInput'),
+    searchBtn: $('searchBtn'),
+    status: $('status'),
+
+    pageBrowse: $('pageBrowse'),
+    pageSearch: $('pageSearch'),
+
+    categoryNav: $('categoryNav'),
+    browseGrid: $('browseGrid'),
+    browseTitle: $('browseTitle'),
+    browseBadge: $('browseBadge'),
+    browseInfo: $('browseInfo'),
+    pageInfo: $('pageInfo'),
+    pageInfo2: $('pageInfo2'),
+    browseHeader: $('browseHeader'),
+    browsePager: $('browsePager'),
+
+    emptyState: $('emptyState'),
+    searchGrid: $('searchGrid'),
+    resultStats: $('resultStats'),
+
+    playerSection: $('player-section'),
+    player: $('player'),
+    playerIframe: $('player-iframe'),
+    nowPlaying: $('nowPlaying'),
+    m3u8Link: $('m3u8Link'),
+    lineSelect: $('lineSelect'),
+    episodesPanel: $('episodes-panel'),
+    episodesList: $('episodes-list'),
+    playerControls: $('playerControls'),
+
+    importModal: $('importModal'),
+    importTextarea: $('importTextarea'),
+    importCount: $('importCount'),
+    sourceList: $('sourceList'),
+
+    playerLoading: $('player-loading'),
+};
+
+// ============================================================
+//  STORAGE
+// ============================================================
+function loadStorage() {
+    try {
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        state.favorites = data.favorites || [];
+        state.history = data.history || [];
+    } catch { state.favorites = [];
+        state.history = []; }
 }
 
-body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: "PingFang SC", "Microsoft YaHei", "Noto Serif SC", serif;
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-}
-button {
-    cursor: pointer;
-    border: none;
-    outline: none;
-    background: none;
-    color: inherit;
-    font: inherit;
-}
-input,
-select {
-    font: inherit;
-    outline: none;
-    border: none;
-    background: none;
-    color: inherit;
-}
-img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
-}
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-::-webkit-scrollbar-thumb {
-    background: var(--text3);
-    border-radius: 4px;
+function saveStorage() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        favorites: state.favorites,
+        history: state.history,
+    }));
 }
 
-/* ===== Toast ===== */
-#toast-container {
-    position: fixed;
-    top: 72px;
-    right: 16px;
-    z-index: 999999;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-width: 340px;
-    pointer-events: none;
+function isFav(vodId, sourceKey) {
+    return state.favorites.some(f => f.vodId === vodId && f.sourceKey === sourceKey);
 }
-.toast {
-    padding: 10px 16px;
-    border-radius: 6px;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    color: var(--text2);
-    font-size: 13px;
-    box-shadow: var(--shadow);
-    pointer-events: auto;
-    animation: toastIn 0.25s ease;
-}
-.toast.success {
-    border-left: 3px solid var(--green);
-    color: var(--text);
-}
-.toast.error {
-    border-left: 3px solid #c0392b;
-    color: var(--text);
-}
-.toast.info {
-    border-left: 3px solid var(--primary);
-    color: var(--text);
-}
-@keyframes toastIn {
-    from {
-        opacity: 0;
-        transform: translateX(30px);
+
+function toggleFav() {
+    if (!state.currentVod || !state.currentSource) return;
+    const id = state.currentVod.vod_id;
+    const key = state.currentSource.key;
+    const idx = state.favorites.findIndex(f => f.vodId === id && f.sourceKey === key);
+    if (idx > -1) {
+        state.favorites.splice(idx, 1);
+        toast('已取消收藏', 'info');
+    } else {
+        state.favorites.push({ vodId: id, sourceKey: key, name: state.currentVod.vod_name, poster: state.currentVod
+                .vod_pic });
+        toast('⭐ 已收藏', 'success');
     }
-    to {
-        opacity: 1;
-        transform: translateX(0);
+    saveStorage();
+}
+
+function addHistory(vod, source, episode) {
+    const entry = {
+        vodId: vod.vod_id,
+        sourceKey: source.key,
+        name: vod.vod_name,
+        poster: vod.vod_pic,
+        episode: episode || '',
+        time: Date.now()
+    };
+    state.history = state.history.filter(h => !(h.vodId === entry.vodId && h.sourceKey === entry.sourceKey));
+    state.history.unshift(entry);
+    if (state.history.length > 100) state.history.pop();
+    saveStorage();
+}
+
+// ============================================================
+//  SOURCES 管理
+// ============================================================
+function getStoredSources() {
+    try {
+        const stored = localStorage.getItem(STORAGE_SOURCES_KEY);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length) {
+                return parsed;
+            }
+        }
+    } catch (e) {}
+    return null;
+}
+
+function setStoredSources(sources) {
+    localStorage.setItem(STORAGE_SOURCES_KEY, JSON.stringify(sources));
+}
+
+async function loadSources() {
+    const stored = getStoredSources();
+    if (stored) {
+        return stored;
     }
+    return [];
 }
 
-/* ===== Header ===== */
-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(245, 240, 232, 0.92);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--border);
-    padding: 8px 16px;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 12px;
-}
-.logo {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text);
-    white-space: nowrap;
-    letter-spacing: -0.3px;
-    cursor: pointer;
-    transition: 0.2s;
-    font-family: "Noto Serif SC", serif;
-}
-.logo:hover {
-    color: var(--primary);
-}
-.logo span {
-    color: var(--primary);
+function hasSources() {
+    return state.sources && state.sources.length > 0;
 }
 
-.controls {
-    display: flex;
-    flex: 1;
-    min-width: 160px;
-    align-items: center;
-    gap: 6px;
-}
-.controls select {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 4px 8px;
-    font-size: 13px;
-    color: var(--text);
-    min-width: 70px;
-    max-width: 120px;
-    cursor: pointer;
-}
-.controls select option {
-    background: var(--bg2);
-}
-.controls input {
-    flex: 1;
-    min-width: 50px;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 13px;
-    color: var(--text);
-    transition: 0.2s;
-}
-.controls input:focus {
-    border-color: var(--primary);
-}
-.controls input::placeholder {
-    color: var(--text3);
+// ============================================================
+//  隐藏源切换
+// ============================================================
+let showHiddenSources = false;
+
+function toggleShowHiddenSources() {
+    showHiddenSources = !showHiddenSources;
+    populateSelect();
 }
 
-.btn {
-    padding: 4px 14px;
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 13px;
-    transition: 0.2s;
-    white-space: nowrap;
-}
-.btn-primary {
-    background: var(--primary);
-    color: #fff;
-}
-.btn-primary:hover {
-    background: var(--primary-hover);
-}
-.btn-primary:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-.btn-ghost {
-    color: var(--text2);
-    border: 1px solid transparent;
-    padding: 3px 10px;
-}
-.btn-ghost:hover {
-    color: var(--text);
-    border-color: var(--border);
-}
-.btn-danger {
-    color: #c0392b;
-}
-.btn-danger:hover {
-    color: #e74c3c;
-}
-.btn-sm {
-    padding: 1px 8px;
-    font-size: 12px;
-    border-radius: 4px;
-}
+// ============================================================
+//  源列表渲染（弹窗内）
+// ============================================================
+function renderSourceList() {
+    const container = dom.sourceList;
+    const sources = getStoredSources() || [];
 
-#status {
-    font-size: 12px;
-    color: var(--text3);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 120px;
-    margin-left: auto;
-}
-.spinner {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    border: 2px solid var(--border);
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    vertical-align: middle;
-}
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
+    if (!sources.length) {
+        container.innerHTML = '<div class="empty-hint">📭 暂无源，请导入</div>';
+        dom.importCount.textContent = '0 个';
+        return;
     }
+
+    const groups = { stable: [], normal: [], backup: [] };
+    sources.forEach(s => {
+        const g = s.group || 'normal';
+        if (groups[g]) groups[g].push(s);
+        else groups.normal.push(s);
+    });
+    const labels = { stable: '稳定', normal: '普通', backup: '备用' };
+    const dots = { stable: 'stable', normal: 'normal', backup: 'backup' };
+
+    let html = '';
+    Object.keys(groups).forEach(g => {
+        if (!groups[g].length) return;
+        html += `<div class="group-label"><span class="dot ${dots[g] || 'normal'}"></span> ${labels[g] || g}</div>`;
+        groups[g].forEach(s => {
+            const isEditing = state.editingKey === s.key;
+            const isHidden = s.enabled === false;
+            html += `
+                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''}">
+                    <div class="s-info">
+                        <span class="s-name">${esc(s.name)}${isHidden ? ' 🔒' : ''}</span>
+                        <span class="s-key">${esc(s.key)}</span>
+                    </div>
+                    <div class="s-actions">
+                        <button class="edit-btn" onclick="editSource('${esc(s.key)}')">编辑</button>
+                        <button class="del-btn" onclick="deleteSource('${esc(s.key)}')">删除</button>
+                    </div>
+                </div>
+            `;
+        });
+    });
+
+    container.innerHTML = html;
+    dom.importCount.textContent = sources.length + ' 个';
 }
 
-/* ===== Main ===== */
-main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 12px 16px 0;
-}
-
-/* ============================================================
-           播放器
-           ============================================================ */
-#player-section {
-    display: none;
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    max-height: 70vh;
-    background: #2c2a26;
-    border-radius: var(--radius) var(--radius) 0 0;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    border-bottom: none;
-}
-#player-section.open {
-    display: block;
-}
-#player-section video {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #1a1816;
-    object-fit: contain;
-}
-#player-iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: none;
-    background: #1a1816;
-}
-
-/* ===== 加载遮罩 ===== */
-#player-loading {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 12px;
-    background: #2c2a26;
-    color: var(--text2);
-    z-index: 10;
-    pointer-events: none;
-    transition: opacity 0.4s ease;
-}
-#player-loading.show {
-    display: flex;
-}
-#player-loading.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-#player-loading .spinner {
-    width: 36px;
-    height: 36px;
-    border-width: 3px;
-}
-#player-loading .label {
-    font-size: 14px;
-    color: #8a7e72;
-    letter-spacing: 0.5px;
-}
-
-/* ===== 隐藏视频默认控件占位 ===== */
-#player::-webkit-media-controls-start-playback-button {
-    display: none !important;
-}
-
-/* ===== 播放器控制栏 ===== */
-.player-controls {
-    display: none !important;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 12px;
-    padding: 8px 14px;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-top: none;
-    border-radius: 0 0 var(--radius) var(--radius);
-    font-size: 13px;
-    color: var(--text2);
-}
-.player-controls.open {
-    display: flex !important;
-}
-.player-controls .title {
-    flex: 1;
-    min-width: 80px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 500;
-}
-.player-controls select#lineSelect {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 13px;
-    color: var(--text);
-    max-width: 100px;
-    cursor: pointer;
-    height: 32px;
-}
-.player-controls select#lineSelect option {
-    background: var(--bg2);
-}
-.player-controls .ctrl-btn {
-    padding: 4px 12px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text2);
-    border-radius: 4px;
-    transition: 0.2s;
-    line-height: 1.4;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    cursor: pointer;
-    white-space: nowrap;
-    height: 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-.player-controls .ctrl-btn:hover {
-    color: var(--text);
-    background: var(--card-hover);
-}
-.player-controls .ctrl-btn.close-btn {
-    color: var(--text3);
-    border: none;
-    background: none;
-    font-size: 18px;
-    padding: 2px 6px;
-    height: 32px;
-    width: 32px;
-}
-.player-controls .ctrl-btn.close-btn:hover {
-    color: #c0392b;
-    background: none;
-}
-.player-controls .link-row {
-    display: flex;
-    flex: 1 1 100%;
-    gap: 6px;
-    align-items: center;
-    width: 100%;
-    margin-top: 2px;
-}
-.player-controls .link-input {
-    flex: 1;
-    min-width: 60px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 13px;
-    color: var(--text3);
-    height: 32px;
-}
-.player-controls .link-input:focus {
-    border-color: var(--primary);
-}
-.player-controls .btn-copy {
-    padding: 4px 14px;
-    font-size: 13px;
-    border-radius: 4px;
-    background: var(--primary);
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: 0.2s;
-    flex-shrink: 0;
-    height: 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-.player-controls .btn-copy:hover {
-    opacity: 0.85;
-}
-
-/* ===== 选集面板 ===== */
-#episodes-panel {
-    display: none;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-top: none;
-    border-radius: 0 0 var(--radius) var(--radius);
-    padding: 12px 14px;
-    max-height: 240px;
-    overflow-y: auto;
-}
-#episodes-panel.open {
-    display: block;
-}
-#episodes-panel::-webkit-scrollbar {
-    width: 3px;
-}
-#episodes-panel::-webkit-scrollbar-thumb {
-    background: var(--text3);
-    border-radius: 4px;
-}
-#episodes-panel .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    color: var(--text2);
-    font-size: 13px;
-    font-weight: 500;
-}
-#episodes-panel .panel-header button {
-    color: var(--text3);
-    font-size: 16px;
-    padding: 0 4px;
-}
-#episodes-panel .panel-header button:hover {
-    color: var(--text);
-}
-#episodes-panel .ep-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-#episodes-panel .ep-list .ep {
-    padding: 4px 14px;
-    border-radius: 4px;
-    font-size: 13px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text2);
-    cursor: pointer;
-    transition: 0.2s;
-    min-width: 44px;
-    text-align: center;
-}
-#episodes-panel .ep-list .ep:hover {
-    border-color: var(--primary);
-    color: var(--text);
-}
-#episodes-panel .ep-list .ep.active {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: #fff;
-}
-#episodes-panel .ep-list .ep-loading {
-    color: var(--text3);
-    font-size: 13px;
-    padding: 4px 0;
-}
-
-/* ============================================================
-           视图容器
-           ============================================================ */
-.page {
-    display: none;
-    animation: fadeIn 0.25s ease;
-}
-.page.active {
-    display: block;
-}
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(6px);
+// ============================================================
+//  编辑源
+// ============================================================
+function editSource(key) {
+    const sources = getStoredSources() || [];
+    const item = sources.find(s => s.key === key);
+    if (!item) {
+        toast('未找到该源', 'error');
+        return;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    state.editingKey = key;
+    dom.importTextarea.value = JSON.stringify(item, null, 2);
+    renderSourceList();
+    dom.importTextarea.focus();
+    dom.importTextarea.scrollTop = 0;
+    toast('已加载到编辑区，修改后点击「导入」保存', 'info');
+}
+
+// ============================================================
+//  删除源
+// ============================================================
+function deleteSource(key) {
+    if (!confirm(`确定要删除源 "${key}" 吗？`)) return;
+    const sources = getStoredSources() || [];
+    const filtered = sources.filter(s => s.key !== key);
+    if (filtered.length === sources.length) {
+        toast('未找到该源', 'error');
+        return;
+    }
+    setStoredSources(filtered);
+    state.sources = filtered;
+    if (state.editingKey === key) {
+        state.editingKey = null;
+        dom.importTextarea.value = '';
+    }
+    renderSourceList();
+    populateSelect();
+    if (!filtered.length) {
+        renderEmptyState();
+    } else {
+        const first = filtered.find(s => s.group === 'stable') || filtered[0];
+        if (first) {
+            dom.sourceSelect.value = first.key;
+        }
+    }
+    toast('✅ 已删除', 'success');
+}
+
+// ============================================================
+//  导入功能
+// ============================================================
+function showImportModal() {
+    dom.importModal.classList.add('open');
+    renderSourceList();
+    if (!state.editingKey) {
+        dom.importTextarea.value = '';
     }
 }
 
-/* ===== 空状态 ===== */
-.empty-state {
-    text-align: center;
-    padding: 60px 20px 50px;
-    color: var(--text2);
-    line-height: 2;
-}
-.empty-state .icon {
-    font-size: 40px;
-    display: block;
-    margin-bottom: 8px;
-}
-.empty-state b {
-    color: var(--text);
-}
-.empty-state .hint {
-    font-size: 13px;
-    color: var(--text3);
+function closeImportModal() {
+    dom.importModal.classList.remove('open');
+    state.editingKey = null;
+    dom.importTextarea.value = '';
 }
 
-/* ============================================================
-           浏览模式
-           ============================================================ */
-.category-nav {
-    display: flex;
-    gap: 4px;
-    overflow-x: auto;
-    padding: 4px 0 12px;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-}
-.category-nav::-webkit-scrollbar {
-    display: none;
-}
-.category-nav .cat {
-    flex-shrink: 0;
-    padding: 4px 18px;
-    border-radius: 20px;
-    font-size: 14px;
-    color: var(--text2);
-    cursor: pointer;
-    transition: 0.2s;
-    white-space: nowrap;
-    border: 1px solid transparent;
-}
-.category-nav .cat:hover {
-    color: var(--text);
-    border-color: var(--border);
-}
-.category-nav .cat.active {
-    color: var(--primary);
-    border-color: var(--primary);
-    background: var(--primary-dim);
-}
+function importSources() {
+    const raw = dom.importTextarea.value.trim();
+    if (!raw) { toast('请粘贴 JSON 内容', 'error'); return; }
 
-.browse-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-.browse-header .title {
-    font-size: 16px;
-    font-weight: 600;
-}
-.browse-header .title .badge {
-    font-size: 12px;
-    font-weight: 400;
-    color: var(--text3);
-    margin-left: 8px;
-}
-.browse-header .info {
-    font-size: 13px;
-    color: var(--text3);
-}
+    try {
+        const data = JSON.parse(raw);
+        if (!Array.isArray(data) || !data.length) {
+            throw new Error('格式错误：需要非空数组');
+        }
+        for (const item of data) {
+            if (!item.key || !item.name || !item.api) {
+                throw new Error('每个源必须包含 key, name, api 字段');
+            }
+        }
 
-/* ===== 影片网格 ===== */
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 12px;
-}
+        let currentSources = getStoredSources() || [];
+        if (state.editingKey) {
+            const idx = currentSources.findIndex(s => s.key === state.editingKey);
+            if (idx > -1) {
+                currentSources[idx] = data[0];
+            } else {
+                currentSources.push(data[0]);
+            }
+            state.editingKey = null;
+            setStoredSources(currentSources);
+            toast('✅ 更新成功', 'success');
+        } else {
+            setStoredSources(data);
+            toast('✅ 导入成功，' + data.length + ' 个源', 'success');
+        }
 
-.card {
-    background: var(--bg2);
-    border-radius: var(--radius);
-    overflow: hidden;
-    cursor: pointer;
-    transition: 0.25s ease;
-    border: 1px solid var(--border);
-    position: relative;
-}
-.card:hover {
-    transform: translateY(-2px);
-    border-color: var(--primary);
-    box-shadow: 0 4px 16px rgba(60, 58, 54, 0.08);
-}
-.card .poster-wrap {
-    position: relative;
-    aspect-ratio: 2/3;
-    overflow: hidden;
-    background: var(--bg);
-}
-.card .poster-wrap img {
-    transition: 0.3s;
-}
-.card:hover .poster-wrap img {
-    transform: scale(1.03);
-}
-.card .poster-wrap .play-icon {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.3);
-    opacity: 0;
-    transition: 0.3s;
-    font-size: 40px;
-    color: #fff;
-}
-.card:hover .poster-wrap .play-icon {
-    opacity: 1;
-}
-.card .poster-wrap .badge-top {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: var(--primary);
-    color: #fff;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-.card .poster-wrap .badge-top.score {
-    background: var(--gold);
-    color: #fff;
-}
-
-.card .info {
-    padding: 8px 10px 10px;
-}
-.card .info .name {
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    color: var(--text);
-}
-.card .info .name .star {
-    color: var(--gold);
-    margin-left: 2px;
-}
-.card .info .meta {
-    font-size: 12px;
-    color: var(--text2);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 8px;
-    margin-top: 4px;
-    align-items: center;
-}
-.card .info .meta .tag {
-    font-size: 11px;
-    padding: 0 8px;
-    border-radius: 10px;
-    background: var(--primary-dim);
-    color: var(--primary);
-}
-.card .info .meta .tag.source {
-    background: rgba(0, 0, 0, 0.04);
-    color: var(--text3);
-}
-.card .info .meta .score {
-    color: var(--gold);
-    font-weight: 600;
-}
-
-.empty-grid {
-    text-align: center;
-    padding: 60px 20px 50px;
-    color: var(--text2);
-    line-height: 2;
-    grid-column: 1 / -1;
-}
-
-/* ===== 分页 ===== */
-.pager {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    justify-content: center;
-    margin-top: 18px;
-    font-size: 13px;
-    color: var(--text3);
-}
-
-/* ============================================================
-           导入弹窗（文人书房风）
-           ============================================================ */
-#importModal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 999;
-    background: rgba(60, 58, 54, 0.35);
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(2px);
-}
-#importModal.open {
-    display: flex;
-}
-.import-box {
-    background: var(--bg2);
-    border-radius: 16px;
-    padding: 24px 28px;
-    max-width: 500px;
-    width: 94%;
-    max-height: 90vh;
-    overflow-y: auto;
-    border: 1px solid var(--border);
-    box-shadow: 0 12px 48px rgba(60, 58, 54, 0.12);
-}
-.import-box .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
-}
-.import-box .modal-header h3 {
-    font-size: 19px;
-    font-weight: 600;
-    color: var(--text);
-    font-family: "Noto Serif SC", serif;
-}
-.import-box .modal-header .close-modal {
-    font-size: 22px;
-    color: var(--text3);
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 6px;
-    transition: 0.2s;
-    line-height: 1;
-    background: none;
-    border: none;
-}
-.import-box .modal-header .close-modal:hover {
-    color: var(--text);
-    background: var(--card-hover);
-}
-.import-box .sub {
-    color: var(--text2);
-    font-size: 13px;
-    margin-bottom: 16px;
-}
-.import-box .import-section {
-    background: var(--bg);
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 16px;
-    border: 1px solid var(--border);
-}
-.import-box .import-section .section-label {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text2);
-    margin-bottom: 8px;
-}
-.import-box textarea {
-    width: 100%;
-    height: 120px;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    color: var(--text);
-    font-size: 13px;
-    font-family: "Courier New", monospace;
-    resize: vertical;
-    transition: 0.2s;
-}
-.import-box textarea:focus {
-    border-color: var(--primary);
-    outline: none;
-}
-.import-box .import-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-.import-box .import-actions .btn {
-    padding: 6px 16px;
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 13px;
-    transition: 0.2s;
-    white-space: nowrap;
-    border: 1px solid var(--border);
-    cursor: pointer;
-    background: var(--bg);
-    color: var(--text2);
-}
-
-.import-box .import-actions .btn:hover {
-    background: var(--card-hover);
-    color: var(--text);
-    border-color: var(--primary);
-}
-.import-box .import-actions .btn-ghost {
-    background: var(--bg);
-    color: var(--text2);
-    border: 1px solid var(--border);
-}
-.import-box .import-actions .btn-ghost:hover {
-    background: var(--card-hover);
-    color: var(--text);
-}
-.import-box .import-actions .btn-cancel {
-    color: var(--text3);
-    background: transparent;
-}
-.import-box .import-actions .btn-cancel:hover {
-    color: var(--text);
-}
-.import-box .import-actions .btn-file {
-    background: var(--bg);
-    color: var(--text2);
-    border: 1px solid var(--border);
-}
-.import-box .import-actions .btn-file:hover {
-    background: var(--card-hover);
-    color: var(--text);
-}
-.import-box .hint {
-    margin-top: 10px;
-    font-size: 12px;
-    color: var(--text3);
-    line-height: 1.6;
-}
-.import-box .hint a {
-    color: var(--primary);
-    cursor: pointer;
-}
-.import-box .hint a:hover {
-    text-decoration: underline;
-}
-
-/* ===== 已有源列表 ===== */
-.import-box .source-section {
-    border-top: 1px solid var(--border);
-    padding-top: 14px;
-}
-.import-box .source-section .source-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-.import-box .source-section .source-header .label {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-}
-.import-box .source-section .source-header .count {
-    font-size: 13px;
-    color: var(--text2);
-    background: var(--bg);
-    padding: 2px 12px;
-    border-radius: 12px;
-}
-.source-list {
-    max-height: 240px;
-    overflow-y: auto;
-    margin-top: 0;
-}
-.source-list::-webkit-scrollbar {
-    width: 4px;
-}
-.source-list::-webkit-scrollbar-thumb {
-    background: var(--text3);
-    border-radius: 4px;
-}
-.source-list .group-label {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text2);
-    padding: 6px 0 4px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.source-list .group-label .dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-.source-list .group-label .dot.stable {
-    background: var(--green);
-}
-.source-list .group-label .dot.normal {
-    background: var(--primary);
-}
-.source-list .group-label .dot.backup {
-    background: var(--gold);
-}
-.source-list .source-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 13px;
-    gap: 8px;
-    transition: 0.2s;
-    background: var(--bg);
-    margin-bottom: 4px;
-    border: 1px solid transparent;
-}
-.source-list .source-item:hover {
-    background: var(--card-hover);
-    border-color: var(--border);
-}
-.source-list .source-item .s-info {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    flex: 1;
-    min-width: 0;
-}
-.source-list .source-item .s-info .s-name {
-    color: var(--text);
-    font-weight: 500;
-}
-.source-list .source-item .s-info .s-key {
-    font-size: 11px;
-    color: var(--text3);
-}
-.source-list .source-item .s-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-}
-.source-list .source-item .s-actions button {
-    padding: 3px 12px;
-    font-size: 12px;
-    border-radius: 4px;
-    transition: 0.2s;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-}
-.source-list .source-item .s-actions .edit-btn {
-    color: var(--primary);
-    background: var(--primary-dim);
-}
-.source-list .source-item .s-actions .edit-btn:hover {
-    background: var(--primary);
-    color: #fff;
-}
-.source-list .source-item .s-actions .del-btn {
-    color: #c0392b;
-    background: rgba(192, 57, 43, 0.08);
-}
-.source-list .source-item .s-actions .del-btn:hover {
-    background: #c0392b;
-    color: #fff;
-}
-.source-list .empty-hint {
-    color: var(--text3);
-    font-size: 13px;
-    padding: 12px 0;
-    text-align: center;
-}
-
-/* ============================================================
-           Footer
-           ============================================================ */
-footer {
-    text-align: center;
-    padding: 24px 16px 6px;
-    font-size: 12px;
-    color: var(--text3);
-    border-top: 1px solid var(--border);
-    margin-top: 24px;
-}
-footer a {
-    color: var(--text3);
-    transition: 0.2s;
-}
-footer a:hover {
-    color: var(--text2);
-}
-footer span {
-    margin: 0 4px;
-}
-
-/* ============================================================
-   源管理 - 远程导入 & 源列表样式
-   ============================================================ */
-
-/* ===== 远程导入行 ===== */
-.remote-import-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-    align-items: center;
-}
-
-.remote-import-row input {
-    flex: 1;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 13px;
-    color: var(--text);
-    min-width: 0;
-}
-
-.remote-import-row input:focus {
-    border-color: var(--primary);
-    outline: none;
-}
-
-.remote-import-row input::placeholder {
-    color: var(--text3);
-}
-
-.remote-import-row .btn {
-    padding: 6px 16px;
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 13px;
-    transition: 0.2s;
-    white-space: nowrap;
-    border: 1px solid var(--border);
-    cursor: pointer;
-    background: var(--bg);
-    color: var(--text2);
-}
-
-.remote-import-row .btn:hover {
-    background: var(--card-hover);
-    color: var(--text);
-    border-color: var(--primary);
-}
-
-/* ===== 固定表头（在源列表上方） ===== */
-.source-header-fixed {
-    position: sticky;
-    top: 0;
-    background: var(--bg2);
-    z-index: 10;
-    padding: 8px 0 10px 0;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.source-header-fixed .label {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-}
-
-.source-header-fixed .count {
-    font-size: 13px;
-    color: var(--text2);
-    background: var(--bg);
-    padding: 2px 12px;
-    border-radius: 12px;
-}
-
-/* ===== 源列表 ===== */
-.source-list {
-    max-height: 340px;
-    overflow-y: auto;
-    padding-right: 4px;
-}
-
-.source-list::-webkit-scrollbar {
-    width: 4px;
-}
-.source-list::-webkit-scrollbar-thumb {
-    background: var(--text3);
-    border-radius: 4px;
-}
-
-/* 分组标签 */
-.source-list .group-label {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text2);
-    padding: 6px 0 4px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.source-list .group-label .dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-.source-list .group-label .dot.stable {
-    background: var(--green);
-}
-.source-list .group-label .dot.normal {
-    background: var(--primary);
-}
-.source-list .group-label .dot.backup {
-    background: var(--gold);
-}
-
-/* 源卡片 - 一行布局 */
-.source-list .source-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    gap: 10px;
-    transition: 0.2s;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    margin-bottom: 4px;
-    min-height: 36px;
-}
-
-.source-list .source-item:hover {
-    background: var(--card-hover);
-    border-color: var(--primary);
-}
-
-.source-list .source-item .s-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;
-    min-width: 0;
-}
-
-.source-list .source-item .s-info .s-name {
-    color: var(--text);
-    font-weight: 500;
-    font-size: 13px;
-    white-space: nowrap;
-}
-
-.source-list .source-item .s-info .s-key {
-    font-size: 11px;
-    color: var(--text3);
-    white-space: nowrap;
-}
-
-.source-list .source-item .s-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-.source-list .source-item .s-actions button {
-    padding: 2px 12px;
-    font-size: 12px;
-    border-radius: 4px;
-    transition: 0.2s;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-}
-
-.source-list .source-item .s-actions .edit-btn {
-    color: var(--primary);
-    background: var(--primary-dim);
-}
-
-.source-list .source-item .s-actions .edit-btn:hover {
-    background: var(--primary);
-    color: #fff;
-}
-
-.source-list .source-item .s-actions .del-btn {
-    color: #c0392b;
-    background: rgba(192, 57, 43, 0.08);
-}
-
-.source-list .source-item .s-actions .del-btn:hover {
-    background: #c0392b;
-    color: #fff;
-}
-
-.source-list .empty-hint {
-    color: var(--text3);
-    font-size: 13px;
-    padding: 12px 0;
-    text-align: center;
-}
-
-/* ===== 导入操作按钮统一风格 ===== */
-.import-box .import-actions .btn {
-    padding: 6px 16px;
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 13px;
-    transition: 0.2s;
-    white-space: nowrap;
-    border: 1px solid var(--border);
-    cursor: pointer;
-    background: var(--bg);
-    color: var(--text2);
-}
-
-.import-box .import-actions .btn:hover {
-    background: var(--card-hover);
-    color: var(--text);
-    border-color: var(--primary);
-}
-
-/* ============================================================
-           响应式
-           ============================================================ */
-@media (max-width: 768px) {
-    header {
-        padding: 6px 10px;
-        gap: 4px 8px;
-    }
-    .logo {
-        font-size: 17px;
-    }
-    .controls select {
-        min-width: 60px;
-        max-width: 80px;
-        font-size: 12px;
-        padding: 3px 6px;
-    }
-    .controls input {
-        min-width: 40px;
-        font-size: 12px;
-        padding: 3px 6px;
-    }
-    .btn {
-        padding: 3px 10px;
-        font-size: 12px;
-    }
-    #status {
-        max-width: 70px;
-        font-size: 11px;
-    }
-
-    .grid {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-        gap: 8px;
-    }
-
-    .player-controls {
-        font-size: 12px;
-        padding: 6px 10px;
-        gap: 4px 6px;
-    }
-    .player-controls .title {
-        font-size: 12px;
-        min-width: 50px;
-        max-width: 100px;
-        flex: 0 1 auto;
-    }
-    .player-controls select#lineSelect {
-        max-width: 70px;
-        font-size: 11px;
-        padding: 2px 4px;
-        flex-shrink: 0;
-    }
-    .player-controls .ctrl-btn {
-        font-size: 12px;
-        padding: 3px 8px;
-        flex-shrink: 0;
-    }
-    .player-controls .ctrl-btn.close-btn {
-        font-size: 16px;
-        padding: 2px 4px;
-        flex-shrink: 0;
-        margin-left: auto;
-    }
-    .player-controls .link-row {
-        flex: 1 1 100%;
-        width: 100%;
-        gap: 4px;
-    }
-    .player-controls .link-input {
-        font-size: 11px;
-        padding: 3px 6px;
-        min-width: 40px;
-    }
-    .player-controls .btn-copy {
-        font-size: 11px;
-        padding: 3px 10px;
-    }
-
-    #player-section {
-        aspect-ratio: 16 / 9;
-        max-height: 50vh;
-    }
-    #player-iframe {
-        max-height: 50vh;
-    }
-    #episodes-panel {
-        max-height: 160px;
-        padding: 10px 12px;
-    }
-    #episodes-panel .ep-list .ep {
-        font-size: 12px;
-        padding: 3px 10px;
-        min-width: 36px;
-    }
-
-    #toast-container {
-        top: 64px;
-        right: 8px;
-        left: 8px;
-        max-width: none;
-    }
-    .category-nav .cat {
-        font-size: 13px;
-        padding: 3px 14px;
-    }
-    .import-box {
-        padding: 16px;
-        max-width: 95%;
-    }
-    .import-box textarea {
-        height: 100px;
-    }
-    .source-list {
-        max-height: 160px;
-    }
-    .source-list .source-item {
-        font-size: 12px;
-        padding: 3px 4px;
-        flex-wrap: wrap;
-    }
-    .source-list .source-item .s-name {
-        min-width: 60px;
-    }
-    /* 🆕 移动端导入按钮自适应铺满 */
-    .import-actions {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        gap: 6px !important;
-    }
-    .import-actions .btn {
-        flex: 1 !important;
-        justify-content: center !important;
-        font-size: 12px !important;
-        padding: 6px 4px !important;
-        white-space: nowrap !important;
-        text-align: center !important;
-        min-width: 0 !important;
+        state.sources = getStoredSources() || [];
+        closeImportModal();
+        populateSelect();
+        const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
+        if (first) {
+            dom.sourceSelect.value = first.key;
+            loadBrowse(first);
+        } else {
+            renderEmptyState();
+        }
+    } catch (e) {
+        toast('JSON 格式错误: ' + e.message, 'error');
     }
 }
 
-@media (max-width: 400px) {
-    .grid {
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        gap: 6px;
-    }
-    .controls select {
-        min-width: 50px;
-        max-width: 65px;
-    }
-    .player-controls select#lineSelect {
-        max-width: 55px;
-        font-size: 10px;
-    }
-    #episodes-panel .ep-list .ep {
-        font-size: 11px;
-        padding: 2px 8px;
-        min-width: 30px;
+function importFromFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (!Array.isArray(data) || !data.length) {
+                throw new Error('格式错误：需要非空数组');
+            }
+            for (const item of data) {
+                if (!item.key || !item.name || !item.api) {
+                    throw new Error('每个源必须包含 key, name, api 字段');
+                }
+            }
+            setStoredSources(data);
+            state.sources = data;
+            toast('✅ 导入成功，' + data.length + ' 个源', 'success');
+            closeImportModal();
+            populateSelect();
+            const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
+            if (first) {
+                dom.sourceSelect.value = first.key;
+                loadBrowse(first);
+            } else {
+                renderEmptyState();
+            }
+        } catch (err) {
+            toast('文件解析失败: ' + err.message, 'error');
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+function loadExample() {
+    const example = [
+        { key: 'feifan', name: '非凡资源', api: 'http://ffzy5.tv/api.php/provide/vod', type: 0, searchable: 1,
+            filterable: 1, playerType: 1, group: 'stable' },
+        { key: 'wolong', name: '卧龙资源', api: 'https://wolongzyw.com/api.php/provide/vod', type: 0, searchable: 1,
+            filterable: 1, playerType: 1, group: 'stable' },
+        { key: 'zuida', name: '最大资源', api: 'https://api.zuidapi.com/api.php/provide/vod', type: 0, searchable: 1,
+            filterable: 1, playerType: 1, group: 'stable' }
+    ];
+    dom.importTextarea.value = JSON.stringify(example, null, 2);
+    state.editingKey = null;
+    renderSourceList();
+    dom.importTextarea.focus();
+    dom.importTextarea.scrollTop = 0;
+    toast('示例已填入，点击「导入」即可', 'info');
+}
+
+// ============================================================
+//  TOAST & STATUS
+// ============================================================
+function toast(msg, type = 'info') {
+    const c = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.textContent = msg;
+    c.appendChild(el);
+    setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateX(30px)';
+        el.style.transition = '0.25s ease';
+        setTimeout(() => el.remove(), 280);
+    }, 2600);
+}
+
+function setStatus(msg, loading = false) {
+    dom.status.innerHTML = loading ? '<span class="spinner"></span> ' + msg : msg;
+}
+
+function esc(s) {
+    if (s == null) return '';
+    const d = document.createElement('div');
+    d.textContent = String(s);
+    return d.innerHTML;
+}
+
+// ============================================================
+//  API
+// ============================================================
+async function fetchProxy(url, timeout = FETCH_TIMEOUT) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), timeout);
+    try {
+        const resp = await fetch(PROXY(url), { signal: ctl.signal });
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.msg || 'HTTP ' + resp.status);
+        }
+        return await resp.json();
+    } finally {
+        clearTimeout(timer);
     }
 }
+
+// ============================================================
+//  ENABLE/DISABLE CONTROLS
+// ============================================================
+function setControlsEnabled(enabled) {
+    dom.searchInput.disabled = !enabled;
+    dom.searchBtn.disabled = !enabled;
+    if (!enabled) {
+        dom.searchInput.placeholder = '请先导入源';
+    } else {
+        dom.searchInput.placeholder = '搜索片名…';
+    }
+}
+
+// ============================================================
+//  RENDER EMPTY STATE
+// ============================================================
+function renderEmptyState() {
+    const grid = dom.browseGrid;
+    grid.innerHTML = `
+                <div class="empty-grid" style="grid-column:1/-1;padding:80px 20px;text-align:center;">
+                    <div style="font-size:56px;margin-bottom:16px;">📜</div>
+                    <div style="font-size:20px;font-weight:700;margin-bottom:8px;color:var(--text);">藏源阁尚空</div>
+                    <div style="color:var(--text2);margin-bottom:16px;font-size:15px;">点击右上角「📜」按钮，录入你的源列表</div>
+                    <button class="btn-primary" onclick="showImportModal()" style="font-size:15px;padding:8px 24px;">📜 录入源</button>
+                    <div style="margin-top:12px;font-size:13px;color:var(--text3);">
+                        或 <a onclick="loadExample()" style="color:var(--primary);cursor:pointer;">批阅示例</a> 快速体验
+                    </div>
+                </div>
+            `;
+    dom.categoryNav.innerHTML = '';
+    dom.browseTitle.textContent = '📥 请导入源';
+    dom.browseBadge.textContent = '';
+    dom.browseInfo.textContent = '';
+    dom.pageInfo.textContent = '-';
+    dom.pageInfo2.textContent = '-';
+    dom.sourceSelect.innerHTML = '<option value="">请导入源</option>';
+    dom.sourceSelect.disabled = true;
+    setStatus('请导入源');
+    setControlsEnabled(false);
+}
+
+// ============================================================
+//  PLAYER LOADING 控制
+// ============================================================
+function showPlayerLoading() {
+    dom.playerLoading.classList.remove('hidden');
+    dom.playerLoading.classList.add('show');
+}
+
+function hidePlayerLoading() {
+    dom.playerLoading.classList.add('hidden');
+    setTimeout(() => {
+        dom.playerLoading.classList.remove('show');
+    }, 400);
+}
+
+// ============================================================
+//  切换到浏览模式（点击 Logo 触发）
+// ============================================================
+function switchToBrowse() {
+    if (state.isPlaying) closePlayer();
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    dom.pageBrowse.classList.add('active');
+    if (state.source) loadBrowse(state.source);
+}
+
+// ============================================================
+//  线路切换
+// ============================================================
+function switchPlayerLine(index) {
+    index = parseInt(index);
+    state.currentLineIndex = index;
+    const lines = state.currentLines;
+    if (!lines || !lines[index]) return;
+    const episodes = parseEpisodes(lines[index].url);
+    state.currentEpisodes = episodes;
+    renderEpisodesPanel(episodes);
+    if (episodes.length) {
+        const first = episodes[0];
+        startPlayer(first.url, (state.currentVod?.vod_name || '') + ' ' + first.name);
+    }
+    toast('已切换: ' + lines[index].name, 'info');
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+async function init() {
+    loadStorage();
+
+    try {
+        state.sources = await loadSources();
+    } catch (e) {
+        state.sources = [];
+    }
+
+    if (!hasSources()) {
+        renderEmptyState();
+        setTimeout(showDisclaimer, 500);
+        dom.importModal.addEventListener('click', (e) => {
+            if (e.target === dom.importModal) closeImportModal();
+        });
+        document.addEventListener('keydown', handleKeydown);
+        return;
+    }
+
+    populateSelect();
+    setControlsEnabled(true);
+    setStatus('就绪');
+
+    const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
+    if (first) {
+        dom.sourceSelect.value = first.key;
+        dom.sourceSelect.disabled = false;
+        await loadBrowse(first);
+    }
+
+    dom.pageBrowse.classList.add('active');
+
+    dom.sourceSelect.addEventListener('change', function() {
+        const key = this.value;
+        if (!key) return;
+        const s = state.sources.find(src => src.key === key);
+        if (!s) {
+            toast('未找到该源', 'error');
+            return;
+        }
+        if (state.isPlaying) closePlayer();
+        state.isLoading = false;
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        dom.pageBrowse.classList.add('active');
+        loadBrowse(s);
+    });
+
+    dom.searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doSearch();
+    });
+    dom.searchBtn.addEventListener('click', doSearch);
+
+    dom.importModal.addEventListener('click', (e) => {
+        if (e.target === dom.importModal) closeImportModal();
+    });
+
+    document.addEventListener('keydown', handleKeydown);
+
+    document.addEventListener('click', (e) => {
+        const panel = dom.episodesPanel;
+        if (panel.classList.contains('open')) {
+            if (!panel.contains(e.target) && !e.target.closest('.ctrl-btn') && !e.target.closest('.close-btn')) {
+                panel.classList.remove('open');
+            }
+        }
+    });
+
+    dom.player.addEventListener('loadedmetadata', () => {
+        hidePlayerLoading();
+    });
+    dom.player.addEventListener('canplay', () => {
+        hidePlayerLoading();
+    });
+    dom.player.addEventListener('error', () => {
+        hidePlayerLoading();
+    });
+
+    // ===== 连续点击状态栏 8 次切换隐藏源显示 =====
+    let statusClickCount = 0;
+    let statusClickTimer = null;
+
+    dom.status.addEventListener('click', () => {
+        statusClickCount++;
+        clearTimeout(statusClickTimer);
+        statusClickTimer = setTimeout(() => {
+            if (statusClickCount >= 8) {
+                toggleShowHiddenSources();
+                toast(showHiddenSources ? '🔓 已显示特殊源' : '🔒 已隐藏特殊源', 'info');
+            }
+            statusClickCount = 0;
+        }, 500);
+    });
+
+    setTimeout(showDisclaimer, 500);
+}
+
+function getSelectedSource() {
+    const key = dom.sourceSelect.value;
+    return state.sources.find(s => s.key === key) || null;
+}
+
+function populateSelect() {
+    const sel = dom.sourceSelect;
+    sel.innerHTML = '';
+    sel.disabled = false;
+
+    if (!state.sources || !state.sources.length) {
+        sel.innerHTML = '<option value="">请导入源</option>';
+        sel.disabled = true;
+        return;
+    }
+
+    // 根据 showHiddenSources 决定是否显示隐藏源
+    let sources = state.sources;
+    if (!showHiddenSources) {
+        sources = sources.filter(s => s.enabled !== false);
+    }
+
+    if (!sources || !sources.length) {
+        sel.innerHTML = '<option value="">请导入源</option>';
+        sel.disabled = true;
+        return;
+    }
+
+    const groups = { stable: [], normal: [], backup: [] };
+    sources.forEach(s => {
+        const g = s.group || 'normal';
+        if (groups[g]) groups[g].push(s);
+        else groups.normal.push(s);
+    });
+    const labels = { stable: '🟢 稳定', normal: '🔵 普通', backup: '🟡 备用' };
+
+    let hasOptions = false;
+    Object.keys(groups).forEach(g => {
+        if (!groups[g].length) return;
+        hasOptions = true;
+        const og = document.createElement('optgroup');
+        og.label = labels[g] || g;
+        if (showHiddenSources) og.label += ' 🔓';
+        groups[g].forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.key;
+            const isHidden = s.enabled === false;
+            opt.textContent = s.name + (isHidden ? ' 🔒' : '');
+            og.appendChild(opt);
+        });
+        sel.appendChild(og);
+    });
+
+    if (!hasOptions) {
+        sel.innerHTML = '<option value="">请导入源</option>';
+        sel.disabled = true;
+    }
+}
+
+// ============================================================
+//  BROWSE
+// ============================================================
+async function loadBrowse(source) {
+    if (!source || state.isLoading) return;
+    state.isLoading = true;
+    state.source = source;
+    state.category = null;
+    state.page = 1;
+    setStatus('加载中…', true);
+    dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">加载分类…</span>';
+
+    await loadMovies();
+
+    try {
+        const data = await fetchProxy(source.api + '?ac=list');
+        const classes = data.class || [];
+        state.categories = classes;
+        renderCategories(classes);
+    } catch (e) {
+        dom.categoryNav.innerHTML = '';
+    }
+    setStatus('就绪');
+    state.isLoading = false;
+}
+
+async function loadMovies() {
+    const s = state.source;
+    if (!s) return;
+    const url = state.category ?
+        `${s.api}?ac=videolist&t=${state.category}&pg=${state.page}` :
+        `${s.api}?ac=videolist&pg=${state.page}`;
+
+    dom.browseGrid.innerHTML = '<div class="empty-grid"><span class="spinner"></span> 加载中…</div>';
+
+    try {
+        const data = await fetchProxy(url);
+        const list = data.list || [];
+        state.totalPages = Math.max(1, parseInt(data.pagecount) || 1);
+        state.movies = list;
+        renderMovies(list);
+        updatePager();
+        dom.browseInfo.textContent = `${list.length} 部`;
+        dom.browseBadge.textContent = `共 ${state.totalPages} 页`;
+    } catch (e) {
+        dom.browseGrid.innerHTML = `<div class="empty-grid">❌ ${esc(e.message)}</div>`;
+        toast('加载失败: ' + e.message, 'error');
+    }
+}
+
+function renderMovies(list) {
+    const grid = dom.browseGrid;
+    if (!list.length) {
+        grid.innerHTML = '<div class="empty-grid">📭 暂无内容</div>';
+        return;
+    }
+    const frag = document.createDocumentFragment();
+    list.forEach(v => {
+        const el = document.createElement('div');
+        el.className = 'card';
+        const poster = v.vod_pic || '';
+        const score = v.vod_score || '';
+        const remark = v.vod_remarks || '';
+        el.innerHTML = `
+                    <div class="poster-wrap">
+                        <img loading="lazy" src="${esc(poster)}" 
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22390%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23181e2a%22/%3E%3C/svg%3E'" />
+                        <div class="play-icon">▶</div>
+                        ${score ? `<div class="badge-top score">${esc(score)}</div>` : ''}
+                        ${remark && !score ? `<div class="badge-top">${esc(remark)}</div>` : ''}
+                    </div>
+                    <div class="info">
+                        <div class="name">${esc(v.vod_name)}</div>
+                        <div class="meta">
+                            <span class="tag">${esc(v.type_name || '影视')}</span>
+                            ${score ? `<span class="score">${esc(score)}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+        el.onclick = () => playMovie(v, state.source);
+        frag.appendChild(el);
+    });
+    grid.innerHTML = '';
+    grid.appendChild(frag);
+}
+
+function renderCategories(classes) {
+    const top = classes.filter(c => String(c.type_pid) === '0');
+    const kids = classes.filter(c => String(c.type_pid) !== '0');
+    const nav = dom.categoryNav;
+    nav.innerHTML = '';
+
+    const all = document.createElement('span');
+    all.className = 'cat active';
+    all.textContent = '全部';
+    all.onclick = () => {
+        document.querySelectorAll('.category-nav .cat').forEach(c => c.classList.remove('active'));
+        all.classList.add('active');
+        state.category = null;
+        state.page = 1;
+        loadMovies();
+    };
+    nav.appendChild(all);
+
+    top.forEach(c => {
+        const btn = document.createElement('span');
+        btn.className = 'cat';
+        btn.textContent = c.type_name;
+        btn.onclick = () => {
+            document.querySelectorAll('.category-nav .cat').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            state.category = c.type_id;
+            state.page = 1;
+            loadMovies();
+        };
+        nav.appendChild(btn);
+        kids.filter(k => String(k.type_pid) === String(c.type_id)).forEach(k => {
+            const kb = document.createElement('span');
+            kb.className = 'cat kid';
+            kb.textContent = '└ ' + k.type_name;
+            kb.onclick = () => {
+                document.querySelectorAll('.category-nav .cat').forEach(c => c.classList.remove('active'));
+                kb.classList.add('active');
+                state.category = k.type_id;
+                state.page = 1;
+                loadMovies();
+            };
+            nav.appendChild(kb);
+        });
+    });
+    dom.browseTitle.textContent = state.source ? state.source.name : '热门推荐';
+}
+
+function updatePager() {
+    const txt = `${state.page}/${state.totalPages}`;
+    dom.pageInfo.textContent = txt;
+    dom.pageInfo2.textContent = txt;
+}
+
+function pagePrev() { if (state.page > 1) { state.page--;
+        loadMovies(); } }
+
+function pageNext() { if (state.page < state.totalPages) { state.page++;
+        loadMovies(); } }
+
+// ============================================================
+//  SEARCH
+// ============================================================
+async function doSearch() {
+    if (!hasSources()) {
+        toast('请先导入源', 'error');
+        return;
+    }
+
+    const q = dom.searchInput.value.trim();
+    if (!q) { toast('请输入片名', 'error'); return; }
+
+    // ===== 根据模式决定搜索范围 =====
+    let targets = state.sources;
+    if (!showHiddenSources) {
+        targets = targets.filter(s => s.enabled !== false);
+    }
+    if (!targets.length) {
+        toast(showHiddenSources ? '没有可用源（含隐藏）' : '没有可用源', 'error');
+        return;
+    }
+
+    // 切换到搜索页
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    dom.pageSearch.classList.add('active');
+
+    dom.emptyState.style.display = 'none';
+    dom.resultStats.style.display = 'block';
+    dom.searchGrid.innerHTML = '';
+    dom.resultStats.textContent = '搜索中…';
+
+    const mySeq = ++state.searchSeq;
+    const results = [];
+    const pool = targets.slice();
+    let done = 0;
+
+    const render = () => {
+        const frag = document.createDocumentFragment();
+        results.forEach(({ v, s }) => {
+            const el = document.createElement('div');
+            el.className = 'card';
+            const fav = isFav(v.vod_id, s.key);
+            const poster = v.vod_pic || '';
+            const score = v.vod_score || '';
+            el.innerHTML = `
+                        <div class="poster-wrap">
+                            <img loading="lazy" src="${esc(poster)}" 
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22390%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23181e2a%22/%3E%3C/svg%3E'" />
+                            <div class="play-icon">▶</div>
+                            ${score ? `<div class="badge-top score">${esc(score)}</div>` : ''}
+                        </div>
+                        <div class="info">
+                            <div class="name">${esc(v.vod_name)}${fav ? ' <span class="star">⭐</span>' : ''}</div>
+                            <div class="meta">
+                                <span class="tag">${esc(v.type_name || '影视')}</span>
+                                <span class="tag source">${esc(s.name)}</span>
+                                ${v.vod_remarks ? `<span>${esc(v.vod_remarks)}</span>` : ''}
+                                ${score ? `<span class="score">${esc(score)}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+            el.onclick = () => playMovie(v, s);
+            frag.appendChild(el);
+        });
+        dom.searchGrid.innerHTML = '';
+        dom.searchGrid.appendChild(frag);
+        dom.resultStats.textContent =
+            `找到 ${results.length} 个结果 · 完成 ${done}/${targets.length} 个源`;
+    };
+
+    async function worker() {
+        while (pool.length && mySeq === state.searchSeq) {
+            const s = pool.shift();
+            try {
+                const url = s.api + '?ac=detail&wd=' + encodeURIComponent(q);
+                const data = await fetchProxy(url);
+                (data.list || []).forEach(v => {
+                    if (v && v.vod_id && v.vod_name) {
+                        if (!results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
+                            results.push({ v, s });
+                        }
+                    }
+                });
+            } catch (e) { /* skip */ }
+            done++;
+            render();
+        }
+    }
+
+    const workers = Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker);
+    await Promise.all(workers);
+    if (mySeq !== state.searchSeq) return;
+    render();
+    if (!results.length) {
+        dom.resultStats.textContent = '未找到结果，试试其他关键词';
+        toast('未找到结果', 'error');
+    }
+}
+
+// ============================================================
+//  核心播放逻辑
+// ============================================================
+function hideAllContent() {
+    dom.browseGrid.style.display = 'none';
+    dom.categoryNav.style.display = 'none';
+    dom.browseHeader.style.display = 'none';
+    dom.browsePager.style.display = 'none';
+    dom.searchGrid.style.display = 'none';
+    dom.resultStats.style.display = 'none';
+    if (dom.emptyState) dom.emptyState.style.display = 'none';
+}
+
+function restoreAllContent() {
+    dom.browseGrid.style.display = '';
+    dom.categoryNav.style.display = '';
+    dom.browseHeader.style.display = '';
+    dom.browsePager.style.display = '';
+    dom.searchGrid.style.display = '';
+    dom.resultStats.style.display = '';
+    if (dom.emptyState) dom.emptyState.style.display = '';
+}
+
+async function playMovie(vod, source) {
+    state.currentVod = vod;
+    state.currentSource = source;
+
+    setStatus('加载播放地址…', true);
+
+    hideAllContent();
+    showPlayerLoading();
+
+    try {
+        const data = await fetchProxy(source.api + '?ac=detail&ids=' + vod.vod_id);
+        const detail = data.list?.[0] || vod;
+
+        let froms = [],
+            urls = [];
+        const playFrom = detail.vod_play_from || '';
+        const playUrl = detail.vod_play_url || '';
+
+        if (playFrom && playUrl) {
+            froms = playFrom.split('$$$').filter(Boolean);
+            urls = playUrl.split('$$$').filter(Boolean);
+        }
+
+        if (!froms.length) {
+            const keys = Object.keys(detail).filter(k => k.startsWith('vod_play_from'));
+            for (const k of keys) {
+                const idx = k.replace('vod_play_from', '');
+                const f = detail[k] || '';
+                const u = detail['vod_play_url' + idx] || '';
+                if (f && u) {
+                    froms.push(f);
+                    urls.push(u);
+                }
+            }
+        }
+
+        const lines = froms.map((f, i) => ({ name: f, url: urls[i] || '' }))
+            .filter(l => l.url.trim());
+
+        lines.sort((a, b) => (a.url.includes('.m3u8') ? 0 : 1) - (b.url.includes('.m3u8') ? 0 : 1));
+
+        if (!lines.length) {
+            toast('该源无可用播放地址', 'error');
+            setStatus('无播放地址');
+            hidePlayerLoading();
+            restoreAllContent();
+            return;
+        }
+
+        state.currentLines = lines;
+        state.currentLineIndex = 0;
+
+        showPlayer();
+
+        const firstUrl = lines[0].url;
+        const episodes = parseEpisodes(firstUrl);
+
+        // ============================================
+        // 虎牙资源特殊处理：直接走代理播放
+        // ============================================
+        if (firstUrl.includes('huyall.com') || firstUrl.includes('baisiweiting.com')) {
+            console.log('🔵 检测到虎牙资源，使用专用播放逻辑');
+            // 先解析出真正的第一集地址
+            const episodes = parseEpisodes(firstUrl);
+            const firstEp = episodes[0];
+            const fullUrl = normalizeUrl(firstEp.url);
+            showPlayer();
+            dom.playerLoading.classList.remove('hidden');
+            dom.playerLoading.classList.add('show');
+            startPlayerWithProxy(fullUrl, vod.vod_name);
+            renderEpisodesPanel(episodes);
+            setStatus('播放中');
+            return;
+        }
+        // ============================================
+
+        if (episodes.length) {
+            state.currentEpisodes = episodes;
+            const firstEp = episodes[0];
+            const fullUrl = normalizeUrl(firstEp.url);
+            startPlayer(fullUrl, vod.vod_name + ' ' + firstEp.name);
+            renderEpisodesPanel(episodes);
+        } else {
+            const fullUrl = normalizeUrl(firstUrl);
+            startPlayer(fullUrl, vod.vod_name);
+            renderEpisodesPanel([]);
+        }
+
+        renderPlayerLines(lines);
+
+        setStatus('播放中');
+    } catch (e) {
+        toast('获取播放地址失败: ' + e.message, 'error');
+        setStatus('加载失败');
+        hidePlayerLoading();
+        restoreAllContent();
+    }
+}
+
+function parseEpisodes(url) {
+    const parts = url.split('#').filter(p => p.includes('$'));
+    if (!parts.length) {
+        const fullUrl = normalizeUrl(url);
+        return [{ name: '播放', url: fullUrl }];
+    }
+    return parts.map(p => {
+        const i = p.indexOf('$');
+        const name = p.slice(0, i).trim() || '播放';
+        let addr = p.slice(i + 1);
+        return { name, url: normalizeUrl(addr) };
+    });
+}
+
+function normalizeUrl(url) {
+    let result = url.trim();
+    if (result.startsWith('/')) {
+        const source = state.currentSource;
+        if (source) {
+            const base = source.api.replace(/\/api\.php.*$/, '');
+            result = base + result;
+        }
+    }
+    return result;
+}
+
+// ============================================================
+//  显示播放器
+// ============================================================
+function showPlayer() {
+    state.isPlaying = true;
+    dom.playerSection.classList.add('open');
+    dom.playerSection.style.display = 'block';
+    dom.playerSection.style.minHeight = '300px';
+    dom.playerControls.classList.add('open');
+    dom.playerControls.style.display = 'flex';
+    dom.player.style.display = 'block';
+    dom.player.style.opacity = '1';
+    dom.player.style.visibility = 'visible';
+    dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderPlayerLines(lines) {
+    const select = dom.lineSelect;
+    select.innerHTML = '';
+    select.style.display = lines.length > 1 ? 'block' : 'block';
+
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = '📡换源';
+    defaultOpt.disabled = true;
+    defaultOpt.selected = true;
+    select.appendChild(defaultOpt);
+
+    lines.forEach((l, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = l.name;
+        select.appendChild(opt);
+    });
+}
+
+// ============================================================
+//  选集面板
+// ============================================================
+function toggleEpisodesPanel() {
+    dom.episodesPanel.classList.toggle('open');
+    if (dom.episodesPanel.classList.contains('open')) {
+        if (!state.currentEpisodes.length && state.currentLines.length) {
+            const url = state.currentLines[state.currentLineIndex]?.url || '';
+            const eps = parseEpisodes(url);
+            state.currentEpisodes = eps;
+            renderEpisodesPanel(eps);
+        }
+    }
+}
+
+function renderEpisodesPanel(episodes) {
+    const list = dom.episodesList;
+    list.innerHTML = '';
+    if (!episodes || !episodes.length) {
+        list.innerHTML = '<span class="ep-loading">暂无剧集</span>';
+        return;
+    }
+
+    // 判断是否为直链播放（只有一集且名字叫"播放"）
+    if (episodes.length === 1 && episodes[0].name === '播放') {
+        const el = document.createElement('span');
+        el.className = 'ep';
+        el.textContent = '▶ 播放';
+        el.onclick = () => {
+            document.querySelectorAll('#episodes-list .ep').forEach(e => e.classList.remove('active'));
+            el.classList.add('active');
+            startPlayer(episodes[0].url, state.currentVod?.vod_name || '播放');
+            dom.episodesPanel.classList.remove('open');
+            if (state.currentVod && state.currentSource) {
+                addHistory(state.currentVod, state.currentSource, '播放');
+            }
+        };
+        list.appendChild(el);
+        return;
+    }
+
+    // 多集正常显示
+    episodes.forEach((ep, idx) => {
+        const el = document.createElement('span');
+        el.className = 'ep';
+        el.textContent = ep.name;
+        el.onclick = () => {
+            document.querySelectorAll('#episodes-list .ep').forEach(e => e.classList.remove('active'));
+            el.classList.add('active');
+            startPlayer(ep.url, (state.currentVod?.vod_name || '') + ' ' + ep.name);
+            dom.episodesPanel.classList.remove('open');
+            if (state.currentVod && state.currentSource) {
+                addHistory(state.currentVod, state.currentSource, ep.name);
+            }
+        };
+        list.appendChild(el);
+    });
+}
+
+// ============================================================
+//  核心播放引擎（直连优先 → 失败走代理 → 最后 iframe）
+// ============================================================
+function startPlayer(url, title) {
+    if (!url || !url.trim()) {
+        toast('播放地址为空', 'error');
+        return;
+    }
+
+    url = url.trim();
+
+    if (url.startsWith('/')) {
+        const source = state.currentSource;
+        if (source) {
+            const base = source.api.replace(/\/api\.php.*$/, '');
+            url = base + url;
+        }
+    }
+
+    state.currentUrl = url;
+
+    dom.nowPlaying.textContent = title || '正在播放';
+    dom.m3u8Link.value = url;
+
+    dom.playerIframe.style.display = 'none';
+    dom.playerIframe.src = '';
+    dom.player.style.display = 'block';
+
+    const video = dom.player;
+    const currentHeight = video.offsetHeight;
+    if (currentHeight > 50) {
+        video.style.minHeight = currentHeight + 'px';
+    }
+
+    if (state.hlsInstance) {
+        state.hlsInstance.destroy();
+        state.hlsInstance = null;
+    }
+
+    const isHtml = url.includes('.html') ||
+        url.includes('/play/') ||
+        (!url.includes('.m3u8') && !url.includes('.mp4') && !url.includes('.ts') && !url.includes('.flv') && !url
+            .includes('.mkv'));
+
+    if (isHtml) {
+        extractM3u8FromHtml(url, title);
+        return;
+    }
+
+    // ===== m3u8 播放 =====
+    if (url.includes('.m3u8') || url.includes('.m3u8?')) {
+        const isDirectM3u8 = url.includes('.m3u8') && !url.includes('#') && url.startsWith('http');
+
+        if (isDirectM3u8) {
+            // ============================================
+            // 虎牙资源直接走代理，跳过直连
+            // ============================================
+            if (url.includes('huyall.com') || url.includes('baisiweiting.com')) {
+                console.log('🔵 虎牙资源，直接走代理');
+                showPlayer();
+                dom.playerLoading.classList.remove('hidden');
+                dom.playerLoading.classList.add('show');
+                startPlayerWithProxy(url, title);
+                return;
+            }
+            // ============================================
+
+            showPlayer();
+            dom.playerLoading.classList.remove('hidden');
+            dom.playerLoading.classList.add('show');
+
+            let fallbackTimer = null;
+            let isFallbackUsed = false;
+
+            const cleanup = function() {
+                if (fallbackTimer) {
+                    clearTimeout(fallbackTimer);
+                    fallbackTimer = null;
+                }
+                video.removeEventListener('canplay', onSuccess);
+                video.removeEventListener('loadedmetadata', onSuccess);
+                video.removeEventListener('error', onError);
+            };
+
+            const onSuccess = function() {
+                if (isFallbackUsed) return;
+                cleanup();
+                dom.playerLoading.classList.add('hidden');
+                setTimeout(function() {
+                    dom.playerLoading.classList.remove('show');
+                }, 400);
+                video.play().catch(function() {});
+                dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                console.log('✅ 直连播放成功');
+            };
+
+            const onError = function() {
+                if (isFallbackUsed) return;
+                isFallbackUsed = true;
+                cleanup();
+                console.warn('⚠️ 直连失败，切换到代理模式');
+                dom.playerLoading.classList.remove('hidden');
+                dom.playerLoading.classList.add('show');
+                startPlayerWithProxy(url, title);
+            };
+
+            video.addEventListener('canplay', onSuccess, { once: true });
+            video.addEventListener('loadedmetadata', onSuccess, { once: true });
+            video.addEventListener('error', onError, { once: true });
+
+            // 9秒超时切代理
+            fallbackTimer = setTimeout(function() {
+                if (isFallbackUsed) return;
+                isFallbackUsed = true;
+                cleanup();
+                console.warn('⏱️ 直连超时，切换到代理模式');
+                dom.playerLoading.classList.remove('hidden');
+                dom.playerLoading.classList.add('show');
+                startPlayerWithProxy(url, title);
+            }, 9000);
+
+            // 开始直连
+            video.src = url;
+            video.load();
+            video.play().catch(function() {});
+            dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+        }
+
+        // 非直连 m3u8（带参数等），直接用 hls.js
+        if (window.Hls && Hls.isSupported()) {
+            const hls = new Hls({ enableWorker: true });
+            state.hlsInstance = hls;
+            hls.loadSource(url);
+            hls.attachMedia(video);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                video.style.minHeight = '';
+                dom.playerLoading.classList.add('hidden');
+                setTimeout(function() {
+                    dom.playerLoading.classList.remove('show');
+                }, 400);
+                video.play().catch(function() {});
+            });
+
+            hls.on(Hls.Events.ERROR, function(e, data) {
+                video.style.minHeight = '';
+                if (data.fatal) {
+                    toast('HLS 播放失败，尝试嵌入', 'error');
+                    startPlayerInIframe(url, title);
+                }
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+            video.play().catch(function() {});
+        } else {
+            startPlayerInIframe(url, title);
+        }
+        dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+    }
+
+    // ===== 普通视频直链 =====
+    video.src = url;
+    video.play().catch(function() {
+        toast('无法直接播放，尝试嵌入', 'error');
+        startPlayerInIframe(url, title);
+    });
+}
+
+// ============================================================
+//  代理播放（备用）- 隐藏加载过程，避免缩小画面闪烁
+// ============================================================
+function startPlayerWithProxy(url, title) {
+    const video = dom.player;
+    video.style.opacity = '0';
+
+    if (window.Hls && Hls.isSupported()) {
+        const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
+
+        fetch(proxyUrl)
+            .then(function(r) {
+                if (!r.ok) throw new Error('代理请求失败: ' + r.status);
+                return r.text();
+            })
+            .then(function(m3u8Content) {
+                const baseUrl = window.location.origin;
+                
+                // ============================================
+                // 关键：替换 enc.key
+                // ============================================
+                const keyUrl = url.replace('/index.m3u8', '/enc.key');
+                m3u8Content = m3u8Content.replace(
+                    /URI="enc\.key"/,
+                    `URI="${baseUrl}/api/proxy?url=${encodeURIComponent(keyUrl)}"`
+                );
+                // ============================================
+
+                const blob = new Blob([m3u8Content], { type: 'application/vnd.apple.mpegurl' });
+                const blobUrl = URL.createObjectURL(blob);
+
+                const hls = new Hls({ enableWorker: true });
+                state.hlsInstance = hls;
+                hls.loadSource(blobUrl);
+                hls.attachMedia(video);
+
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    video.style.opacity = '1';
+                    video.style.width = '100%';
+                    video.style.height = '100%';
+                    video.style.minHeight = '';
+                    dom.playerLoading.classList.add('hidden');
+                    setTimeout(function() {
+                        dom.playerLoading.classList.remove('show');
+                    }, 400);
+                    video.play().catch(function() {});
+                    console.log('✅ 代理播放成功');
+                });
+
+                hls.on(Hls.Events.ERROR, function(e, data) {
+                    video.style.opacity = '1';
+                    dom.playerLoading.classList.add('hidden');
+                    if (data.fatal) {
+                        toast('HLS 播放失败，尝试嵌入', 'error');
+                        startPlayerInIframe(url, title);
+                    }
+                });
+            })
+            .catch(function(e) {
+                console.error('代理加载失败:', e);
+                video.style.opacity = '1';
+                dom.playerLoading.classList.add('hidden');
+                toast('播放失败: ' + e.message, 'error');
+                startPlayerInIframe(url, title);
+            });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.style.opacity = '1';
+        video.src = url;
+        video.play().catch(function() {});
+    } else {
+        video.style.opacity = '1';
+        startPlayerInIframe(url, title);
+    }
+}
+
+// ============================================================
+//  从 HTML 提取 m3u8
+// ============================================================
+async function extractM3u8FromHtml(pageUrl, title) {
+    setStatus('解析中…', true);
+
+    try {
+        if (pageUrl.startsWith('/')) {
+            const source = state.currentSource;
+            if (source) {
+                const base = source.api.replace(/\/api\.php.*$/, '');
+                pageUrl = base + pageUrl;
+            }
+        }
+
+        const resp = await fetchProxy(pageUrl);
+        const html = typeof resp === 'string' ? resp : JSON.stringify(resp);
+
+        const patterns = [
+            /["'](https?:[^"']+\.m3u8[^"']*)["']/,
+            /["'](\/[^"']+\.m3u8[^"']*)["']/,
+            /var\s+url\s*=\s*["']([^"']+\.m3u8[^"']*)["']/,
+            /url\s*[:=]\s*["']([^"']+\.m3u8[^"']*)["']/i,
+            /src\s*[:=]\s*["']([^"']+\.m3u8[^"']*)["']/i,
+            /(https?:[^\s"']+\.m3u8[^\s"']*)/,
+            /(\/[^\s"']+\.m3u8[^\s"']*)/,
+        ];
+
+        let m3u8Url = null;
+        for (const pattern of patterns) {
+            const match = html.match(pattern);
+            if (match) {
+                m3u8Url = match[1];
+                break;
+            }
+        }
+
+        if (m3u8Url) {
+            if (m3u8Url.startsWith('/')) {
+                const base = new URL(pageUrl).origin;
+                m3u8Url = base + m3u8Url;
+            }
+            if (!m3u8Url.startsWith('http://') && !m3u8Url.startsWith('https://')) {
+                const base = pageUrl.replace(/\/[^/]*$/, '/');
+                m3u8Url = base + m3u8Url;
+            }
+            toast('✅ 解析成功', 'success');
+            setStatus('就绪');
+            startPlayer(m3u8Url, title || '解析播放');
+        } else {
+            toast('未能提取 m3u8，尝试嵌入页面', 'info');
+            startPlayerInIframe(pageUrl, title);
+        }
+    } catch (e) {
+        toast('解析失败: ' + e.message, 'error');
+        setStatus('解析失败');
+        startPlayerInIframe(pageUrl, title);
+    }
+}
+
+// ============================================================
+//  iframe 备选
+// ============================================================
+function startPlayerInIframe(url, title) {
+    dom.playerSection.classList.add('open');
+    dom.playerControls.classList.add('open');
+    dom.nowPlaying.textContent = title || '嵌入播放';
+    dom.m3u8Link.value = url;
+
+    dom.player.style.display = 'none';
+    dom.playerIframe.style.display = 'block';
+    dom.playerIframe.src = url;
+
+    toast('已切换到嵌入式播放', 'info');
+    dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ============================================================
+//  播放器控制
+// ============================================================
+function closePlayer() {
+    state.isPlaying = false;
+    dom.playerSection.classList.remove('open');
+    dom.playerSection.style.display = 'none';
+    dom.playerControls.classList.remove('open');
+    dom.playerControls.style.display = 'none';
+    dom.episodesPanel.classList.remove('open');
+
+    if (state.hlsInstance) {
+        state.hlsInstance.destroy();
+        state.hlsInstance = null;
+    }
+    dom.player.removeAttribute('src');
+    dom.player.load();
+    dom.player.style.display = 'block';
+    dom.playerIframe.style.display = 'none';
+    dom.playerIframe.src = '';
+    dom.nowPlaying.textContent = '—';
+    dom.m3u8Link.value = '';
+
+    state.currentLines = [];
+    state.currentEpisodes = [];
+
+    dom.lineSelect.style.display = 'none';
+
+    hidePlayerLoading();
+    restoreAllContent();
+}
+
+// ============================================================
+//  复制链接
+// ============================================================
+function copyLink() {
+    const input = dom.m3u8Link;
+    if (!input || !input.value) {
+        toast('没有可复制的链接', 'error');
+        return;
+    }
+    input.select();
+    input.setSelectionRange(0, input.value.length);
+    try {
+        navigator.clipboard.writeText(input.value).then(() => {
+            toast('✅ 已复制到剪贴板', 'success');
+        }).catch(() => {
+            document.execCommand('copy');
+            toast('✅ 已复制', 'success');
+        });
+    } catch (e) {
+        toast('请手动复制：' + input.value, 'info');
+    }
+}
+
+// ============================================================
+//  KEYBOARD
+// ============================================================
+function handleKeydown(e) {
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+
+    const video = dom.player;
+    if (dom.playerSection.classList.contains('open') && video) {
+        switch (e.key) {
+            case ' ':
+                e.preventDefault();
+                video.paused ? video.play() : video.pause();
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                video.currentTime += 10;
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                video.currentTime -= 10;
+                break;
+            case 'Escape':
+                if (document.fullscreenElement) document.exitFullscreen();
+                break;
+        }
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        dom.searchInput.focus();
+        dom.searchInput.select();
+    }
+}
+
+// ============================================================
+//  DISCLAIMER
+// ============================================================
+let disclaimerShown = false;
+
+function showDisclaimer() {
+    // 检查是否已经同意过
+    const agreed = localStorage.getItem(STORAGE_DISCLAIMER_KEY);
+    if (agreed === 'true') return;
+
+    if (disclaimerShown) return;
+    disclaimerShown = true;
+
+    const result = confirm(
+        '📺 TVPlayer · 免责声明\n\n' +
+        '1. 本工具为纯前端空壳播放器，不包含、不存储任何音视频内容。\n' +
+        '2. 所有播放资源均来自第三方公开采集接口，由用户自行配置。\n' +
+        '3. 仅供技术学习交流使用，请于 24 小时内删除缓存内容。\n' +
+        '4. 尊重版权，支持正版影视平台。\n' +
+        '5. 使用本工具产生的一切法律风险由使用者自行承担。\n\n' +
+        '点击「确定」表示您同意上述条款。'
+    );
+
+    if (result) {
+        localStorage.setItem(STORAGE_DISCLAIMER_KEY, 'true');
+    }
+}
+
+// ============================================================
+//  BOOT
+// ============================================================
+document.addEventListener('DOMContentLoaded', init);
