@@ -2125,12 +2125,12 @@ function startPlayer(url, title) {
     }
 
     // ============================================================
-    //  ⚠️ xibaom20.com 直接用 video 播放（不经过 HLS.js）
+    //  用 video 播放（不经过 HLS.js）
     // ============================================================
     if (url.includes('xibaom20.com') || 
         url.includes('vip.ffzy-plays.com') || 
         url.includes('vv.jisuzyv.com')) {
-        console.log('🔄 检测到 xibaom20，直接用 video 播放');
+        console.log('🔄 检测到 video 直链源，直接用 video 播放');
         const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
         const baseUrl = url.substring(0, url.lastIndexOf('/') + 1);
         
