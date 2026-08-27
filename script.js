@@ -415,54 +415,56 @@ function renderSourceList() {
     let html = '';
 
     // 有效源分组
+    // 有效源分组
     if (validSources.length) {
         html += `<div class="group-label"><span class="dot stable"></span> 🟢 有效 (${validSources.length})</div>`;
         validSources.forEach((s, index) => {
             const isEditing = state.editingKey === s.key;
             html += `
-                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''}" 
+                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''} display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-radius:8px; background:var(--bg); margin-bottom:4px; border:1px solid transparent;" 
                      draggable="true" 
                      data-index="${index}"
                      data-key="${esc(s.key)}">
-                    <div class="s-info" style="display:flex; align-items:center; gap:12px;">
-                        <span class="s-name" style="display:flex; align-items:center; gap:6px;">
-                            <span style="cursor:grab; color:var(--text3);">☰</span>
-                            ${esc(s.name)}
-                        </span>
-                        <span class="s-key" style="color:var(--text3); font-size:12px;">${esc(s.key)}</span>
+                    <div style="display:flex; align-items:center; gap:14px; flex:1;">
+                        <span style="cursor:grab; color:var(--text3); font-size:16px;">☰</span>
+                        <span style="font-weight:500; color:var(--text);">${esc(s.name)}</span>
+                        <span style="color:var(--text3); font-size:12px;">${esc(s.key)}</span>
                         <span style="font-size:12px; color:#2e7d32;">🟢有效</span>
                     </div>
-                    <div class="s-actions">
-                        <button class="edit-btn" onclick="editSource('${esc(s.key)}')">编辑</button>
-                        <button class="del-btn" onclick="deleteSource('${esc(s.key)}')">删除</button>
+                    <div style="display:flex; gap:6px; flex-shrink:0;">
+                        <button class="edit-btn" onclick="editSource('${esc(s.key)}')" style="padding:3px 12px; font-size:12px; border-radius:4px; border:none; cursor:pointer; color:var(--primary); background:var(--primary-dim);">编辑</button>
+                        <button class="del-btn" onclick="deleteSource('${esc(s.key)}')" style="padding:3px 12px; font-size:12px; border-radius:4px; border:none; cursor:pointer; color:#c0392b; background:rgba(192,57,43,0.08);">删除</button>
                     </div>
                 </div>
             `;
         });
     }
 
-    if (invalidSources.length) {
-        html += `<div class="group-label"><span class="dot backup"></span> 🔴 失效 (${invalidSources.length})</div>`;
-        invalidSources.forEach((s, index) => {
-            const isEditing = state.editingKey === s.key;
-            const realIndex = validSources.length + index;
-            html += `
-                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''} opacity:0.7;" 
-                     draggable="true" 
-                     data-index="${realIndex}"
-                     data-key="${esc(s.key)}">
-                    <div class="s-info">
-                        <span class="s-name" style="color:var(--text3);">☰ ${esc(s.name)}</span>
-                        <span class="s-key">${esc(s.key)}</span>
+        // 失效源分组
+        if (invalidSources.length) {
+            html += `<div class="group-label"><span class="dot backup"></span> 🔴 失效 (${invalidSources.length})</div>`;
+            invalidSources.forEach((s, index) => {
+                const isEditing = state.editingKey === s.key;
+                const realIndex = validSources.length + index;
+                html += `
+                    <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''} display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-radius:8px; background:var(--bg); margin-bottom:4px; border:1px solid transparent; opacity:0.7;" 
+                         draggable="true" 
+                         data-index="${realIndex}"
+                         data-key="${esc(s.key)}">
+                        <div style="display:flex; align-items:center; gap:14px; flex:1;">
+                            <span style="cursor:grab; color:var(--text3); font-size:16px;">☰</span>
+                            <span style="font-weight:500; color:var(--text3);">${esc(s.name)}</span>
+                            <span style="color:var(--text3); font-size:12px;">${esc(s.key)}</span>
+                            <span style="font-size:12px; color:#c62828;">🔴失效</span>
+                        </div>
+                        <div style="display:flex; gap:6px; flex-shrink:0;">
+                            <button class="edit-btn" onclick="editSource('${esc(s.key)}')" style="padding:3px 12px; font-size:12px; border-radius:4px; border:none; cursor:pointer; color:var(--primary); background:var(--primary-dim);">编辑</button>
+                            <button class="del-btn" onclick="deleteSource('${esc(s.key)}')" style="padding:3px 12px; font-size:12px; border-radius:4px; border:none; cursor:pointer; color:#c0392b; background:rgba(192,57,43,0.08);">删除</button>
+                        </div>
                     </div>
-                    <div class="s-actions">
-                        <button class="edit-btn" onclick="editSource('${esc(s.key)}')">编辑</button>
-                        <button class="del-btn" onclick="deleteSource('${esc(s.key)}')">删除</button>
-                    </div>
-                </div>
-            `;
-        });
-    }
+                `;
+            });
+        }
 
     // ✅ 添加清空缓存按钮
     html += `
