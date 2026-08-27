@@ -1388,7 +1388,8 @@ async function loadCategoriesInBackground(source) {
         }
         
         if (classes && classes.length) {
-            setClassCache(cacheKey, classes);  // ← 存入 localStorage
+            // ✅ 存入 localStorage
+            setClassCache(cacheKey, classes);
             state.categories = classes;
             renderCategories(classes);
             console.log('✅ 分类加载并缓存:', source.name, classes.length);
