@@ -1303,11 +1303,8 @@ async function loadBrowse(source) {
     setStatus('加载中…', true);
     dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">加载分类…</span>';
 
-    // ✅ 先加载卡片（秒开）
+    // ✅ 只请求一次，分类和列表一起拿
     await loadMovies();
-    
-    // ✅ 分类后台加载（不阻塞）
-    loadCategoriesInBackground(source);
 
     setStatus('就绪');
     state.isLoading = false;
@@ -1353,17 +1350,8 @@ function renderMovies(list) {
     list.forEach(v => {
         const el = document.createElement('div');
         el.className = 'card';
-        
-        let poster = v.vod_pic || '';
-        // ✅ 走代理
-        if (poster) {
-            poster = '/api/proxy?url=' + encodeURIComponent(poster);
-        }
-        // ✅ 如果还是空，用占位图
-        if (!poster) {
-            poster = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22390%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23181e2a%22/%3E%3C/svg%3E';
-        }
-        
+        // ✅ 直接用原地址，不走代理（恢复以前）
+        const poster = v.vod_pic || '';
         const score = v.vod_score || '';
         const remark = v.vod_remarks || '';
         el.innerHTML = `
