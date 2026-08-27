@@ -414,6 +414,7 @@ function renderSourceList() {
 
     let html = '';
 
+    // 有效源分组
     if (validSources.length) {
         html += `<div class="group-label"><span class="dot stable"></span> 🟢 有效 (${validSources.length})</div>`;
         validSources.forEach((s, index) => {
@@ -423,9 +424,13 @@ function renderSourceList() {
                      draggable="true" 
                      data-index="${index}"
                      data-key="${esc(s.key)}">
-                    <div class="s-info">
-                        <span class="s-name">☰ ${esc(s.name)}</span>
-                        <span class="s-key">${esc(s.key)}</span>
+                    <div class="s-info" style="display:flex; align-items:center; gap:12px;">
+                        <span class="s-name" style="display:flex; align-items:center; gap:6px;">
+                            <span style="cursor:grab; color:var(--text3);">☰</span>
+                            ${esc(s.name)}
+                        </span>
+                        <span class="s-key" style="color:var(--text3); font-size:12px;">${esc(s.key)}</span>
+                        <span style="font-size:12px; color:#2e7d32;">🟢有效</span>
                     </div>
                     <div class="s-actions">
                         <button class="edit-btn" onclick="editSource('${esc(s.key)}')">编辑</button>
