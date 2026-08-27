@@ -382,7 +382,7 @@ function toggleShowHiddenSources() {
 }
 
 // ============================================================
-//  源列表渲染（弹窗内）- 一行显示
+//  源列表渲染（弹窗内）- 可拖拽排序
 // ============================================================
 function renderSourceList() {
     const container = dom.sourceList;
@@ -416,12 +416,15 @@ function renderSourceList() {
 
     if (validSources.length) {
         html += `<div class="group-label"><span class="dot stable"></span> 🟢 有效 (${validSources.length})</div>`;
-        validSources.forEach(s => {
+        validSources.forEach((s, index) => {
             const isEditing = state.editingKey === s.key;
             html += `
-                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''}">
+                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''}" 
+                     draggable="true" 
+                     data-index="${index}"
+                     data-key="${esc(s.key)}">
                     <div class="s-info">
-                        <span class="s-name">${esc(s.name)}</span>
+                        <span class="s-name">☰ ${esc(s.name)}</span>
                         <span class="s-key">${esc(s.key)}</span>
                     </div>
                     <div class="s-actions">
@@ -435,12 +438,16 @@ function renderSourceList() {
 
     if (invalidSources.length) {
         html += `<div class="group-label"><span class="dot backup"></span> 🔴 失效 (${invalidSources.length})</div>`;
-        invalidSources.forEach(s => {
+        invalidSources.forEach((s, index) => {
             const isEditing = state.editingKey === s.key;
+            const realIndex = validSources.length + index;
             html += `
-                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''} opacity:0.7;">
+                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''} opacity:0.7;" 
+                     draggable="true" 
+                     data-index="${realIndex}"
+                     data-key="${esc(s.key)}">
                     <div class="s-info">
-                        <span class="s-name" style="color:var(--text3);">🔴 ${esc(s.name)}</span>
+                        <span class="s-name" style="color:var(--text3);">☰ ${esc(s.name)}</span>
                         <span class="s-key">${esc(s.key)}</span>
                     </div>
                     <div class="s-actions">
@@ -465,6 +472,100 @@ function renderSourceList() {
     `;
 
     container.innerHTML = html;
+
+    // 添加拖拽排序事件
+    setupDragAndDrop();
+}
+
+// ============================================================
+//  拖拽排序
+// ============================================================
+let dragStartIndex = null;
+let dragEnterCount = 0;
+
+function setupDragAndDrop() {
+    const items = document.querySelectorAll('.source-item[draggable="true"]');
+    
+    items.forEach(item => {
+        item.removeEventListener('dragstart', handleDragStart);
+        item.removeEventListener('dragend', handleDragEnd);
+        item.removeEventListener('dragover', handleDragOver);
+        item.removeEventListener('dragenter', handleDragEnter);
+        item.removeEventListener('dragleave', handleDragLeave);
+        item.removeEventListener('drop', handleDrop);
+        
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragend', handleDragEnd);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('dragenter', handleDragEnter);
+        item.addEventListener('dragleave', handleDragLeave);
+        item.addEventListener('drop', handleDrop);
+    });
+}
+
+function handleDragStart(e) {
+    dragStartIndex = parseInt(this.dataset.index);
+    this.style.opacity = '0.4';
+    this.style.borderColor = 'var(--primary)';
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.dataset.key);
+}
+
+function handleDragEnd(e) {
+    this.style.opacity = '';
+    this.style.borderColor = '';
+    document.querySelectorAll('.source-item').forEach(el => {
+        el.style.borderColor = '';
+        el.style.background = '';
+    });
+    dragEnterCount = 0;
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+    e.preventDefault();
+    dragEnterCount++;
+    if (this !== e.target) return;
+    this.style.borderColor = 'var(--primary)';
+    this.style.background = 'var(--primary-dim)';
+}
+
+function handleDragLeave(e) {
+    dragEnterCount--;
+    if (dragEnterCount > 0) return;
+    this.style.borderColor = '';
+    this.style.background = '';
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    dragEnterCount = 0;
+    this.style.borderColor = '';
+    this.style.background = '';
+
+    const dragKey = e.dataTransfer.getData('text/plain');
+    const dropKey = this.dataset.key;
+    
+    if (dragKey === dropKey) return;
+    if (!dragKey || !dropKey) return;
+
+    const sources = getStoredSources() || [];
+    const dragIndex = sources.findIndex(s => s.key === dragKey);
+    const dropIndex = sources.findIndex(s => s.key === dropKey);
+    
+    if (dragIndex === -1 || dropIndex === -1) return;
+
+    const [movedItem] = sources.splice(dragIndex, 1);
+    sources.splice(dropIndex, 0, movedItem);
+
+    setStoredSources(sources);
+    state.sources = sources;
+    renderSourceList();
+    toast('✅ 排序已更新', 'success');
 }
 
 // ============================================================
