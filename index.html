@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>TVPlayer · 云端影视</title>
+    
+    <!-- ===== PWA 配置 ===== -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#b76e4a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- ===== PWA 配置结束 ===== -->
+    
     <script src="/hls.min.js"></script>
     <link rel="stylesheet" href="/style.css" />
 </head>
@@ -164,6 +172,18 @@
         <span>·</span>
         <span>源由用户自行导入</span>
     </footer>
+
+    <!-- ===== Service Worker ===== -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('✅ Service Worker 注册成功'))
+                .catch(err => console.log('❌ Service Worker 注册失败:', err));
+        });
+    }
+    </script>
+    <!-- ===== Service Worker 结束 ===== -->
 
     <script src="/script.js"></script>
 </body>
