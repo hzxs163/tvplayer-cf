@@ -1364,7 +1364,7 @@ function populateSelect() {
 }
 
 // ============================================================
-//  loadCategoriesInBackground - 后台加载分类（新增）
+//  loadCategoriesInBackground - 后台加载分类（带缓存）
 // ============================================================
 async function loadCategoriesInBackground(source) {
     const cacheKey = source.api;
@@ -1379,16 +1379,16 @@ async function loadCategoriesInBackground(source) {
     }
 
     try {
-        const data = await fetchProxy(source.api + '?ac=videolist&pg=1');
-        let classes = data?.class || [];
+        let classData = await fetchProxy(source.api + '?ac=list');
+        let classes = classData?.class || [];
         
         if (!classes.length) {
-            const classData = await fetchProxy(source.api + '?ac=list');
-            classes = classData?.class || [];
+            const data = await fetchProxy(source.api + '?ac=videolist&pg=1');
+            classes = data?.class || [];
         }
         
         if (classes && classes.length) {
-            // ✅ 存入缓存
+            // ✅ 存入 localStorage
             setClassCache(cacheKey, classes);
             state.categories = classes;
             renderCategories(classes);
