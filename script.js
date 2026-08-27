@@ -2127,45 +2127,70 @@ function startPlayer(url, title) {
     // ============================================================
     //  用 video 播放（不经过 HLS.js）
     // ============================================================
-    if (url.includes('xibaom20.com')) {
-        console.log('🔄 检测到 video 直链源，直接用 video 播放');
-        const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
-        const baseUrl = url.substring(0, url.lastIndexOf('/') + 1);
-        
-        fetch(proxyUrl)
-            .then(r => {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                return r.text();
-            })
-            .then(text => {
-                let modified = text.replace(
-                    /^([^#].*)$/gm,
-                    function(line) {
-                        if (!line.startsWith('#') && line.trim() && !line.startsWith('http')) {
-                            return baseUrl + line.trim();
-                        }
-                        return line;
+    // ============================================================
+//  ⚠️ video 直接播放源
+// ============================================================
+if (url.includes('xibaom20.com') || 
+    url.includes('vip.ffzy-plays.com')) {
+    
+    console.log('🔄 检测到 video 直链源，直接用 video 播放');
+    const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
+    const baseUrl = url.substring(0, url.lastIndexOf('/') + 1);
+    
+    fetch(proxyUrl)
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+        })
+        .then(text => {
+            let modified = text.replace(
+                /^([^#].*)$/gm,
+                function(line) {
+                    if (!line.startsWith('#') && line.trim() && !line.startsWith('http')) {
+                        return baseUrl + line.trim();
                     }
-                );
-                
-                const blob = new Blob([modified], { type: 'application/vnd.apple.mpegurl' });
-                const blobUrl = URL.createObjectURL(blob);
-                
-                dom.playerLoading.classList.add('hidden');
-                setTimeout(() => {
-                    dom.playerLoading.classList.remove('show');
-                }, 400);
-                
-                dom.player.src = blobUrl;
-                dom.player.play().catch(function() {});
-                console.log('✅ xibaom20 video 直接播放成功');
-            })
-            .catch(e => {
-                console.error('❌ 获取 m3u8 失败:', e);
-                startPlayerInIframe(url, title);
-            });
-        return;
-    }
+                    return line;
+                }
+            );
+            
+            const blob = new Blob([modified], { type: 'application/vnd.apple.mpegurl' });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // ✅ 强制显示 video 元素
+            dom.player.style.display = 'block';
+            dom.player.style.width = '100%';
+            dom.player.style.height = '100%';
+            dom.player.style.minHeight = '300px';
+            dom.player.style.position = 'relative';
+            dom.player.style.zIndex = '100';
+            dom.player.style.opacity = '1';
+            dom.player.style.visibility = 'visible';
+            
+            // ✅ 确保父容器也可见
+            const container = dom.player.parentElement;
+            if (container) {
+                container.style.display = 'block';
+                container.style.width = '100%';
+                container.style.height = 'auto';
+                container.style.minHeight = '300px';
+            }
+            
+            // ✅ 隐藏加载遮罩
+            dom.playerLoading.classList.add('hidden');
+            setTimeout(() => {
+                dom.playerLoading.classList.remove('show');
+            }, 400);
+            
+            dom.player.src = blobUrl;
+            dom.player.play().catch(function() {});
+            console.log('✅ video 直接播放成功');
+        })
+        .catch(e => {
+            console.error('❌ 获取 m3u8 失败:', e);
+            startPlayerInIframe(url, title);
+        });
+    return;
+}
 
     
     dom.playerIframe.style.display = 'none';
