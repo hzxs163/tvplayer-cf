@@ -1369,7 +1369,7 @@ function populateSelect() {
 async function loadCategoriesInBackground(source) {
     const cacheKey = source.api;
     
-    // ✅ 先从 localStorage 读取
+    // ✅ 先从缓存读取
     const cached = getClassCache(cacheKey);
     if (cached && cached.length) {
         state.categories = cached;
@@ -1379,23 +1379,27 @@ async function loadCategoriesInBackground(source) {
     }
 
     try {
-        let classData = await fetchProxy(source.api + '?ac=list');
-        let classes = classData?.class || [];
+        const data = await fetchProxy(source.api + '?ac=videolist&pg=1');
+        let classes = data?.class || [];
         
         if (!classes.length) {
-            const data = await fetchProxy(source.api + '?ac=videolist&pg=1');
-            classes = data?.class || [];
+            const classData = await fetchProxy(source.api + '?ac=list');
+            classes = classData?.class || [];
         }
         
         if (classes && classes.length) {
-            // ✅ 存入 localStorage
+            // ✅ 存入缓存
             setClassCache(cacheKey, classes);
             state.categories = classes;
             renderCategories(classes);
             console.log('✅ 分类加载并缓存:', source.name, classes.length);
+        } else {
+            console.log('⚠️ 没有分类数据:', source.name);
+            dom.categoryNav.innerHTML = '<span class="cat active">全部</span>';
         }
     } catch (e) {
         console.warn('分类加载失败:', source.name);
+        dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">分类加载失败</span>';
     }
 }
 
