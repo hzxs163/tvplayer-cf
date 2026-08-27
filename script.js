@@ -1058,13 +1058,19 @@ function showPlayer() {
 function renderPlayerLines(lines) {
     const select = dom.lineSelect;
     select.innerHTML = '';
-    select.style.display = lines.length > 1 ? 'block' : 'none';
+    select.style.display = lines.length > 1 ? 'block' : 'block';
+
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = '📡换源';
+    defaultOpt.disabled = true;
+    defaultOpt.selected = true;  // ← 始终选中这个
+    select.appendChild(defaultOpt);
 
     lines.forEach((l, i) => {
         const opt = document.createElement('option');
         opt.value = i;
         opt.textContent = l.name;
-        if (i === state.currentLineIndex) opt.selected = true;
         select.appendChild(opt);
     });
 }
@@ -1313,7 +1319,9 @@ function startPlayerInIframe(url, title) {
 function closePlayer() {
     state.isPlaying = false;
     dom.playerSection.classList.remove('open');
+    dom.playerSection.style.display = 'none';
     dom.playerControls.classList.remove('open');
+    dom.playerControls.style.display = 'none';
     dom.episodesPanel.classList.remove('open');
 
     if (state.hlsInstance) {
@@ -1336,7 +1344,28 @@ function closePlayer() {
     hidePlayerLoading();
     restoreAllContent();
 }
-
+// ============================================================
+//  复制链接
+// ============================================================
+function copyLink() {
+    const input = dom.m3u8Link;
+    if (!input || !input.value) {
+        toast('没有可复制的链接', 'error');
+        return;
+    }
+    input.select();
+    input.setSelectionRange(0, input.value.length);
+    try {
+        navigator.clipboard.writeText(input.value).then(() => {
+            toast('✅ 已复制到剪贴板', 'success');
+        }).catch(() => {
+            document.execCommand('copy');
+            toast('✅ 已复制', 'success');
+        });
+    } catch (e) {
+        toast('请手动复制：' + input.value, 'info');
+    }
+}
 // ============================================================
 //  KEYBOARD
 // ============================================================
