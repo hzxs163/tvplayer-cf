@@ -2124,6 +2124,50 @@ function startPlayer(url, title) {
         return;
     }
 
+    // ============================================================
+    //  ⚠️ xibaom20.com 直接用 video 播放（不经过 HLS.js）
+    // ============================================================
+    if (url.includes('xibaom20.com')) {
+        console.log('🔄 检测到 xibaom20，直接用 video 播放');
+        const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
+        const baseUrl = url.substring(0, url.lastIndexOf('/') + 1);
+        
+        fetch(proxyUrl)
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.text();
+            })
+            .then(text => {
+                let modified = text.replace(
+                    /^([^#].*)$/gm,
+                    function(line) {
+                        if (!line.startsWith('#') && line.trim() && !line.startsWith('http')) {
+                            return baseUrl + line.trim();
+                        }
+                        return line;
+                    }
+                );
+                
+                const blob = new Blob([modified], { type: 'application/vnd.apple.mpegurl' });
+                const blobUrl = URL.createObjectURL(blob);
+                
+                dom.playerLoading.classList.add('hidden');
+                setTimeout(() => {
+                    dom.playerLoading.classList.remove('show');
+                }, 400);
+                
+                dom.player.src = blobUrl;
+                dom.player.play().catch(function() {});
+                console.log('✅ xibaom20 video 直接播放成功');
+            })
+            .catch(e => {
+                console.error('❌ 获取 m3u8 失败:', e);
+                startPlayerInIframe(url, title);
+            });
+        return;
+    }
+
+    
     dom.playerIframe.style.display = 'none';
     dom.playerIframe.src = '';
     dom.player.style.display = 'block';
