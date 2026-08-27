@@ -27,7 +27,13 @@
             <select id="sourceSelect"><option value="">请导入源</option></select>
             <input type="text" id="searchInput" placeholder="搜索片名…" disabled />
             <button class="btn btn-primary" id="searchBtn" disabled onclick="doSearch()">搜索</button>
-            <button class="btn-ghost" onclick="showImportModal()" title="导入源" style="font-size:18px;padding:0 6px;">📥</button>
+            <button class="btn-ghost" onclick="showImportModal()" title="导入源" style="font-size:18px;padding:0 6px;display:flex;align-items:center;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+            </button>
             <span id="status">请导入源</span>
         </div>
     </header>
