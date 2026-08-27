@@ -1381,16 +1381,20 @@ function renderMovies(list) {
         return;
     }
     const frag = document.createDocumentFragment();
+    const currentSource = state.source; // ✅ 保存当前源引用
+    
     list.forEach(v => {
         const el = document.createElement('div');
         el.className = 'card';
         const poster = v.vod_pic || '';
         const score = v.vod_score || '';
         const remark = v.vod_remarks || '';
+        // ✅ 转义 poster 用于 onerror
+        const escapedPoster = esc(poster);
         el.innerHTML = `
                     <div class="poster-wrap">
-                        <img loading="lazy" referrerpolicy="no-referrer" src="${esc(poster)}" 
-                             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22390%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23181e2a%22/%3E%3C/svg%3E'" />
+                        <img loading="lazy" referrerpolicy="no-referrer" src="${escapedPoster}" 
+                             onerror="this.onerror=null; console.warn('图片加载失败:', '${escapedPoster}'); this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22390%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23181e2a%22/%3E%3C/svg%3E'" />
                         <div class="play-icon">▶</div>
                         ${score ? `<div class="badge-top score">${esc(score)}</div>` : ''}
                         ${remark && !score ? `<div class="badge-top">${esc(remark)}</div>` : ''}
@@ -1403,7 +1407,7 @@ function renderMovies(list) {
                         </div>
                     </div>
                 `;
-        el.onclick = () => playMovie(v, state.source);
+        el.onclick = () => playMovie(v, currentSource); // ✅ 使用保存的引用
         frag.appendChild(el);
     });
     grid.innerHTML = '';
