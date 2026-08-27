@@ -33,6 +33,7 @@ const state = {
     isLoading: false,
     editingKey: null,
     hlsInstance: null,
+    currentController: null,
 };
 
 // ============================================================
@@ -179,6 +180,9 @@ function toggleShowHiddenSources() {
 // ============================================================
 //  源列表渲染（弹窗内）
 // ============================================================
+// ============================================================
+//  源列表渲染（弹窗内）
+// ============================================================
 function renderSourceList() {
     const container = dom.sourceList;
     const sources = getStoredSources() || [];
@@ -189,26 +193,33 @@ function renderSourceList() {
         return;
     }
 
-    const groups = { stable: [], normal: [], backup: [] };
-    sources.forEach(s => {
-        const g = s.group || 'normal';
-        if (groups[g]) groups[g].push(s);
-        else groups.normal.push(s);
-    });
-    const labels = { stable: '稳定', normal: '普通', backup: '备用' };
-    const dots = { stable: 'stable', normal: 'normal', backup: 'backup' };
+    // 分组：有效源 和 失效源
+    const validSources = sources.filter(s => s.enabled !== false);
+    const invalidSources = sources.filter(s => s.enabled === false);
 
-    let html = '';
-    Object.keys(groups).forEach(g => {
-        if (!groups[g].length) return;
-        html += `<div class="group-label"><span class="dot ${dots[g] || 'normal'}"></span> ${labels[g] || g}</div>`;
-        groups[g].forEach(s => {
+    let html = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <span style="font-size:14px; font-weight:600; color:var(--text);">📋源</span>
+                <span style="font-size:13px; color:var(--text2);">共 ${sources.length} 个</span>
+                <span style="font-size:13px; color:#2e7d32;">🟢有效 ${validSources.length} 个</span>
+                ${invalidSources.length > 0 ? `<span style="font-size:13px; color:#c62828;">🔴失效 ${invalidSources.length} 个</span>` : ''}
+            </div>
+            <button class="btn btn-ghost" onclick="checkAllSources()" style="font-size:12px; padding:4px 14px; border:1px solid var(--border); border-radius:6px; cursor:pointer; background:var(--bg);">
+                🔍检测
+            </button>
+        </div>
+    `;
+
+    // 有效源分组
+    if (validSources.length) {
+        html += `<div class="group-label"><span class="dot stable"></span> 🟢 有效</div>`;
+        validSources.forEach(s => {
             const isEditing = state.editingKey === s.key;
-            const isHidden = s.enabled === false;
             html += `
                 <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''}">
                     <div class="s-info">
-                        <span class="s-name">${esc(s.name)}${isHidden ? ' 🔒' : ''}</span>
+                        <span class="s-name">${esc(s.name)}</span>
                         <span class="s-key">${esc(s.key)}</span>
                     </div>
                     <div class="s-actions">
@@ -218,10 +229,31 @@ function renderSourceList() {
                 </div>
             `;
         });
-    });
+    }
+
+    // 失效源分组
+    if (invalidSources.length) {
+        html += `<div style="margin-top:12px; padding-top:8px; border-top:1px solid var(--border);"></div>`;
+        html += `<div class="group-label"><span class="dot backup"></span> 🔴 失效（${invalidSources.length} 个）</div>`;
+        invalidSources.forEach(s => {
+            const isEditing = state.editingKey === s.key;
+            html += `
+                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''} opacity:0.7;">
+                    <div class="s-info">
+                        <span class="s-name" style="color:var(--text3);">🔴 ${esc(s.name)} <span style="font-size:11px; color:var(--text3);">(失效)</span></span>
+                        <span class="s-key">${esc(s.key)}</span>
+                    </div>
+                    <div class="s-actions">
+                        <button class="edit-btn" onclick="editSource('${esc(s.key)}')">编辑</button>
+                        <button class="del-btn" onclick="deleteSource('${esc(s.key)}')">删除</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
 
     container.innerHTML = html;
-    dom.importCount.textContent = sources.length + ' 个';
+    // dom.importCount.textContent = sources.length + ' 个';
 }
 
 // ============================================================
@@ -267,7 +299,6 @@ function deleteSource(key) {
         const first = filtered.find(s => s.group === 'stable') || filtered[0];
         if (first) {
             dom.sourceSelect.value = first.key;
-            // loadBrowse(first);  // ← 删掉这行
         }
     }
     toast('✅ 已删除', 'success');
@@ -389,6 +420,119 @@ function loadExample() {
 }
 
 // ============================================================
+//  一键检查失效源（控制台版逻辑）
+// ============================================================
+async function checkAllSources() {
+    // ============================================
+    // 检查前先清除所有失效标记
+    // ============================================
+    const sources = getStoredSources() || [];
+    if (sources.length) {
+        const clearedSources = sources.map(s => {
+            return { ...s, enabled: true };
+        });
+        setStoredSources(clearedSources);
+        state.sources = clearedSources;
+    }
+    // ============================================
+
+    const sources2 = getStoredSources() || [];
+    if (!sources2.length) {
+        toast('没有源需要检查', 'info');
+        return;
+    }
+
+    const checkBtn = document.querySelector('#sourceList .btn-ghost');
+    const total = sources2.length;
+    let checked = 0;
+    const results = { valid: [], invalid: [] };
+
+    if (checkBtn) {
+        checkBtn.textContent = '⏳ 0/' + total;
+        checkBtn.disabled = true;
+    }
+
+    toast('🔍 开始检查 ' + total + ' 个源...', 'info');
+
+    function checkSource(source) {
+        return new Promise((resolve) => {
+            const proxyUrl = '/api/proxy?url=' + encodeURIComponent(source.api);
+            fetch(proxyUrl, { signal: AbortSignal.timeout(5000) })
+                .then(r => {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.text();
+                })
+                .then(text => {
+                    const isJSON = text.trimStart().startsWith('{') || text.trimStart().startsWith('[');
+                    const hasList = text.includes('"list"');
+                    const hasClass = text.includes('"class"');
+                    const hasCode = text.includes('"code"');
+                    const hasVodId = text.includes('"vod_id"');
+                    const valid = isJSON && (hasList || hasClass || hasCode || hasVodId);
+                    resolve({ valid, source });
+                })
+                .catch(() => {
+                    resolve({ valid: false, source });
+                });
+        });
+    }
+
+    const batchSize = 5;
+    for (let i = 0; i < total; i += batchSize) {
+        const batch = sources2.slice(i, i + batchSize);
+        const batchResults = await Promise.all(batch.map(s => checkSource(s)));
+        batchResults.forEach(result => {
+            checked++;
+            if (result.valid) {
+                results.valid.push(result.source);
+            } else {
+                results.invalid.push(result.source);
+            }
+            if (checkBtn) {
+                checkBtn.textContent = '⏳ ' + checked + '/' + total;
+            }
+        });
+        if (i + batchSize < total) {
+            await new Promise(r => setTimeout(r, 150));
+        }
+    }
+
+    if (checkBtn) {
+        checkBtn.textContent = '🔍 检查失效源';
+        checkBtn.disabled = false;
+    }
+
+    const invalidCount = results.invalid.length;
+
+    if (invalidCount === 0) {
+        toast('🎉 全部 ' + total + ' 个源均有效！', 'success');
+        renderSourceList();
+        return;
+    }
+
+    // 标记失效源（仅标记，不删除）
+    let modified = false;
+    const newSources = sources2.map(s => {
+        const found = results.invalid.find(inv => inv.key === s.key);
+        if (found) {
+            modified = true;
+            return { ...s, enabled: false };
+        }
+        return s;
+    });
+
+    if (modified) {
+        setStoredSources(newSources);
+        state.sources = newSources;
+        renderSourceList();
+        populateSelect();
+        toast('⚠️ 发现 ' + invalidCount + ' 个失效源，已标记', 'warning');
+    } else {
+        renderSourceList();
+    }
+}
+
+// ============================================================
 //  TOAST & STATUS
 // ============================================================
 function toast(msg, type = 'info') {
@@ -420,17 +564,36 @@ function esc(s) {
 //  API
 // ============================================================
 async function fetchProxy(url, timeout = FETCH_TIMEOUT) {
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), timeout);
+    // 只取消同类型的上一个请求（通过 url 前缀判断）
+    const urlKey = url.split('?')[0]; // 取 API 地址作为 key
+    if (state.currentController && state.currentController._urlKey === urlKey) {
+        state.currentController.abort();
+        state.currentController = null;
+    }
+    
+    const controller = new AbortController();
+    controller._urlKey = urlKey; // 标记这个请求的类型
+    state.currentController = controller;
+    
+    const timer = setTimeout(() => controller.abort(), timeout);
     try {
-        const resp = await fetch(PROXY(url), { signal: ctl.signal });
+        const resp = await fetch(PROXY(url), { signal: controller.signal });
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({}));
             throw new Error(err.msg || 'HTTP ' + resp.status);
         }
         return await resp.json();
+    } catch (e) {
+        if (e.name === 'AbortError') {
+            // 静默处理，不打印日志
+            return null;
+        }
+        throw e;
     } finally {
         clearTimeout(timer);
+        if (state.currentController === controller) {
+            state.currentController = null;
+        }
     }
 }
 
@@ -511,6 +674,26 @@ function switchPlayerLine(index) {
     const episodes = parseEpisodes(lines[index].url);
     state.currentEpisodes = episodes;
     renderEpisodesPanel(episodes);
+    
+    // ============================================
+    // 百度源：使用 iframe 播放
+    // ============================================
+    if (state.currentSource?.key === 'dbm3u8' || state.currentSource?.name.includes('百度')) {
+        const firstEp = episodes[0];
+        const m3u8Url = normalizeUrl(firstEp.url);
+        const baiduPlayerUrl = 'https://jx.jxbdzyw.com/m3u8/?url=' + encodeURIComponent(m3u8Url);
+        dom.playerIframe.style.display = 'block';
+        dom.playerIframe.src = baiduPlayerUrl;
+        dom.player.style.display = 'none';
+        dom.playerLoading.classList.add('hidden');
+        setTimeout(() => {
+            dom.playerLoading.classList.remove('show');
+        }, 400);
+        toast('已切换: ' + lines[index].name, 'info');
+        return;
+    }
+    // ============================================
+    
     if (episodes.length) {
         const first = episodes[0];
         startPlayer(first.url, (state.currentVod?.vod_name || '') + ' ' + first.name);
@@ -622,6 +805,9 @@ function getSelectedSource() {
     return state.sources.find(s => s.key === key) || null;
 }
 
+// ============================================================
+//  populateSelect - 首页下拉框
+// ============================================================
 function populateSelect() {
     const sel = dom.sourceSelect;
     sel.innerHTML = '';
@@ -645,30 +831,40 @@ function populateSelect() {
         return;
     }
 
-    const groups = { stable: [], normal: [], backup: [] };
-    sources.forEach(s => {
-        const g = s.group || 'normal';
-        if (groups[g]) groups[g].push(s);
-        else groups.normal.push(s);
-    });
-    const labels = { stable: '🟢 稳定', normal: '🔵 普通', backup: '🟡 备用' };
+    // 分组：有效源 和 失效源
+    const validSources = sources.filter(s => s.enabled !== false);
+    const invalidSources = sources.filter(s => s.enabled === false);
 
     let hasOptions = false;
-    Object.keys(groups).forEach(g => {
-        if (!groups[g].length) return;
-        hasOptions = true;
+
+    // 有效源分组
+    if (validSources.length) {
         const og = document.createElement('optgroup');
-        og.label = labels[g] || g;
-        if (showHiddenSources) og.label += ' 🔓';
-        groups[g].forEach(s => {
+        og.label = '🟢 有效';
+        validSources.forEach(s => {
             const opt = document.createElement('option');
             opt.value = s.key;
-            const isHidden = s.enabled === false;
-            opt.textContent = s.name + (isHidden ? ' 🔒' : '');
+            opt.textContent = s.name;
             og.appendChild(opt);
+            hasOptions = true;
         });
         sel.appendChild(og);
-    });
+    }
+
+    // 失效源分组
+    if (invalidSources.length) {
+        const og = document.createElement('optgroup');
+        og.label = '🔴 失效';
+        invalidSources.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.key;
+            opt.textContent = s.name + ' (失效)';
+            opt.style.color = '#999';
+            og.appendChild(opt);
+            hasOptions = true;
+        });
+        sel.appendChild(og);
+    }
 
     if (!hasOptions) {
         sel.innerHTML = '<option value="">请导入源</option>';
@@ -692,6 +888,7 @@ async function loadBrowse(source) {
 
     try {
         const data = await fetchProxy(source.api + '?ac=list');
+        if (data === null) return;
         const classes = data.class || [];
         state.categories = classes;
         renderCategories(classes);
@@ -713,6 +910,7 @@ async function loadMovies() {
 
     try {
         const data = await fetchProxy(url);
+        if (data === null) return;
         const list = data.list || [];
         state.totalPages = Math.max(1, parseInt(data.pagecount) || 1);
         state.movies = list;
@@ -833,11 +1031,15 @@ async function doSearch() {
     const q = dom.searchInput.value.trim();
     if (!q) { toast('请输入片名', 'error'); return; }
 
-    const sel = dom.sourceSelect;
-    const targets = sel.value === '__all__' ?
-        state.sources :
-        state.sources.filter(s => s.key === sel.value);
-    if (!targets.length) { toast('请选择有效源', 'error'); return; }
+    // ===== 根据模式决定搜索范围 =====
+    let targets = state.sources;
+    if (!showHiddenSources) {
+        targets = targets.filter(s => s.enabled !== false);
+    }
+    if (!targets.length) {
+        toast(showHiddenSources ? '没有可用源（含隐藏）' : '没有可用源', 'error');
+        return;
+    }
 
     // 切换到搜索页
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -887,24 +1089,29 @@ async function doSearch() {
             `找到 ${results.length} 个结果 · 完成 ${done}/${targets.length} 个源`;
     };
 
-    async function worker() {
-        while (pool.length && mySeq === state.searchSeq) {
-            const s = pool.shift();
-            try {
-                const url = s.api + '?ac=detail&wd=' + encodeURIComponent(q);
-                const data = await fetchProxy(url);
-                (data.list || []).forEach(v => {
-                    if (v && v.vod_id && v.vod_name) {
-                        if (!results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
-                            results.push({ v, s });
-                        }
+async function worker() {
+    while (pool.length && mySeq === state.searchSeq) {
+        const s = pool.shift();
+        try {
+            const url = s.api + '?ac=detail&wd=' + encodeURIComponent(q);
+            const data = await fetchProxy(url);
+            if (data === null) continue;
+            const rawList = data.list || [];
+            const keyword = q.toLowerCase();
+            rawList.forEach(v => {
+                if (v && v.vod_id && v.vod_name) {
+                    const name = (v.vod_name || '').toLowerCase();
+                    // 包含匹配：adn 只匹配包含 adn 的标题
+                    if (name.includes(keyword) && !results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
+                        results.push({ v, s });
                     }
-                });
-            } catch (e) { /* skip */ }
-            done++;
-            render();
-        }
+                }
+            });
+        } catch (e) { /* skip */ }
+        done++;
+        render();
     }
+}
 
     const workers = Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker);
     await Promise.all(workers);
@@ -950,6 +1157,7 @@ async function playMovie(vod, source) {
 
     try {
         const data = await fetchProxy(source.api + '?ac=detail&ids=' + vod.vod_id);
+        if (data === null) return;
         const detail = data.list?.[0] || vod;
 
         let froms = [],
@@ -994,7 +1202,61 @@ async function playMovie(vod, source) {
         showPlayer();
 
         const firstUrl = lines[0].url;
+
+        // ============================================
+        // 百度源 (dbm3u8) 特殊处理：使用 iframe 播放
+        // ============================================
+        if (source.key === 'dbm3u8' || source.name.includes('百度') || firstUrl.includes('b3.bdzybf22.com')) {
+            console.log('🔵 检测到百度源，使用 iframe 播放');
+            
+            // 解析第一集的 m3u8 地址
+            const episodes = parseEpisodes(firstUrl);
+            const firstEp = episodes[0];
+            const m3u8Url = normalizeUrl(firstEp.url);
+            
+            // 构造百度播放器地址
+            const baiduPlayerUrl = 'https://jx.jxbdzyw.com/m3u8/?url=' + encodeURIComponent(m3u8Url);
+            
+            showPlayer();
+            dom.playerLoading.classList.remove('hidden');
+            dom.playerLoading.classList.add('show');
+            
+            // 用 iframe 播放
+            dom.playerIframe.style.display = 'block';
+            dom.playerIframe.src = baiduPlayerUrl;
+            dom.player.style.display = 'none';
+            
+            dom.playerLoading.classList.add('hidden');
+            setTimeout(function() {
+                dom.playerLoading.classList.remove('show');
+            }, 400);
+            
+            renderEpisodesPanel(episodes);
+            setStatus('播放中');
+            return;
+        }
+        // ============================================
+
         const episodes = parseEpisodes(firstUrl);
+
+        // ============================================
+        // 虎牙资源特殊处理：直接走代理播放
+        // ============================================
+        if (firstUrl.includes('huyall.com') || firstUrl.includes('baisiweiting.com')) {
+            console.log('🔵 检测到虎牙资源，使用专用播放逻辑');
+            // 先解析出真正的第一集地址
+            const episodes = parseEpisodes(firstUrl);
+            const firstEp = episodes[0];
+            const fullUrl = normalizeUrl(firstEp.url);
+            showPlayer();
+            dom.playerLoading.classList.remove('hidden');
+            dom.playerLoading.classList.add('show');
+            startPlayerWithProxy(fullUrl, vod.vod_name);
+            renderEpisodesPanel(episodes);
+            setStatus('播放中');
+            return;
+        }
+        // ============================================
 
         if (episodes.length) {
             state.currentEpisodes = episodes;
@@ -1051,7 +1313,13 @@ function normalizeUrl(url) {
 function showPlayer() {
     state.isPlaying = true;
     dom.playerSection.classList.add('open');
+    dom.playerSection.style.display = 'block';
+    dom.playerSection.style.minHeight = '300px';
     dom.playerControls.classList.add('open');
+    dom.playerControls.style.display = 'flex';
+    dom.player.style.display = 'block';
+    dom.player.style.opacity = '1';
+    dom.player.style.visibility = 'visible';
     dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -1064,7 +1332,7 @@ function renderPlayerLines(lines) {
     defaultOpt.value = '';
     defaultOpt.textContent = '📡换源';
     defaultOpt.disabled = true;
-    defaultOpt.selected = true;  // ← 始终选中这个
+    defaultOpt.selected = true;
     select.appendChild(defaultOpt);
 
     lines.forEach((l, i) => {
@@ -1124,6 +1392,22 @@ function renderEpisodesPanel(episodes) {
         el.onclick = () => {
             document.querySelectorAll('#episodes-list .ep').forEach(e => e.classList.remove('active'));
             el.classList.add('active');
+            // ============================================
+            // 百度源选集：使用 iframe 播放
+            // ============================================
+            if (state.currentSource?.key === 'dbm3u8' || state.currentSource?.name.includes('百度')) {
+                const m3u8Url = normalizeUrl(ep.url);
+                const baiduPlayerUrl = 'https://jx.jxbdzyw.com/m3u8/?url=' + encodeURIComponent(m3u8Url);
+                dom.playerIframe.style.display = 'block';
+                dom.playerIframe.src = baiduPlayerUrl;
+                dom.player.style.display = 'none';
+                dom.episodesPanel.classList.remove('open');
+                if (state.currentVod && state.currentSource) {
+                    addHistory(state.currentVod, state.currentSource, ep.name);
+                }
+                return;
+            }
+            // ============================================
             startPlayer(ep.url, (state.currentVod?.vod_name || '') + ' ' + ep.name);
             dom.episodesPanel.classList.remove('open');
             if (state.currentVod && state.currentSource) {
@@ -1135,7 +1419,7 @@ function renderEpisodesPanel(episodes) {
 }
 
 // ============================================================
-//  核心播放引擎（直链优先 + hls.js 备选）
+//  核心播放引擎（直连优先 → 失败走代理 → 最后 iframe）
 // ============================================================
 function startPlayer(url, title) {
     if (!url || !url.trim()) {
@@ -1162,23 +1446,21 @@ function startPlayer(url, title) {
     dom.playerIframe.src = '';
     dom.player.style.display = 'block';
 
-    // === 切换前：记住当前高度，防止塌陷 ===
     const video = dom.player;
     const currentHeight = video.offsetHeight;
     if (currentHeight > 50) {
         video.style.minHeight = currentHeight + 'px';
     }
 
-    // === 销毁旧 HLS 实例 ===
     if (state.hlsInstance) {
         state.hlsInstance.destroy();
         state.hlsInstance = null;
     }
 
-    const isHtml = url.includes('.html') ||
-        url.includes('/play/') ||
-        (!url.includes('.m3u8') && !url.includes('.mp4') && !url.includes('.ts') && !url.includes('.flv') && !url
-            .includes('.mkv'));
+    // 先判断是否为流媒体直链，再判断是否为 HTML 页面
+    // 修复：vv.jisuzyv.com/play/xxx/index.m3u8 这类地址含 /play/ 但本质是 m3u8，不能误判为 HTML
+    const isMedia = /\.(m3u8|mp4|ts|flv|mkv|mp3|aac|webm|m4s)(\?[^#]*)?(#.*)?$/i.test(url);
+    const isHtml = !isMedia && (url.includes('.html') || url.includes('/play/') || url.includes('/vod/') || url.includes('/show/') || url.includes('/detail/'));
 
     if (isHtml) {
         extractM3u8FromHtml(url, title);
@@ -1187,31 +1469,101 @@ function startPlayer(url, title) {
 
     // ===== m3u8 播放 =====
     if (url.includes('.m3u8') || url.includes('.m3u8?')) {
-        // 【新增】检测是否是纯直链 m3u8（没有 # 分隔符）
-        const isDirectM3u8 = !url.includes('#') && url.trim().startsWith('http');
+        const isDirectM3u8 = url.includes('.m3u8') && !url.includes('#') && url.startsWith('http');
 
-        // 【新增】如果是直链且浏览器支持直接播放 m3u8，直接用 video 标签
-        if (isDirectM3u8 && video.canPlayType('application/vnd.apple.mpegurl')) {
+        if (isDirectM3u8) {
+            // ============================================
+            // 虎牙资源直接走代理，跳过直连
+            // ============================================
+            if (url.includes('huyall.com') || url.includes('baisiweiting.com')) {
+                console.log('🔵 虎牙资源，直接走代理');
+                showPlayer();
+                dom.playerLoading.classList.remove('hidden');
+                dom.playerLoading.classList.add('show');
+                startPlayerWithProxy(url, title);
+                return;
+            }
+            // ============================================
+
+            showPlayer();
+            dom.playerLoading.classList.remove('hidden');
+            dom.playerLoading.classList.add('show');
+
+            let fallbackTimer = null;
+            let isFallbackUsed = false;
+
+            const cleanup = function() {
+                if (fallbackTimer) {
+                    clearTimeout(fallbackTimer);
+                    fallbackTimer = null;
+                }
+                video.removeEventListener('canplay', onSuccess);
+                video.removeEventListener('loadedmetadata', onSuccess);
+                video.removeEventListener('error', onError);
+            };
+
+            const onSuccess = function() {
+                if (isFallbackUsed) return;
+                cleanup();
+                dom.playerLoading.classList.add('hidden');
+                setTimeout(function() {
+                    dom.playerLoading.classList.remove('show');
+                }, 400);
+                video.play().catch(function() {});
+                dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                console.log('✅ 直连播放成功');
+            };
+
+            const onError = function() {
+                if (isFallbackUsed) return;
+                isFallbackUsed = true;
+                cleanup();
+                console.warn('⚠️ 直连失败，切换到代理模式');
+                dom.playerLoading.classList.remove('hidden');
+                dom.playerLoading.classList.add('show');
+                startPlayerWithProxy(url, title);
+            };
+
+            video.addEventListener('canplay', onSuccess, { once: true });
+            video.addEventListener('loadedmetadata', onSuccess, { once: true });
+            video.addEventListener('error', onError, { once: true });
+
+            // 9秒超时切代理
+            fallbackTimer = setTimeout(function() {
+                if (isFallbackUsed) return;
+                isFallbackUsed = true;
+                cleanup();
+                console.warn('⏱️ 直连超时，切换到代理模式');
+                dom.playerLoading.classList.remove('hidden');
+                dom.playerLoading.classList.add('show');
+                startPlayerWithProxy(url, title);
+            }, 9000);
+
+            // 开始直连
             video.src = url;
-            video.play().catch(() => {});
+            video.load();
+            video.play().catch(function() {});
             dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             return;
         }
 
-        // 其他情况使用 hls.js
+        // 非直连 m3u8（带参数等），直接用 hls.js
         if (window.Hls && Hls.isSupported()) {
             const hls = new Hls({ enableWorker: true });
             state.hlsInstance = hls;
             hls.loadSource(url);
             hls.attachMedia(video);
 
-            // 加载完成后清除占位高度
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
                 video.style.minHeight = '';
-                video.play().catch(() => {});
+                dom.playerLoading.classList.add('hidden');
+                setTimeout(function() {
+                    dom.playerLoading.classList.remove('show');
+                }, 400);
+                video.play().catch(function() {});
             });
 
-            hls.on(Hls.Events.ERROR, (e, data) => {
+            hls.on(Hls.Events.ERROR, function(e, data) {
                 video.style.minHeight = '';
                 if (data.fatal) {
                     toast('HLS 播放失败，尝试嵌入', 'error');
@@ -1220,7 +1572,7 @@ function startPlayer(url, title) {
             });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = url;
-            video.play().catch(() => {});
+            video.play().catch(function() {});
         } else {
             startPlayerInIframe(url, title);
         }
@@ -1230,10 +1582,85 @@ function startPlayer(url, title) {
 
     // ===== 普通视频直链 =====
     video.src = url;
-    video.play().catch(() => {
+    video.play().catch(function() {
         toast('无法直接播放，尝试嵌入', 'error');
         startPlayerInIframe(url, title);
     });
+}
+
+// ============================================================
+//  代理播放（备用）- 隐藏加载过程，避免缩小画面闪烁
+// ============================================================
+function startPlayerWithProxy(url, title) {
+    const video = dom.player;
+    video.style.opacity = '0';
+
+    if (window.Hls && Hls.isSupported()) {
+        const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
+
+        fetch(proxyUrl)
+            .then(function(r) {
+                if (!r.ok) throw new Error('代理请求失败: ' + r.status);
+                return r.text();
+            })
+            .then(function(m3u8Content) {
+                const baseUrl = window.location.origin;
+                
+                // ============================================
+                // 关键：替换 enc.key
+                // ============================================
+                const keyUrl = url.replace('/index.m3u8', '/enc.key');
+                m3u8Content = m3u8Content.replace(
+                    /URI="enc\.key"/,
+                    `URI="${baseUrl}/api/proxy?url=${encodeURIComponent(keyUrl)}"`
+                );
+                // ============================================
+
+                const blob = new Blob([m3u8Content], { type: 'application/vnd.apple.mpegurl' });
+                const blobUrl = URL.createObjectURL(blob);
+
+                const hls = new Hls({ enableWorker: true });
+                state.hlsInstance = hls;
+                hls.loadSource(blobUrl);
+                hls.attachMedia(video);
+
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    video.style.opacity = '1';
+                    video.style.width = '100%';
+                    video.style.height = '100%';
+                    video.style.minHeight = '';
+                    dom.playerLoading.classList.add('hidden');
+                    setTimeout(function() {
+                        dom.playerLoading.classList.remove('show');
+                    }, 400);
+                    video.play().catch(function() {});
+                    console.log('✅ 代理播放成功');
+                });
+
+                hls.on(Hls.Events.ERROR, function(e, data) {
+                    video.style.opacity = '1';
+                    dom.playerLoading.classList.add('hidden');
+                    if (data.fatal) {
+                        toast('HLS 播放失败，尝试嵌入', 'error');
+                        startPlayerInIframe(url, title);
+                    }
+                });
+            })
+            .catch(function(e) {
+                console.error('代理加载失败:', e);
+                video.style.opacity = '1';
+                dom.playerLoading.classList.add('hidden');
+                toast('播放失败: ' + e.message, 'error');
+                startPlayerInIframe(url, title);
+            });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.style.opacity = '1';
+        video.src = url;
+        video.play().catch(function() {});
+    } else {
+        video.style.opacity = '1';
+        startPlayerInIframe(url, title);
+    }
 }
 
 // ============================================================
@@ -1252,7 +1679,16 @@ async function extractM3u8FromHtml(pageUrl, title) {
         }
 
         const resp = await fetchProxy(pageUrl);
+        if (resp === null) return;
         const html = typeof resp === 'string' ? resp : JSON.stringify(resp);
+
+        // 防御：若内容本身就是 m3u8 播放列表（#EXTM3U 开头），说明 URL 是直链但被误判为页面，直接播放原地址
+        if (String(html).trimStart().startsWith('#EXTM3U')) {
+            toast('✅ 识别为 m3u8 直链', 'success');
+            setStatus('就绪');
+            startPlayer(pageUrl, title || '解析播放');
+            return;
+        }
 
         const patterns = [
             /["'](https?:[^"']+\.m3u8[^"']*)["']/,
@@ -1344,6 +1780,7 @@ function closePlayer() {
     hidePlayerLoading();
     restoreAllContent();
 }
+
 // ============================================================
 //  复制链接
 // ============================================================
@@ -1366,6 +1803,7 @@ function copyLink() {
         toast('请手动复制：' + input.value, 'info');
     }
 }
+
 // ============================================================
 //  KEYBOARD
 // ============================================================
