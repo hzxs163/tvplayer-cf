@@ -2135,6 +2135,109 @@ function startPlayer(url, title) {
     // 🚀 直接播放 m3u8，不走代理
     // ============================================================
     if (url.includes('.m3u8') || url.includes('.m3u8?')) {
+    // ✅ 判断是否需要处理密钥（检测是否包含加密域名）
+    const needsKeyProxy = url.includes('jpxm3u8.com') || 
+                          url.includes('jpts1.top') || 
+                          url.includes('jpxm3u8');
+    
+    if (needsKeyProxy) {
+        // 加密源：直连 m3u8，密钥走代理
+        console.log('🔐 检测到加密源，m3u8 直连，密钥走代理');
+        const baseUrl = new URL(url).origin;
+        
+        // 1. 直连获取 m3u8
+        fetch(url)
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.text();
+            })
+            .then(text => {
+                // 2. 替换密钥地址为代理地址
+                let modified = text.replace(
+                    /URI="(https?:\/\/[^"]+key[^"]*)"/g,
+                    function(match, keyUrl) {
+                        return 'URI="' + '/api/proxy?url=' + encodeURIComponent(keyUrl) + '"';
+                    }
+                );
+                
+                // 3. 补全相对路径的分片地址
+                modified = modified.replace(
+                    /^([^#].*)$/gm,
+                    function(line) {
+                        if (!line.startsWith('#') && !line.startsWith('http') && line.trim()) {
+                            if (line.startsWith('/')) {
+                                return baseUrl + line;
+                            }
+                            if (!line.startsWith('http')) {
+                                return baseUrl + '/' + line;
+                            }
+                        }
+                        return line;
+                    }
+                );
+                
+                // 4. 创建 blob URL
+                const blob = new Blob([modified], { type: 'application/vnd.apple.mpegurl' });
+                const blobUrl = URL.createObjectURL(blob);
+                
+                // 5. HLS.js 播放
+                if (state.hlsInstance) {
+                    state.hlsInstance.destroy();
+                }
+                const hls = new Hls({
+                    enableWorker: true,
+                    maxBufferLength: 120,
+                    maxMaxBufferLength: 300,
+                    maxBufferSize: 120 * 1000 * 1000,
+                    maxBufferHole: 0.5,
+                    lowLatencyMode: false,
+                    fragLoadingTimeOut: 30000,
+                    fragLoadingMaxRetry: 20,
+                    fragLoadingRetryDelay: 500,
+                    manifestLoadingTimeOut: 15000,
+                    manifestLoadingMaxRetry: 10,
+                    levelLoadingTimeOut: 15000,
+                    levelLoadingMaxRetry: 10,
+                    startFragPrefetch: true,
+                });
+                state.hlsInstance = hls;
+                hls.loadSource(blobUrl);
+                hls.attachMedia(video);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    dom.playerLoading.classList.add('hidden');
+                    setTimeout(() => {
+                        dom.playerLoading.classList.remove('show');
+                    }, 400);
+                    video.play().catch(function() {});
+                    console.log('✅ 加密源 HLS 播放成功');
+                });
+                
+                hls.on(Hls.Events.ERROR, function(e, data) {
+                    console.warn('⚠️ HLS 错误:', data.details);
+                    if (data.fatal) {
+                        const fatalErrors = ['manifestLoadError', 'manifestIncompatibleCodecsError', 'bufferAddCodecError'];
+                        if (fatalErrors.includes(data.details)) {
+                            console.error('❌ 致命错误，降级到 iframe');
+                            toast('HLS 播放失败，尝试嵌入', 'error');
+                            startPlayerInIframe(url, title);
+                        } else {
+                            console.warn('⚠️ 尝试恢复 HLS 播放...');
+                            try {
+                                hls.recoverMediaError();
+                            } catch (e) {
+                                console.warn('恢复失败');
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(e => {
+                console.error('❌ 获取 m3u8 失败:', e);
+                startPlayerInIframe(url, title);
+            });
+    } else {
+        // 普通源：直接用 HLS.js 播放
         if (window.Hls && Hls.isSupported()) {
             const hls = new Hls({
                 enableWorker: true,
@@ -2189,8 +2292,18 @@ function startPlayer(url, title) {
                 video.style.minHeight = '';
                 console.warn('⚠️ HLS 错误:', data.details);
                 if (data.fatal) {
-                    toast('HLS 播放失败，尝试嵌入', 'error');
-                    startPlayerInIframe(url, title);
+                    const fatalErrors = ['manifestLoadError', 'manifestIncompatibleCodecsError', 'bufferAddCodecError'];
+                    if (fatalErrors.includes(data.details)) {
+                        toast('HLS 播放失败，尝试嵌入', 'error');
+                        startPlayerInIframe(url, title);
+                    } else {
+                        console.warn('⚠️ 尝试恢复 HLS 播放...');
+                        try {
+                            hls.recoverMediaError();
+                        } catch (e) {
+                            console.warn('恢复失败');
+                        }
+                    }
                 }
             });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -2199,9 +2312,10 @@ function startPlayer(url, title) {
         } else {
             startPlayerInIframe(url, title);
         }
-        dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        return;
     }
+    dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+}
 
     // 非 m3u8 视频直链
     video.src = url;
