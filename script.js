@@ -2109,6 +2109,46 @@ function startPlayer(url, title) {
     dom.m3u8Link.value = url;
 
     // ============================================================
+    //  ⚠️ vip.ffzy-plays.com 使用 video 直连
+    // ============================================================
+    if (url.includes('vip.ffzy-plays.com')) {
+        console.log('🔄 检测到 vip.ffzy-plays，使用 video 直连');
+        
+        // 1. 确保播放器界面可见并清理旧状态
+        dom.player.style.display = 'block';
+        dom.player.style.width = '100%';
+        dom.player.style.height = '100%';
+        dom.player.style.minHeight = '300px';
+        dom.player.style.position = 'relative';
+        dom.player.style.zIndex = '100';
+        dom.player.style.opacity = '1';
+        dom.player.style.visibility = 'visible';
+        dom.playerIframe.style.display = 'none';
+        dom.playerIframe.src = '';
+        dom.playerLoading.classList.add('hidden');
+        setTimeout(() => {
+            dom.playerLoading.classList.remove('show');
+        }, 400);
+        
+        // 2. 清除可能存在的 HLS 实例，防止干扰
+        if (window._hls) {
+            window._hls.destroy();
+            window._hls = null;
+        }
+        if (state.hlsInstance) {
+            state.hlsInstance.destroy();
+            state.hlsInstance = null;
+        }
+    
+        // 3. 直接加载视频（核心）
+        dom.player.src = url;
+        dom.player.play().catch(function() {});
+        console.log('✅ vip.ffzy-plays video 直连已启动');
+        return;
+    }
+
+    
+    // ============================================================
     //  ✅ 加密源直接走 iframe（不尝试 HLS.js）
     // ============================================================
     if (url.includes('jpxm3u8.com') || url.includes('jpts1.top') || url.includes('jpxm3u8')) {
