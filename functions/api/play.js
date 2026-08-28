@@ -1,5 +1,5 @@
-// functions/api/play.js - 流媒体播放代理（完整版）
-// 增加防盗链绕过、缓存优化、地址重写
+// functions/api/play.js - 流媒体播放代理（增强版）
+// 增强防盗链绕过，支持 Cookie 转发和更完整的请求模拟
 
 const CACHE_MAX_AGE = 10;
 
@@ -44,31 +44,82 @@ export async function onRequest(context) {
     // 4. 发起代理请求
     try {
         const targetOrigin = new URL(targetUrl).origin;
+        const targetHost = new URL(targetUrl).host;
 
+        // ============================================================
+        // 完整的浏览器请求头模拟
+        // ============================================================
         const proxyRequest = new Request(targetUrl, {
-            method: request.method,
+            method: 'GET',
             headers: {
-                // ============================================================
-                // 关键：模拟浏览器请求头，绕过防盗链
-                // ============================================================
+                // 基础请求头
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-                'Accept': '*/*',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
                 'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
                 'Accept-Encoding': 'gzip, deflate, br',
-                // 防盗链关键：Referer 和 Origin 设置为目标站点的域名
-                'Referer': targetOrigin + '/',
-                'Origin': targetOrigin,
                 'Cache-Control': 'no-cache',
                 'Pragma': 'no-cache',
+
+                // ============================================================
+                // 防盗链关键：Referer 和 Origin 设置为目标站点的首页
+                // ============================================================
+                'Referer': targetOrigin + '/',
+                'Origin': targetOrigin,
+                'Host': targetHost,
+
+                // ============================================================
+                // 安全请求头（模拟浏览器行为）
+                // ============================================================
                 'Sec-Fetch-Dest': 'empty',
                 'Sec-Fetch-Mode': 'cors',
                 'Sec-Fetch-Site': 'cross-site',
+                'Sec-Ch-Ua': '"Not/A)Brand";v="99", "Google Chrome";v="126", "Chromium";v="126"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"Windows"',
+
+                // 连接控制
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
             },
+            // 跟随重定向
             redirect: 'follow',
         });
 
         response = await fetch(proxyRequest);
 
+        // 5. 如果还是 403，尝试使用不同的策略
+        if (response.status === 403) {
+            console.warn('⚠️ 403 错误，尝试降级策略:', targetUrl);
+
+            // 策略2：使用更简化的请求头
+            const fallbackRequest = new Request(targetUrl, {
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+                    'Accept': '*/*',
+                    'Referer': targetOrigin + '/',
+                    'Origin': targetOrigin,
+                },
+                redirect: 'follow',
+            });
+
+            response = await fetch(fallbackRequest);
+
+            // 策略3：如果还是 403，尝试不带 Referer
+            if (response.status === 403) {
+                const noRefererRequest = new Request(targetUrl, {
+                    method: 'GET',
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+                        'Accept': '*/*',
+                    },
+                    redirect: 'follow',
+                });
+                response = await fetch(noRefererRequest);
+            }
+        }
+
+        // 6. 检查响应状态
         if (!response.ok) {
             return new Response(`源站返回错误: ${response.status} ${response.statusText}`, {
                 status: response.status,
@@ -78,12 +129,12 @@ export async function onRequest(context) {
         const contentType = response.headers.get('content-type') || '';
         let content = await response.text();
 
-        // 5. 如果是 m3u8 文件，重写内部地址
+        // 7. 如果是 m3u8 文件，重写内部地址
         if (contentType.includes('mpegurl') || contentType.includes('vnd.apple.mpegurl') || content.trim().startsWith('#EXTM3U')) {
             content = rewriteM3u8(content, targetUrl);
         }
 
-        // 6. 存入缓存
+        // 8. 存入缓存
         const headers = new Headers(response.headers);
         headers.set('Cache-Control', `public, max-age=${CACHE_MAX_AGE}`);
         headers.set('X-Cache', 'MISS');
@@ -123,11 +174,9 @@ function rewriteM3u8(content, baseUrl) {
 
         // 将非注释行（.ts 分片地址）重写为代理地址
         try {
-            // 处理完整 URL 或相对路径
             const absoluteUrl = new URL(trimmed, baseUrl).href;
             rewritten.push('/api/play?url=' + encodeURIComponent(absoluteUrl));
         } catch (e) {
-            // 拼接失败，保持原样
             rewritten.push(line);
         }
     }
