@@ -22,6 +22,7 @@ function shouldUseProxy(url) {
         'jpxm3u8.com',
         'jpts1.top',
         'ffzy5.tv',
+        'super.ffzy-online6.com',
     ];
     for (const domain of noProxyDomains) {
         if (url.includes(domain)) {
