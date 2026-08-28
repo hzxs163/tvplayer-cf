@@ -14,11 +14,6 @@ const STORAGE_PLAY_PROGRESS_KEY = 'tv_play_progress';
 //  判断是否需要走代理（针对防盗链严格的源）
 // ============================================================
 function shouldUseProxy(url) {
-    // 🆕 如果已经是代理地址，不再重复代理（防止嵌套）
-    if (url.includes('/api/play') || url.includes('/api/proxy')) {
-        return false;
-    }
-
     const noProxyDomains = [
         'vip.ffzy-plays.com',
         'vip.ffzy-play.com',
@@ -32,6 +27,11 @@ function shouldUseProxy(url) {
         }
     }
     return true;
+}
+
+function getPlaybackUrl(url) {
+    const useProxy = shouldUseProxy(url);
+    return useProxy ? PLAY_PROXY(url) : url;
 }
 
 // ============================================================
