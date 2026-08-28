@@ -36,8 +36,24 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// ============================================================
 // 拦截请求，优先从缓存返回
+// ============================================================
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // ============================================================
+  // 🆕 关键：如果是 .ts 分片请求，转发给 /api/play 代理
+  // ============================================================
+  if (url.pathname.endsWith('.ts') || url.pathname.includes('.ts?')) {
+    const proxyUrl = '/api/play?url=' + encodeURIComponent(event.request.url);
+    event.respondWith(fetch(proxyUrl));
+    return;
+  }
+
+  // ============================================================
+  // 原有逻辑：优先从缓存返回
+  // ============================================================
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
