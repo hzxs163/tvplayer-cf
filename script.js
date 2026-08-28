@@ -2344,6 +2344,7 @@ function startPlayer(url, title) {
         }
     }
 
+    url = getPlaybackUrl(url);
     state.currentUrl = url;
 
     dom.nowPlaying.textContent = title || '正在播放';
