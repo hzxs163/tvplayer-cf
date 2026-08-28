@@ -23,6 +23,7 @@ function shouldUseProxy(url) {
         'jpts1.top',
         'ffzy5.tv',
         'super.ffzy-online6.com',
+        'vod.ffzy-bofang.com',
     ];
     for (const domain of noProxyDomains) {
         if (url.includes(domain)) {
