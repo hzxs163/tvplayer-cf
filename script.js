@@ -11,6 +11,30 @@ const STORAGE_DISCLAIMER_KEY = 'tv_disclaimer_agreed';
 const STORAGE_PLAY_PROGRESS_KEY = 'tv_play_progress';
 
 // ============================================================
+//  判断是否需要走代理（针对防盗链严格的源）
+// ============================================================
+function shouldUseProxy(url) {
+    const noProxyDomains = [
+        'vip.ffzy-plays.com',
+        'vip.ffzy-play.com',
+        'vod1.maowushi.com',
+        'jpxm3u8.com',
+        'jpts1.top',
+    ];
+    for (const domain of noProxyDomains) {
+        if (url.includes(domain)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function getPlaybackUrl(url) {
+    const useProxy = shouldUseProxy(url);
+    return useProxy ? PLAY_PROXY(url) : url;
+}
+
+// ============================================================
 //  API 适配器 - 自动探测不同影视站点的参数格式
 // ============================================================
 const API_ADAPTERS = {
@@ -1198,7 +1222,9 @@ function switchPlayerLine(index) {
     
     if (episodes.length) {
         const first = episodes[0];
-        startPlayer(first.url, (state.currentVod?.vod_name || '') + ' ' + first.name);
+        // 🆕 使用 getPlaybackUrl 统一处理
+        const finalUrl = getPlaybackUrl(first.url);
+        startPlayer(finalUrl, (state.currentVod?.vod_name || '') + ' ' + first.name);
     }
     toast('已切换: ' + lines[index].name, 'info');
 }
@@ -1839,69 +1865,74 @@ async function playMovie(vod, source) {
                 dom.player.style.display = 'block';
                 
                 if (window.Hls && Hls.isSupported()) {
-                    if (window._iqiyiHls) {
-                        window._iqiyiHls.destroy();
-                        window._iqiyiHls = null;
-                    }
-                    
-                    const hls = new Hls({
-                        enableWorker: true,
-                        maxBufferLength: 60,
-                        maxMaxBufferLength: 120,
-                        maxBufferSize: 60 * 1000 * 1000,
-                        maxBufferHole: 1.0,
-                        lowLatencyMode: false,
-                        backbufferLength: 60,
-                        liveBackBufferLength: 60,
-                        progressive: true,
-                        fragLoadingMaxRetry: 8,
-                        fragLoadingRetryDelay: 500,
-                        fragLoadingMaxRetryTimeout: 180000,
-                        manifestLoadingMaxRetry: 6,
-                        manifestLoadingRetryDelay: 500,
-                        levelLoadingMaxRetry: 6,
-                        levelLoadingRetryDelay: 500,
-                        startFragPrefetch: true,
-                        testBandwidth: false,
-                        abrEwmaFastLive: 0.1,
-                        abrEwmaSlowLive: 1,
-                        abrEwmaFastVoD: 0.1,
-                        abrEwmaSlowVoD: 1,
-                        abrEwmaDefaultEstimate: 5e6,
-                        abrBandWidthFactor: 0.7,
-                        abrBandWidthUpFactor: 0.95,
-                        xhrSetup: function(xhr, xhrUrl) {
-                            try {
-                                const urlObj = new URL(xhrUrl);
-                                xhr.setRequestHeader('Referer', urlObj.origin + '/');
-                                xhr.setRequestHeader('Origin', urlObj.origin);
-                                xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
-                            } catch (e) {}
-                        }
-                    });
-                    window._iqiyiHls = hls;
-                    
-                    hls.loadSource(PLAY_PROXY(m3u8Url));
-                    hls.attachMedia(dom.player);
-                    
-                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    // 🆕 复用现有实例
+                    if (state.hlsInstance) {
+                        console.log('🔄 复用 HLS 实例 (爱奇艺)');
+                        state.hlsInstance.loadSource(getPlaybackUrl(m3u8Url));
+                        dom.player.play().catch(function() {});
                         dom.playerLoading.classList.add('hidden');
                         setTimeout(function() {
                             dom.playerLoading.classList.remove('show');
                         }, 400);
-                        dom.player.play().catch(function() {});
-                        console.log('✅ 爱奇艺源 HLS.js 播放成功');
-                    });
-                    
-                    hls.on(Hls.Events.ERROR, function(e, data) {
-                        dom.playerLoading.classList.add('hidden');
-                        console.warn('⚠️ HLS 错误:', data.details);
-                        if (data.fatal) {
-                            toast('HLS 播放失败，尝试直连', 'error');
-                            dom.player.src = m3u8Url;
+                    } else {
+                        const hls = new Hls({
+                            enableWorker: true,
+                            maxBufferLength: 60,
+                            maxMaxBufferLength: 120,
+                            maxBufferSize: 60 * 1000 * 1000,
+                            maxBufferHole: 1.0,
+                            lowLatencyMode: false,
+                            backbufferLength: 60,
+                            liveBackBufferLength: 60,
+                            progressive: true,
+                            fragLoadingMaxRetry: 8,
+                            fragLoadingRetryDelay: 500,
+                            fragLoadingMaxRetryTimeout: 180000,
+                            manifestLoadingMaxRetry: 6,
+                            manifestLoadingRetryDelay: 500,
+                            levelLoadingMaxRetry: 6,
+                            levelLoadingRetryDelay: 500,
+                            startFragPrefetch: true,
+                            testBandwidth: false,
+                            abrEwmaFastLive: 0.1,
+                            abrEwmaSlowLive: 1,
+                            abrEwmaFastVoD: 0.1,
+                            abrEwmaSlowVoD: 1,
+                            abrEwmaDefaultEstimate: 5e6,
+                            abrBandWidthFactor: 0.7,
+                            abrBandWidthUpFactor: 0.95,
+                            xhrSetup: function(xhr, xhrUrl) {
+                                try {
+                                    const urlObj = new URL(xhrUrl);
+                                    xhr.setRequestHeader('Referer', urlObj.origin + '/');
+                                    xhr.setRequestHeader('Origin', urlObj.origin);
+                                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+                                } catch (e) {}
+                            }
+                        });
+                        state.hlsInstance = hls;
+                        hls.loadSource(getPlaybackUrl(m3u8Url));
+                        hls.attachMedia(dom.player);
+                        
+                        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                            dom.playerLoading.classList.add('hidden');
+                            setTimeout(function() {
+                                dom.playerLoading.classList.remove('show');
+                            }, 400);
                             dom.player.play().catch(function() {});
-                        }
-                    });
+                            console.log('✅ 爱奇艺源 HLS.js 播放成功');
+                        });
+                        
+                        hls.on(Hls.Events.ERROR, function(e, data) {
+                            dom.playerLoading.classList.add('hidden');
+                            console.warn('⚠️ HLS 错误:', data.details);
+                            if (data.fatal) {
+                                toast('HLS 播放失败，尝试直连', 'error');
+                                dom.player.src = m3u8Url;
+                                dom.player.play().catch(function() {});
+                            }
+                        });
+                    }
                 } else {
                     dom.player.src = m3u8Url;
                     dom.player.play().catch(function() {});
@@ -1955,11 +1986,14 @@ async function playMovie(vod, source) {
             state.currentEpisodes = episodes;
             const firstEp = episodes[0];
             const fullUrl = normalizeUrl(firstEp.url);
-            startPlayer(fullUrl, vod.vod_name + ' ' + firstEp.name);
+            // 🆕 使用 getPlaybackUrl 统一处理
+            const finalUrl = getPlaybackUrl(fullUrl);
+            startPlayer(finalUrl, vod.vod_name + ' ' + firstEp.name);
             renderEpisodesPanel(episodes);
         } else {
             const fullUrl = normalizeUrl(firstUrl);
-            startPlayer(fullUrl, vod.vod_name);
+            const finalUrl = getPlaybackUrl(fullUrl);
+            startPlayer(finalUrl, vod.vod_name);
             renderEpisodesPanel([]);
         }
 
@@ -2060,7 +2094,9 @@ function renderEpisodesPanel(episodes) {
         el.onclick = () => {
             document.querySelectorAll('#episodes-list .ep').forEach(e => e.classList.remove('active'));
             el.classList.add('active');
-            startPlayer(episodes[0].url, state.currentVod?.vod_name || '播放');
+            // 🆕 使用 getPlaybackUrl 统一处理
+            const finalUrl = getPlaybackUrl(episodes[0].url);
+            startPlayer(finalUrl, state.currentVod?.vod_name || '播放');
             dom.episodesPanel.classList.remove('open');
             if (state.currentVod && state.currentSource) {
                 addHistory(state.currentVod, state.currentSource, '播放');
@@ -2102,69 +2138,74 @@ function renderEpisodesPanel(episodes) {
                     dom.playerLoading.classList.add('show');
                     
                     if (window.Hls && Hls.isSupported()) {
-                        if (window._iqiyiHls) {
-                            window._iqiyiHls.destroy();
-                            window._iqiyiHls = null;
-                        }
-                        
-                        const hls = new Hls({
-                            enableWorker: true,
-                            maxBufferLength: 60,
-                            maxMaxBufferLength: 120,
-                            maxBufferSize: 60 * 1000 * 1000,
-                            maxBufferHole: 1.0,
-                            lowLatencyMode: false,
-                            backbufferLength: 60,
-                            liveBackBufferLength: 60,
-                            progressive: true,
-                            fragLoadingMaxRetry: 8,
-                            fragLoadingRetryDelay: 500,
-                            fragLoadingMaxRetryTimeout: 180000,
-                            manifestLoadingMaxRetry: 6,
-                            manifestLoadingRetryDelay: 500,
-                            levelLoadingMaxRetry: 6,
-                            levelLoadingRetryDelay: 500,
-                            startFragPrefetch: true,
-                            testBandwidth: false,
-                            abrEwmaFastLive: 0.1,
-                            abrEwmaSlowLive: 1,
-                            abrEwmaFastVoD: 0.1,
-                            abrEwmaSlowVoD: 1,
-                            abrEwmaDefaultEstimate: 5e6,
-                            abrBandWidthFactor: 0.7,
-                            abrBandWidthUpFactor: 0.95,
-                            xhrSetup: function(xhr, xhrUrl) {
-                                try {
-                                    const urlObj = new URL(xhrUrl);
-                                    xhr.setRequestHeader('Referer', urlObj.origin + '/');
-                                    xhr.setRequestHeader('Origin', urlObj.origin);
-                                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
-                                } catch (e) {}
-                            }
-                        });
-                        window._iqiyiHls = hls;
-                        
-                        hls.loadSource(PLAY_PROXY(m3u8Url));
-                        hls.attachMedia(dom.player);
-                        
-                        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        // 🆕 复用现有实例
+                        if (state.hlsInstance) {
+                            console.log('🔄 复用 HLS 实例 (选集)');
+                            state.hlsInstance.loadSource(getPlaybackUrl(m3u8Url));
+                            dom.player.play().catch(function() {});
                             dom.playerLoading.classList.add('hidden');
                             setTimeout(function() {
                                 dom.playerLoading.classList.remove('show');
                             }, 400);
-                            dom.player.play().catch(function() {});
-                            console.log('✅ 选集 HLS.js 播放成功');
-                        });
-                        
-                        hls.on(Hls.Events.ERROR, function(e, data) {
-                            dom.playerLoading.classList.add('hidden');
-                            console.warn('⚠️ HLS 错误:', data.details);
-                            if (data.fatal) {
-                                toast('HLS 播放失败，尝试直连', 'error');
-                                dom.player.src = m3u8Url;
+                        } else {
+                            const hls = new Hls({
+                                enableWorker: true,
+                                maxBufferLength: 60,
+                                maxMaxBufferLength: 120,
+                                maxBufferSize: 60 * 1000 * 1000,
+                                maxBufferHole: 1.0,
+                                lowLatencyMode: false,
+                                backbufferLength: 60,
+                                liveBackBufferLength: 60,
+                                progressive: true,
+                                fragLoadingMaxRetry: 8,
+                                fragLoadingRetryDelay: 500,
+                                fragLoadingMaxRetryTimeout: 180000,
+                                manifestLoadingMaxRetry: 6,
+                                manifestLoadingRetryDelay: 500,
+                                levelLoadingMaxRetry: 6,
+                                levelLoadingRetryDelay: 500,
+                                startFragPrefetch: true,
+                                testBandwidth: false,
+                                abrEwmaFastLive: 0.1,
+                                abrEwmaSlowLive: 1,
+                                abrEwmaFastVoD: 0.1,
+                                abrEwmaSlowVoD: 1,
+                                abrEwmaDefaultEstimate: 5e6,
+                                abrBandWidthFactor: 0.7,
+                                abrBandWidthUpFactor: 0.95,
+                                xhrSetup: function(xhr, xhrUrl) {
+                                    try {
+                                        const urlObj = new URL(xhrUrl);
+                                        xhr.setRequestHeader('Referer', urlObj.origin + '/');
+                                        xhr.setRequestHeader('Origin', urlObj.origin);
+                                        xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+                                    } catch (e) {}
+                                }
+                            });
+                            state.hlsInstance = hls;
+                            hls.loadSource(getPlaybackUrl(m3u8Url));
+                            hls.attachMedia(dom.player);
+                            
+                            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                                dom.playerLoading.classList.add('hidden');
+                                setTimeout(function() {
+                                    dom.playerLoading.classList.remove('show');
+                                }, 400);
                                 dom.player.play().catch(function() {});
-                            }
-                        });
+                                console.log('✅ 选集 HLS.js 播放成功');
+                            });
+                            
+                            hls.on(Hls.Events.ERROR, function(e, data) {
+                                dom.playerLoading.classList.add('hidden');
+                                console.warn('⚠️ HLS 错误:', data.details);
+                                if (data.fatal) {
+                                    toast('HLS 播放失败，尝试直连', 'error');
+                                    dom.player.src = m3u8Url;
+                                    dom.player.play().catch(function() {});
+                                }
+                            });
+                        }
                     } else {
                         dom.player.src = m3u8Url;
                         dom.player.play().catch(function() {});
@@ -2184,7 +2225,9 @@ function renderEpisodesPanel(episodes) {
                 }
                 return;
             }
-            startPlayer(ep.url, (state.currentVod?.vod_name || '') + ' ' + ep.name);
+            // 🆕 使用 getPlaybackUrl 统一处理
+            const finalUrl = getPlaybackUrl(ep.url);
+            startPlayer(finalUrl, (state.currentVod?.vod_name || '') + ' ' + ep.name);
             dom.episodesPanel.classList.remove('open');
             if (state.currentVod && state.currentSource) {
                 addHistory(state.currentVod, state.currentSource, ep.name);
@@ -2195,7 +2238,7 @@ function renderEpisodesPanel(episodes) {
 }
 
 // ============================================================
-//  🆕 增强的 startPlayer - 使用代理播放
+//  🆕 增强的 startPlayer - 使用代理播放 + 复用 HLS 实例
 // ============================================================
 function startPlayer(url, title) {
     if (!url || !url.trim()) {
@@ -2240,10 +2283,6 @@ function startPlayer(url, title) {
             dom.playerLoading.classList.remove('show');
         }, 400);
         
-        if (window._hls) {
-            window._hls.destroy();
-            window._hls = null;
-        }
         if (state.hlsInstance) {
             state.hlsInstance.destroy();
             state.hlsInstance = null;
@@ -2324,11 +2363,6 @@ function startPlayer(url, title) {
         video.style.minHeight = currentHeight + 'px';
     }
 
-    if (state.hlsInstance) {
-        state.hlsInstance.destroy();
-        state.hlsInstance = null;
-    }
-
     const isMedia = /\.(m3u8|mp4|ts|flv|mkv|mp3|aac|webm|m4s)(\?[^#]*)?(#.*)?$/i.test(url);
     const isHtml = !isMedia && (url.includes('.html') || url.includes('/play/') || url.includes('/vod/') || url.includes('/show/') || url.includes('/detail/'));
 
@@ -2338,10 +2372,28 @@ function startPlayer(url, title) {
     }
 
     // ============================================================
-    //  🚀 统一使用代理播放 m3u8（核心改动）
+    //  🚀 统一使用代理播放 m3u8 + 复用 HLS 实例
     // ============================================================
     if (url.includes('.m3u8') || url.includes('.m3u8?')) {
         if (window.Hls && Hls.isSupported()) {
+            const finalUrl = getPlaybackUrl(url);
+            
+            // 🆕 如果有现有实例，直接复用
+            if (state.hlsInstance) {
+                console.log('🔄 复用 HLS 实例，切换源:', finalUrl);
+                state.hlsInstance.loadSource(finalUrl);
+                // 切换源后自动继续播放
+                dom.playerLoading.classList.add('hidden');
+                setTimeout(() => {
+                    dom.playerLoading.classList.remove('show');
+                }, 400);
+                video.play().catch(function() {});
+                dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                return;
+            }
+            
+            // 首次创建
+            console.log('🆕 创建新的 HLS 实例');
             const hls = new Hls({
                 enableWorker: true,
                 maxBufferLength: 60,
@@ -2379,9 +2431,7 @@ function startPlayer(url, title) {
                 }
             });
             state.hlsInstance = hls;
-            
-            // 使用代理地址
-            hls.loadSource(PLAY_PROXY(url));
+            hls.loadSource(finalUrl);
             hls.attachMedia(video);
 
             hls.on(Hls.Events.MANIFEST_PARSED, function() {
@@ -2403,7 +2453,8 @@ function startPlayer(url, title) {
                 }
             });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = PLAY_PROXY(url);
+            const finalUrl = getPlaybackUrl(url);
+            video.src = finalUrl;
             video.play().catch(function() {});
         } else {
             startPlayerInIframe(url, title);
@@ -2540,9 +2591,16 @@ function startPlayerWithProxy(url, title) {
                 const blob = new Blob([modifiedM3u8], { type: 'application/vnd.apple.mpegurl' });
                 const blobUrl = URL.createObjectURL(blob);
                 
+                // 🆕 复用现有实例
                 if (state.hlsInstance) {
-                    state.hlsInstance.destroy();
-                    state.hlsInstance = null;
+                    console.log('🔄 复用 HLS 实例 (代理)');
+                    state.hlsInstance.loadSource(blobUrl);
+                    dom.playerLoading.classList.add('hidden');
+                    setTimeout(function() {
+                        dom.playerLoading.classList.remove('show');
+                    }, 400);
+                    video.play().catch(function() {});
+                    return;
                 }
                 
                 const hls = new Hls({
