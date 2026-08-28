@@ -15,18 +15,16 @@ const STORAGE_THUMBNAIL_KEY = 'tv_thumbnail_';
 //  判断是否需要走代理（针对防盗链严格的源）
 // ============================================================
 function shouldUseProxy(url) {
-    const noProxyPatterns = [
-        /vip\.ffzy-plays?\.com/,
-        /ffzy5\.tv/,
-        /super\.ffzy-online6\.com/,
-        /vod\.ffzy-bofang\.com/,
-        /maowushi\.com/,
-        /jpxm3u8\.com/,
-        /jpts1\.top/,
-        /\.ffzy-/,           // ← 匹配所有 .ffzy- 开头的域名
+    // 包含这些关键词的 URL 不走代理
+    const noProxyKeywords = [
+        'ffzy',
+        'maowushi',
+        'jpxm3u8',
+        'jpts1',
+        'jisuzyv',
     ];
-    for (const pattern of noProxyPatterns) {
-        if (pattern.test(url)) {
+    for (const keyword of noProxyKeywords) {
+        if (url.includes(keyword)) {
             return false;
         }
     }
