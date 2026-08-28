@@ -21,6 +21,7 @@ function shouldUseProxy(url) {
         'vod1.maowushi.com',
         'jpxm3u8.com',
         'jpts1.top',
+        'ffzy5.tv',
     ];
     for (const domain of noProxyDomains) {
         if (url.includes(domain)) {
