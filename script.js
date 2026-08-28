@@ -24,6 +24,7 @@ function shouldUseProxy(url) {
         'jisuzyv',
         'tyyszywvod2',
         'ppqrrs',
+        'modujx',
     ];
     for (const keyword of noProxyKeywords) {
         if (url.includes(keyword)) {
