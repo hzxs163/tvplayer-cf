@@ -9,6 +9,7 @@ const STORAGE_KEY = 'tv_data';
 const STORAGE_SOURCES_KEY = 'tv_sources';
 const STORAGE_DISCLAIMER_KEY = 'tv_disclaimer_agreed';
 const STORAGE_PLAY_PROGRESS_KEY = 'tv_play_progress';
+const STORAGE_THUMBNAIL_KEY = 'tv_thumbnail_';
 
 // ============================================================
 //  判断是否需要走代理（针对防盗链严格的源）
@@ -387,6 +388,30 @@ function getPlayProgress(vodId, sourceKey) {
         const key = `${vodId}_${sourceKey}`;
         const all = JSON.parse(localStorage.getItem(STORAGE_PLAY_PROGRESS_KEY) || '{}');
         return all[key] || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+// ============================================================
+//  🆕 首帧截图 - 存储和获取
+// ============================================================
+function saveThumbnail(vodId, dataUrl) {
+    try {
+        if (!vodId || !dataUrl) return;
+        const key = STORAGE_THUMBNAIL_KEY + vodId;
+        localStorage.setItem(key, dataUrl);
+        console.log('✅ 首帧截图已保存:', vodId, dataUrl.length + ' bytes');
+    } catch (e) {
+        console.warn('保存截图失败:', e.message);
+    }
+}
+
+function getThumbnail(vodId) {
+    try {
+        if (!vodId) return null;
+        const key = STORAGE_THUMBNAIL_KEY + vodId;
+        return localStorage.getItem(key);
     } catch (e) {
         return null;
     }
@@ -1510,6 +1535,9 @@ async function loadMovies() {
     }
 }
 
+// ============================================================
+//  🆕 renderMovies - 支持首帧截图 + 预加载
+// ============================================================
 function renderMovies(list) {
     const grid = dom.browseGrid;
     if (!list.length) {
@@ -1520,13 +1548,21 @@ function renderMovies(list) {
     list.forEach(v => {
         const el = document.createElement('div');
         el.className = 'card';
+        
+        const vodId = v.vod_id;
         const poster = v.vod_pic || '';
         const score = v.vod_score || '';
         const remark = v.vod_remarks || '';
+        
+        // 🆕 检查是否有保存的首帧截图
+        const savedThumbnail = getThumbnail(vodId);
+        
         el.innerHTML = `
                     <div class="poster-wrap">
-                        <img loading="lazy" src="${esc(poster)}" 
-                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22390%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23181e2a%22/%3E%3C/svg%3E'" />
+                        <img loading="lazy" 
+                             src="${savedThumbnail || poster}" 
+                             onerror="this.src='${poster}'"
+                             style="${savedThumbnail ? 'object-fit:contain;background:#000;' : ''}" />
                         <div class="play-icon">▶</div>
                         ${score ? `<div class="badge-top score">${esc(score)}</div>` : ''}
                         ${remark && !score ? `<div class="badge-top">${esc(remark)}</div>` : ''}
@@ -1539,6 +1575,50 @@ function renderMovies(list) {
                         </div>
                     </div>
                 `;
+        
+        // 🆕 鼠标悬停时预加载
+        let preconnectLink = null;
+        let abortController = null;
+        
+        el.addEventListener('mouseenter', function() {
+            // 1. 预连接到视频源域名
+            if (state.source) {
+                try {
+                    const origin = new URL(state.source.api).origin;
+                    preconnectLink = document.createElement('link');
+                    preconnectLink.rel = 'preconnect';
+                    preconnectLink.href = origin;
+                    document.head.appendChild(preconnectLink);
+                } catch(e) {}
+            }
+            
+            // 2. 如果有 m3u8 地址，提前获取前 1KB（预热缓存）
+            if (v.vod_play_url) {
+                const firstUrl = v.vod_play_url.split('#')[0];
+                if (firstUrl && firstUrl.includes('.m3u8')) {
+                    abortController = new AbortController();
+                    fetch(firstUrl, { 
+                        headers: { 'Range': 'bytes=0-1024' },
+                        signal: abortController.signal,
+                    })
+                    .then(r => r.arrayBuffer())
+                    .then(() => console.log('✅ 预加载完成:', v.vod_name))
+                    .catch(() => {});
+                }
+            }
+        });
+        
+        el.addEventListener('mouseleave', function() {
+            if (preconnectLink && preconnectLink.parentNode) {
+                preconnectLink.parentNode.removeChild(preconnectLink);
+                preconnectLink = null;
+            }
+            if (abortController) {
+                abortController.abort();
+                abortController = null;
+            }
+        });
+        
         el.onclick = () => playMovie(v, state.source);
         frag.appendChild(el);
     });
@@ -1676,10 +1756,14 @@ doSearch = async function() {
             const fav = isFav(v.vod_id, s.key);
             const poster = v.vod_pic || '';
             const score = v.vod_score || '';
+            // 🆕 搜索页也支持首帧截图
+            const savedThumbnail = getThumbnail(v.vod_id);
             el.innerHTML = `
                         <div class="poster-wrap">
-                            <img loading="lazy" src="${esc(poster)}" 
-                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22390%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23181e2a%22/%3E%3C/svg%3E'" />
+                            <img loading="lazy" 
+                                 src="${savedThumbnail || poster}" 
+                                 onerror="this.src='${poster}'"
+                                 style="${savedThumbnail ? 'object-fit:contain;background:#000;' : ''}" />
                             <div class="play-icon">▶</div>
                             ${score ? `<div class="badge-top score">${esc(score)}</div>` : ''}
                         </div>
@@ -2238,7 +2322,7 @@ function renderEpisodesPanel(episodes) {
 }
 
 // ============================================================
-//  🆕 增强的 startPlayer - 使用代理播放 + 复用 HLS 实例
+//  🆕 增强的 startPlayer - 使用代理播放 + 复用 HLS 实例 + 首帧截图
 // ============================================================
 function startPlayer(url, title) {
     if (!url || !url.trim()) {
@@ -2372,7 +2456,7 @@ function startPlayer(url, title) {
     }
 
     // ============================================================
-    //  🚀 统一使用代理播放 m3u8 + 复用 HLS 实例
+    //  🚀 统一使用代理播放 m3u8 + 复用 HLS 实例 + 首帧截图
     // ============================================================
     if (url.includes('.m3u8') || url.includes('.m3u8?')) {
         if (window.Hls && Hls.isSupported()) {
@@ -2452,6 +2536,31 @@ function startPlayer(url, title) {
                     startPlayerInIframe(url, title);
                 }
             });
+            
+            // ============================================================
+            //  🆕 首帧截图 - 在播放成功时自动保存
+            // ============================================================
+            const vodId = state.currentVod?.vod_id;
+            if (vodId) {
+                // 使用 once 确保只执行一次
+                video.addEventListener('loadeddata', function captureFirstFrame() {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const ratio = Math.min(320 / video.videoWidth, 180 / video.videoHeight);
+                        canvas.width = Math.round(video.videoWidth * ratio) || 320;
+                        canvas.height = Math.round(video.videoHeight * ratio) || 180;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                        saveThumbnail(vodId, dataUrl);
+                    } catch(e) {
+                        console.warn('首帧截图失败:', e.message);
+                    }
+                    video.removeEventListener('loadeddata', captureFirstFrame);
+                });
+            }
+            
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             const finalUrl = getPlaybackUrl(url);
             video.src = finalUrl;
