@@ -2222,6 +2222,7 @@ function startPlayer(url, title) {
     //  vip.ffzy-plays.com 使用 video 直连
     // ============================================================
     if (url.includes('vip.ffzy-plays.com') || 
+        url.includes('vip.ffzy-plays.com') || 
         url.includes('vod1.maowushi.com')) {
         console.log('🔄 检测到 vip.ffzy-plays，使用 video 直连');
         
