@@ -2,11 +2,13 @@
 //  CONFIG
 // ============================================================
 const PROXY = (url) => '/api/proxy?url=' + encodeURIComponent(url);
+const PLAY_PROXY = (url) => '/api/play?url=' + encodeURIComponent(url);
 const CONCURRENCY = 6;
 const FETCH_TIMEOUT = 15000;
 const STORAGE_KEY = 'tv_data';
 const STORAGE_SOURCES_KEY = 'tv_sources';
 const STORAGE_DISCLAIMER_KEY = 'tv_disclaimer_agreed';
+const STORAGE_PLAY_PROGRESS_KEY = 'tv_play_progress';
 
 // ============================================================
 //  API 适配器 - 自动探测不同影视站点的参数格式
@@ -65,7 +67,7 @@ const _adapterCache = new Map();
 const _classCache = new Map();
 
 // ============================================================
-//  分类缓存 - localStorage 持久化（永久有效）  ← 从这里开始插入
+//  分类缓存 - localStorage 持久化（永久有效）
 // ============================================================
 const CLASS_CACHE_KEY = 'tv_class_cache';
 
@@ -109,9 +111,6 @@ function clearClassCache() {
 
 window.clearClassCache = clearClassCache;
 
-// ============================================================
-//  查看缓存信息（新增）
-// ============================================================
 function showClassCache() {
     try {
         const raw = localStorage.getItem(CLASS_CACHE_KEY);
@@ -340,6 +339,36 @@ function addHistory(vod, source, episode) {
 }
 
 // ============================================================
+//  断点续播 - 存储播放进度
+// ============================================================
+function savePlayProgress(vodId, sourceKey, episode, currentTime, duration) {
+    try {
+        const key = `${vodId}_${sourceKey}`;
+        const data = {
+            episode: episode || '',
+            currentTime: currentTime || 0,
+            duration: duration || 0,
+            updatedAt: Date.now()
+        };
+        const all = JSON.parse(localStorage.getItem(STORAGE_PLAY_PROGRESS_KEY) || '{}');
+        all[key] = data;
+        localStorage.setItem(STORAGE_PLAY_PROGRESS_KEY, JSON.stringify(all));
+    } catch (e) {
+        // 静默失败
+    }
+}
+
+function getPlayProgress(vodId, sourceKey) {
+    try {
+        const key = `${vodId}_${sourceKey}`;
+        const all = JSON.parse(localStorage.getItem(STORAGE_PLAY_PROGRESS_KEY) || '{}');
+        return all[key] || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+// ============================================================
 //  SOURCES 管理
 // ============================================================
 function getStoredSources() {
@@ -415,7 +444,6 @@ function renderSourceList() {
     let html = '';
 
     // 有效源分组
-    // 有效源分组
     if (validSources.length) {
         html += `<div class="group-label"><span class="dot stable"></span> 🟢 有效 (${validSources.length})</div>`;
         validSources.forEach((s, index) => {
@@ -440,33 +468,33 @@ function renderSourceList() {
         });
     }
 
-        // 失效源分组
-        if (invalidSources.length) {
-            html += `<div class="group-label"><span class="dot backup"></span> 🔴 失效 (${invalidSources.length})</div>`;
-            invalidSources.forEach((s, index) => {
-                const isEditing = state.editingKey === s.key;
-                const realIndex = validSources.length + index;
-                html += `
-                    <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''} display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-radius:8px; background:var(--bg); margin-bottom:4px; border:1px solid transparent; opacity:0.7;" 
-                         draggable="true" 
-                         data-index="${realIndex}"
-                         data-key="${esc(s.key)}">
-                        <div style="display:flex; align-items:center; gap:14px; flex:1;">
-                            <span style="cursor:grab; color:var(--text3); font-size:16px;">☰</span>
-                            <span style="font-weight:500; color:var(--text3);">${esc(s.name)}</span>
-                            <span style="color:var(--text3); font-size:12px;">${esc(s.key)}</span>
-                            <span style="font-size:12px; color:#c62828;">🔴失效</span>
-                        </div>
-                        <div style="display:flex; gap:6px; flex-shrink:0;">
-                            <button class="edit-btn" onclick="editSource('${esc(s.key)}')" style="padding:3px 12px; font-size:12px; border-radius:4px; border:none; cursor:pointer; color:var(--primary); background:var(--primary-dim);">编辑</button>
-                            <button class="del-btn" onclick="deleteSource('${esc(s.key)}')" style="padding:3px 12px; font-size:12px; border-radius:4px; border:none; cursor:pointer; color:#c0392b; background:rgba(192,57,43,0.08);">删除</button>
-                        </div>
+    // 失效源分组
+    if (invalidSources.length) {
+        html += `<div class="group-label"><span class="dot backup"></span> 🔴 失效 (${invalidSources.length})</div>`;
+        invalidSources.forEach((s, index) => {
+            const isEditing = state.editingKey === s.key;
+            const realIndex = validSources.length + index;
+            html += `
+                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''} display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-radius:8px; background:var(--bg); margin-bottom:4px; border:1px solid transparent; opacity:0.7;" 
+                     draggable="true" 
+                     data-index="${realIndex}"
+                     data-key="${esc(s.key)}">
+                    <div style="display:flex; align-items:center; gap:14px; flex:1;">
+                        <span style="cursor:grab; color:var(--text3); font-size:16px;">☰</span>
+                        <span style="font-weight:500; color:var(--text3);">${esc(s.name)}</span>
+                        <span style="color:var(--text3); font-size:12px;">${esc(s.key)}</span>
+                        <span style="font-size:12px; color:#c62828;">🔴失效</span>
                     </div>
-                `;
-            });
-        }
+                    <div style="display:flex; gap:6px; flex-shrink:0;">
+                        <button class="edit-btn" onclick="editSource('${esc(s.key)}')" style="padding:3px 12px; font-size:12px; border-radius:4px; border:none; cursor:pointer; color:var(--primary); background:var(--primary-dim);">编辑</button>
+                        <button class="del-btn" onclick="deleteSource('${esc(s.key)}')" style="padding:3px 12px; font-size:12px; border-radius:4px; border:none; cursor:pointer; color:#c0392b; background:rgba(192,57,43,0.08);">删除</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
 
-    // ✅ 添加清空缓存按钮
+    // 添加清空缓存按钮
     html += `
         <div style="display:flex; gap:10px; margin-top:12px; padding-top:10px; border-top:1px solid var(--border); flex-wrap:wrap;">
             <button class="btn btn-ghost" onclick="clearClassCache()" style="font-size:12px; color:#c0392b; border:1px solid #c0392b; padding:4px 14px; border-radius:4px; cursor:pointer; background:transparent;">
@@ -903,7 +931,7 @@ async function fetchRemoteSources() {
 }
 
 // ============================================================
-//  🆕 一键检查失效源（显示进度）
+//  一键检查失效源（显示进度）
 // ============================================================
 async function checkAllSources() {
     const sources = state.sources || [];
@@ -1369,7 +1397,7 @@ function populateSelect() {
 async function loadCategoriesInBackground(source) {
     const cacheKey = source.api;
     
-    // ✅ 先从缓存读取
+    // 先从缓存读取
     const cached = getClassCache(cacheKey);
     if (cached && cached.length) {
         state.categories = cached;
@@ -1388,7 +1416,6 @@ async function loadCategoriesInBackground(source) {
         }
         
         if (classes && classes.length) {
-            // ✅ 存入 localStorage
             setClassCache(cacheKey, classes);
             state.categories = classes;
             renderCategories(classes);
@@ -1403,10 +1430,8 @@ async function loadCategoriesInBackground(source) {
     }
 }
 
-
-
 // ============================================================
-//  BROWSE - 修复：使用适配器，分类和列表一起获取
+//  BROWSE - 使用适配器，分类和列表一起获取
 // ============================================================
 async function loadBrowse(source) {
     if (!source || state.isLoading) return;
@@ -1419,10 +1444,10 @@ async function loadBrowse(source) {
     // 先显示"加载分类…"
     dom.categoryNav.innerHTML = '<span style="color:var(--text3);padding:4px 0;">⏳ 加载分类…</span>';
 
-    // ✅ 先加载卡片（优先）
+    // 先加载卡片（优先）
     await loadMovies();
 
-    // ✅ 分类后台加载（不阻塞）
+    // 分类后台加载（不阻塞）
     loadCategoriesInBackground(source);
 
     setStatus('就绪');
@@ -1430,7 +1455,7 @@ async function loadBrowse(source) {
 }
 
 // ============================================================
-//  loadMovies - 修复：使用 smartApiRequest 自动适配.
+//  loadMovies - 使用 smartApiRequest 自动适配
 // ============================================================
 async function loadMovies() {
     const s = state.source;
@@ -1513,7 +1538,7 @@ function renderCategories(classes) {
 
     if (!classes || !classes.length) return;
 
-    // ✅ 自动检测是否有 type_pid 字段
+    // 自动检测是否有 type_pid 字段
     const hasPid = classes.some(c => c.type_pid !== undefined);
     
     if (!hasPid) {
@@ -1580,7 +1605,7 @@ function pageNext() { if (state.page < state.totalPages) { state.page++;
         loadMovies(); } }
 
 // ============================================================
-//  SEARCH - 修复：使用 ac=list&wd=
+//  SEARCH - 使用 ac=list&wd=
 // ============================================================
 doSearch = async function() {
     if (!hasSources()) {
@@ -1591,7 +1616,7 @@ doSearch = async function() {
     const q = dom.searchInput.value.trim();
     if (!q) { toast('请输入片名', 'error'); return; }
 
-    // ===== 根据模式决定搜索范围 =====
+    // 根据模式决定搜索范围
     let targets = state.sources;
     if (!showHiddenSources) {
         targets = targets.filter(s => s.enabled !== false);
@@ -1663,7 +1688,7 @@ doSearch = async function() {
                 rawList.forEach(v => {
                     if (v && v.vod_id && v.vod_name) {
                         const name = (v.vod_name || '').toLowerCase();
-                        // 包含匹配：adn 只匹配包含 adn 的标题
+                        // 包含匹配
                         if (name.includes(keyword) && !results.some(r => r.v.vod_id === v.vod_id && r.s.key === s.key)) {
                             results.push({ v, s });
                         }
@@ -1709,7 +1734,7 @@ function restoreAllContent() {
 }
 
 // ============================================================
-//  playMovie - 修复：使用 smartApiRequest 获取详情
+//  playMovie - 使用 smartApiRequest 获取详情
 // ============================================================
 async function playMovie(vod, source) {
     state.currentVod = vod;
@@ -1721,7 +1746,6 @@ async function playMovie(vod, source) {
     showPlayerLoading();
 
     try {
-        // ✅ 修复：使用 smartApiRequest 获取详情
         const result = await smartApiRequest(source, 'detail', { id: vod.vod_id });
         if (!result) return;
         const detail = result.list?.[0] || vod;
@@ -1822,14 +1846,23 @@ async function playMovie(vod, source) {
                     
                     const hls = new Hls({
                         enableWorker: true,
-                        maxBufferLength: 180,
-                        maxMaxBufferLength: 300,
-                        maxBufferSize: 300 * 1000 * 1000,
+                        maxBufferLength: 60,
+                        maxMaxBufferLength: 120,
+                        maxBufferSize: 60 * 1000 * 1000,
                         maxBufferHole: 1.0,
                         lowLatencyMode: false,
-                        backbufferLength: 120,
-                        liveBackBufferLength: 120,
+                        backbufferLength: 60,
+                        liveBackBufferLength: 60,
                         progressive: true,
+                        fragLoadingMaxRetry: 8,
+                        fragLoadingRetryDelay: 500,
+                        fragLoadingMaxRetryTimeout: 180000,
+                        manifestLoadingMaxRetry: 6,
+                        manifestLoadingRetryDelay: 500,
+                        levelLoadingMaxRetry: 6,
+                        levelLoadingRetryDelay: 500,
+                        startFragPrefetch: true,
+                        testBandwidth: false,
                         abrEwmaFastLive: 0.1,
                         abrEwmaSlowLive: 1,
                         abrEwmaFastVoD: 0.1,
@@ -1837,15 +1870,6 @@ async function playMovie(vod, source) {
                         abrEwmaDefaultEstimate: 5e6,
                         abrBandWidthFactor: 0.7,
                         abrBandWidthUpFactor: 0.95,
-                        fragLoadingMaxRetry: 20,
-                        fragLoadingRetryDelay: 200,
-                        fragLoadingMaxRetryTimeout: 180000,
-                        manifestLoadingMaxRetry: 10,
-                        manifestLoadingRetryDelay: 500,
-                        levelLoadingMaxRetry: 10,
-                        levelLoadingRetryDelay: 500,
-                        startFragPrefetch: true,
-                        testBandwidth: false,
                         xhrSetup: function(xhr, xhrUrl) {
                             try {
                                 const urlObj = new URL(xhrUrl);
@@ -1857,7 +1881,7 @@ async function playMovie(vod, source) {
                     });
                     window._iqiyiHls = hls;
                     
-                    hls.loadSource(m3u8Url);
+                    hls.loadSource(PLAY_PROXY(m3u8Url));
                     hls.attachMedia(dom.player);
                     
                     hls.on(Hls.Events.MANIFEST_PARSED, function() {
@@ -2085,14 +2109,23 @@ function renderEpisodesPanel(episodes) {
                         
                         const hls = new Hls({
                             enableWorker: true,
-                            maxBufferLength: 180,
-                            maxMaxBufferLength: 300,
-                            maxBufferSize: 300 * 1000 * 1000,
+                            maxBufferLength: 60,
+                            maxMaxBufferLength: 120,
+                            maxBufferSize: 60 * 1000 * 1000,
                             maxBufferHole: 1.0,
                             lowLatencyMode: false,
-                            backbufferLength: 120,
-                            liveBackBufferLength: 120,
+                            backbufferLength: 60,
+                            liveBackBufferLength: 60,
                             progressive: true,
+                            fragLoadingMaxRetry: 8,
+                            fragLoadingRetryDelay: 500,
+                            fragLoadingMaxRetryTimeout: 180000,
+                            manifestLoadingMaxRetry: 6,
+                            manifestLoadingRetryDelay: 500,
+                            levelLoadingMaxRetry: 6,
+                            levelLoadingRetryDelay: 500,
+                            startFragPrefetch: true,
+                            testBandwidth: false,
                             abrEwmaFastLive: 0.1,
                             abrEwmaSlowLive: 1,
                             abrEwmaFastVoD: 0.1,
@@ -2100,15 +2133,6 @@ function renderEpisodesPanel(episodes) {
                             abrEwmaDefaultEstimate: 5e6,
                             abrBandWidthFactor: 0.7,
                             abrBandWidthUpFactor: 0.95,
-                            fragLoadingMaxRetry: 20,
-                            fragLoadingRetryDelay: 200,
-                            fragLoadingMaxRetryTimeout: 180000,
-                            manifestLoadingMaxRetry: 10,
-                            manifestLoadingRetryDelay: 500,
-                            levelLoadingMaxRetry: 10,
-                            levelLoadingRetryDelay: 500,
-                            startFragPrefetch: true,
-                            testBandwidth: false,
                             xhrSetup: function(xhr, xhrUrl) {
                                 try {
                                     const urlObj = new URL(xhrUrl);
@@ -2120,7 +2144,7 @@ function renderEpisodesPanel(episodes) {
                         });
                         window._iqiyiHls = hls;
                         
-                        hls.loadSource(m3u8Url);
+                        hls.loadSource(PLAY_PROXY(m3u8Url));
                         hls.attachMedia(dom.player);
                         
                         hls.on(Hls.Events.MANIFEST_PARSED, function() {
@@ -2171,7 +2195,7 @@ function renderEpisodesPanel(episodes) {
 }
 
 // ============================================================
-//  startPlayer - 直接播放 m3u8，不走代理
+//  🆕 增强的 startPlayer - 使用代理播放
 // ============================================================
 function startPlayer(url, title) {
     if (!url || !url.trim()) {
@@ -2195,13 +2219,12 @@ function startPlayer(url, title) {
     dom.m3u8Link.value = url;
 
     // ============================================================
-    //  ⚠️ vip.ffzy-plays.com 使用 video 直连
+    //  vip.ffzy-plays.com 使用 video 直连
     // ============================================================
     if (url.includes('vip.ffzy-plays.com') || 
         url.includes('vod1.maowushi.com')) {
         console.log('🔄 检测到 vip.ffzy-plays，使用 video 直连');
         
-        // 1. 确保播放器界面可见并清理旧状态
         dom.player.style.display = 'block';
         dom.player.style.width = '100%';
         dom.player.style.height = '100%';
@@ -2217,7 +2240,6 @@ function startPlayer(url, title) {
             dom.playerLoading.classList.remove('show');
         }, 400);
         
-        // 2. 清除可能存在的 HLS 实例，防止干扰
         if (window._hls) {
             window._hls.destroy();
             window._hls = null;
@@ -2227,16 +2249,14 @@ function startPlayer(url, title) {
             state.hlsInstance = null;
         }
     
-        // 3. 直接加载视频（核心）
         dom.player.src = url;
         dom.player.play().catch(function() {});
         console.log('✅ vip.ffzy-plays video 直连已启动');
         return;
     }
 
-    
     // ============================================================
-    //  ✅ 加密源直接走 iframe（不尝试 HLS.js）
+    //  加密源直接走 iframe
     // ============================================================
     if (url.includes('jpxm3u8.com') || url.includes('jpts1.top') || url.includes('jpxm3u8')) {
         console.log('🔐 检测到加密源，直接使用 iframe 播放');
@@ -2252,10 +2272,10 @@ function startPlayer(url, title) {
     }
 
     // ============================================================
-    //  用 video 播放（不经过 HLS.js）
+    //  xibaom20.com 视频直链
     // ============================================================
-if (url.includes('xibaom20.com')) {
-        console.log('🔄 检测到 video 直链源，直接用 video 播放');
+    if (url.includes('xibaom20.com')) {
+        console.log('🔄 检测到 xibaom20 直链源');
         const proxyUrl = '/api/proxy?url=' + encodeURIComponent(url);
         const baseUrl = url.substring(0, url.lastIndexOf('/') + 1);
         
@@ -2294,7 +2314,6 @@ if (url.includes('xibaom20.com')) {
         return;
     }
 
-    
     dom.playerIframe.style.display = 'none';
     dom.playerIframe.src = '';
     dom.player.style.display = 'block';
@@ -2318,22 +2337,31 @@ if (url.includes('xibaom20.com')) {
         return;
     }
 
-
     // ============================================================
-    // 🚀 直接播放 m3u8，不走代理
+    //  🚀 统一使用代理播放 m3u8（核心改动）
     // ============================================================
     if (url.includes('.m3u8') || url.includes('.m3u8?')) {
         if (window.Hls && Hls.isSupported()) {
             const hls = new Hls({
                 enableWorker: true,
-                maxBufferLength: 180,
-                maxMaxBufferLength: 300,
-                maxBufferSize: 300 * 1000 * 1000,
+                maxBufferLength: 60,
+                maxMaxBufferLength: 120,
+                maxBufferSize: 60 * 1000 * 1000,
                 maxBufferHole: 1.0,
                 lowLatencyMode: false,
-                backbufferLength: 120,
-                liveBackBufferLength: 120,
+                backbufferLength: 60,
+                liveBackBufferLength: 60,
                 progressive: true,
+                // 激进的超时和重试策略
+                fragLoadingMaxRetry: 8,
+                fragLoadingRetryDelay: 500,
+                fragLoadingMaxRetryTimeout: 180000,
+                manifestLoadingMaxRetry: 6,
+                manifestLoadingRetryDelay: 500,
+                levelLoadingMaxRetry: 6,
+                levelLoadingRetryDelay: 500,
+                startFragPrefetch: true,
+                testBandwidth: false,
                 abrEwmaFastLive: 0.1,
                 abrEwmaSlowLive: 1,
                 abrEwmaFastVoD: 0.1,
@@ -2341,15 +2369,6 @@ if (url.includes('xibaom20.com')) {
                 abrEwmaDefaultEstimate: 5e6,
                 abrBandWidthFactor: 0.7,
                 abrBandWidthUpFactor: 0.95,
-                fragLoadingMaxRetry: 20,
-                fragLoadingRetryDelay: 200,
-                fragLoadingMaxRetryTimeout: 180000,
-                manifestLoadingMaxRetry: 10,
-                manifestLoadingRetryDelay: 500,
-                levelLoadingMaxRetry: 10,
-                levelLoadingRetryDelay: 500,
-                startFragPrefetch: true,
-                testBandwidth: false,
                 xhrSetup: function(xhr, xhrUrl) {
                     try {
                         const urlObj = new URL(xhrUrl);
@@ -2360,7 +2379,9 @@ if (url.includes('xibaom20.com')) {
                 }
             });
             state.hlsInstance = hls;
-            hls.loadSource(url);
+            
+            // 使用代理地址
+            hls.loadSource(PLAY_PROXY(url));
             hls.attachMedia(video);
 
             hls.on(Hls.Events.MANIFEST_PARSED, function() {
@@ -2370,7 +2391,7 @@ if (url.includes('xibaom20.com')) {
                     dom.playerLoading.classList.remove('show');
                 }, 400);
                 video.play().catch(function() {});
-                console.log('✅ 直连 HLS 播放成功');
+                console.log('✅ 代理 HLS 播放成功');
             });
 
             hls.on(Hls.Events.ERROR, function(e, data) {
@@ -2382,7 +2403,7 @@ if (url.includes('xibaom20.com')) {
                 }
             });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = url;
+            video.src = PLAY_PROXY(url);
             video.play().catch(function() {});
         } else {
             startPlayerInIframe(url, title);
@@ -2526,14 +2547,23 @@ function startPlayerWithProxy(url, title) {
                 
                 const hls = new Hls({
                     enableWorker: true,
-                    maxBufferLength: 180,
-                    maxMaxBufferLength: 300,
-                    maxBufferSize: 300 * 1000 * 1000,
+                    maxBufferLength: 60,
+                    maxMaxBufferLength: 120,
+                    maxBufferSize: 60 * 1000 * 1000,
                     maxBufferHole: 1.0,
                     lowLatencyMode: false,
-                    backbufferLength: 120,
-                    liveBackBufferLength: 120,
+                    backbufferLength: 60,
+                    liveBackBufferLength: 60,
                     progressive: true,
+                    fragLoadingMaxRetry: 8,
+                    fragLoadingRetryDelay: 500,
+                    fragLoadingMaxRetryTimeout: 180000,
+                    manifestLoadingMaxRetry: 6,
+                    manifestLoadingRetryDelay: 500,
+                    levelLoadingMaxRetry: 6,
+                    levelLoadingRetryDelay: 500,
+                    startFragPrefetch: true,
+                    testBandwidth: false,
                     abrEwmaFastLive: 0.1,
                     abrEwmaSlowLive: 1,
                     abrEwmaFastVoD: 0.1,
@@ -2541,15 +2571,6 @@ function startPlayerWithProxy(url, title) {
                     abrEwmaDefaultEstimate: 5e6,
                     abrBandWidthFactor: 0.7,
                     abrBandWidthUpFactor: 0.95,
-                    fragLoadingMaxRetry: 20,
-                    fragLoadingRetryDelay: 200,
-                    fragLoadingMaxRetryTimeout: 180000,
-                    manifestLoadingMaxRetry: 10,
-                    manifestLoadingRetryDelay: 500,
-                    levelLoadingMaxRetry: 10,
-                    levelLoadingRetryDelay: 500,
-                    startFragPrefetch: true,
-                    testBandwidth: false,
                     xhrSetup: function(xhr, xhrUrl) {
                         try {
                             const urlObj = new URL(xhrUrl);
@@ -2787,5 +2808,9 @@ function showDisclaimer() {
         localStorage.setItem(STORAGE_DISCLAIMER_KEY, 'true');
     }
 }
+
+// 检测是否为移动端
+const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                 (window.innerWidth < 768);
 
 document.addEventListener('DOMContentLoaded', init);
