@@ -9,35 +9,6 @@ const STORAGE_KEY = 'tv_data';
 const STORAGE_SOURCES_KEY = 'tv_sources';
 const STORAGE_DISCLAIMER_KEY = 'tv_disclaimer_agreed';
 const STORAGE_PLAY_PROGRESS_KEY = 'tv_play_progress';
-const STORAGE_THUMBNAIL_KEY = 'tv_thumbnail_';
-
-// ============================================================
-//  判断是否需要走代理（针对防盗链严格的源）
-// ============================================================
-function shouldUseProxy(url) {
-    // 包含这些关键词的 URL 不走代理
-    const noProxyKeywords = [
-        'ffzy',
-        'maowushi',
-        'jpxm3u8',
-        'jpts1',
-        'jisuzyv',
-        'tyyszywvod2',
-        'ppqrrs',
-        'modujx',
-    ];
-    for (const keyword of noProxyKeywords) {
-        if (url.includes(keyword)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-function getPlaybackUrl(url) {
-    const useProxy = shouldUseProxy(url);
-    return useProxy ? PLAY_PROXY(url) : url;
-}
 
 // ============================================================
 //  API 适配器 - 自动探测不同影视站点的参数格式
@@ -392,30 +363,6 @@ function getPlayProgress(vodId, sourceKey) {
         const key = `${vodId}_${sourceKey}`;
         const all = JSON.parse(localStorage.getItem(STORAGE_PLAY_PROGRESS_KEY) || '{}');
         return all[key] || null;
-    } catch (e) {
-        return null;
-    }
-}
-
-// ============================================================
-//  🆕 首帧截图 - 存储和获取
-// ============================================================
-function saveThumbnail(vodId, dataUrl) {
-    try {
-        if (!vodId || !dataUrl) return;
-        const key = STORAGE_THUMBNAIL_KEY + vodId;
-        localStorage.setItem(key, dataUrl);
-        console.log('✅ 首帧截图已保存:', vodId, dataUrl.length + ' bytes');
-    } catch (e) {
-        console.warn('保存截图失败:', e.message);
-    }
-}
-
-function getThumbnail(vodId) {
-    try {
-        if (!vodId) return null;
-        const key = STORAGE_THUMBNAIL_KEY + vodId;
-        return localStorage.getItem(key);
     } catch (e) {
         return null;
     }
@@ -1251,9 +1198,7 @@ function switchPlayerLine(index) {
     
     if (episodes.length) {
         const first = episodes[0];
-        // 🆕 使用 getPlaybackUrl 统一处理
-        const finalUrl = getPlaybackUrl(first.url);
-        startPlayer(finalUrl, (state.currentVod?.vod_name || '') + ' ' + first.name);
+        startPlayer(first.url, (state.currentVod?.vod_name || '') + ' ' + first.name);
     }
     toast('已切换: ' + lines[index].name, 'info');
 }
@@ -1539,9 +1484,6 @@ async function loadMovies() {
     }
 }
 
-// ============================================================
-//  🆕 renderMovies - 支持首帧截图 + 预加载
-// ============================================================
 function renderMovies(list) {
     const grid = dom.browseGrid;
     if (!list.length) {
@@ -1552,21 +1494,13 @@ function renderMovies(list) {
     list.forEach(v => {
         const el = document.createElement('div');
         el.className = 'card';
-        
-        const vodId = v.vod_id;
         const poster = v.vod_pic || '';
         const score = v.vod_score || '';
         const remark = v.vod_remarks || '';
-        
-        // 🆕 检查是否有保存的首帧截图
-        const savedThumbnail = getThumbnail(vodId);
-        
         el.innerHTML = `
                     <div class="poster-wrap">
-                        <img loading="lazy" 
-                             src="${savedThumbnail || poster}" 
-                             onerror="this.src='${poster}'"
-                             style="${savedThumbnail ? 'object-fit:contain;background:#000;' : ''}" />
+                        <img loading="lazy" src="${esc(poster)}" 
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22390%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23181e2a%22/%3E%3C/svg%3E'" />
                         <div class="play-icon">▶</div>
                         ${score ? `<div class="badge-top score">${esc(score)}</div>` : ''}
                         ${remark && !score ? `<div class="badge-top">${esc(remark)}</div>` : ''}
@@ -1579,50 +1513,6 @@ function renderMovies(list) {
                         </div>
                     </div>
                 `;
-        
-        // 🆕 鼠标悬停时预加载
-        let preconnectLink = null;
-        let abortController = null;
-        
-        el.addEventListener('mouseenter', function() {
-            // 1. 预连接到视频源域名
-            if (state.source) {
-                try {
-                    const origin = new URL(state.source.api).origin;
-                    preconnectLink = document.createElement('link');
-                    preconnectLink.rel = 'preconnect';
-                    preconnectLink.href = origin;
-                    document.head.appendChild(preconnectLink);
-                } catch(e) {}
-            }
-            
-            // 2. 如果有 m3u8 地址，提前获取前 1KB（预热缓存）
-            if (v.vod_play_url) {
-                const firstUrl = v.vod_play_url.split('#')[0];
-                if (firstUrl && firstUrl.includes('.m3u8')) {
-                    abortController = new AbortController();
-                    fetch(firstUrl, { 
-                        headers: { 'Range': 'bytes=0-1024' },
-                        signal: abortController.signal,
-                    })
-                    .then(r => r.arrayBuffer())
-                    .then(() => console.log('✅ 预加载完成:', v.vod_name))
-                    .catch(() => {});
-                }
-            }
-        });
-        
-        el.addEventListener('mouseleave', function() {
-            if (preconnectLink && preconnectLink.parentNode) {
-                preconnectLink.parentNode.removeChild(preconnectLink);
-                preconnectLink = null;
-            }
-            if (abortController) {
-                abortController.abort();
-                abortController = null;
-            }
-        });
-        
         el.onclick = () => playMovie(v, state.source);
         frag.appendChild(el);
     });
@@ -1760,14 +1650,10 @@ doSearch = async function() {
             const fav = isFav(v.vod_id, s.key);
             const poster = v.vod_pic || '';
             const score = v.vod_score || '';
-            // 🆕 搜索页也支持首帧截图
-            const savedThumbnail = getThumbnail(v.vod_id);
             el.innerHTML = `
                         <div class="poster-wrap">
-                            <img loading="lazy" 
-                                 src="${savedThumbnail || poster}" 
-                                 onerror="this.src='${poster}'"
-                                 style="${savedThumbnail ? 'object-fit:contain;background:#000;' : ''}" />
+                            <img loading="lazy" src="${esc(poster)}" 
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22390%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23181e2a%22/%3E%3C/svg%3E'" />
                             <div class="play-icon">▶</div>
                             ${score ? `<div class="badge-top score">${esc(score)}</div>` : ''}
                         </div>
@@ -1953,74 +1839,69 @@ async function playMovie(vod, source) {
                 dom.player.style.display = 'block';
                 
                 if (window.Hls && Hls.isSupported()) {
-                    // 🆕 复用现有实例
-                    if (state.hlsInstance) {
-                        console.log('🔄 复用 HLS 实例 (爱奇艺)');
-                        state.hlsInstance.loadSource(getPlaybackUrl(m3u8Url));
-                        dom.player.play().catch(function() {});
+                    if (window._iqiyiHls) {
+                        window._iqiyiHls.destroy();
+                        window._iqiyiHls = null;
+                    }
+                    
+                    const hls = new Hls({
+                        enableWorker: true,
+                        maxBufferLength: 60,
+                        maxMaxBufferLength: 120,
+                        maxBufferSize: 60 * 1000 * 1000,
+                        maxBufferHole: 1.0,
+                        lowLatencyMode: false,
+                        backbufferLength: 60,
+                        liveBackBufferLength: 60,
+                        progressive: true,
+                        fragLoadingMaxRetry: 8,
+                        fragLoadingRetryDelay: 500,
+                        fragLoadingMaxRetryTimeout: 180000,
+                        manifestLoadingMaxRetry: 6,
+                        manifestLoadingRetryDelay: 500,
+                        levelLoadingMaxRetry: 6,
+                        levelLoadingRetryDelay: 500,
+                        startFragPrefetch: true,
+                        testBandwidth: false,
+                        abrEwmaFastLive: 0.1,
+                        abrEwmaSlowLive: 1,
+                        abrEwmaFastVoD: 0.1,
+                        abrEwmaSlowVoD: 1,
+                        abrEwmaDefaultEstimate: 5e6,
+                        abrBandWidthFactor: 0.7,
+                        abrBandWidthUpFactor: 0.95,
+                        xhrSetup: function(xhr, xhrUrl) {
+                            try {
+                                const urlObj = new URL(xhrUrl);
+                                xhr.setRequestHeader('Referer', urlObj.origin + '/');
+                                xhr.setRequestHeader('Origin', urlObj.origin);
+                                xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+                            } catch (e) {}
+                        }
+                    });
+                    window._iqiyiHls = hls;
+                    
+                    hls.loadSource(PLAY_PROXY(m3u8Url));
+                    hls.attachMedia(dom.player);
+                    
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
                         dom.playerLoading.classList.add('hidden');
                         setTimeout(function() {
                             dom.playerLoading.classList.remove('show');
                         }, 400);
-                    } else {
-                        const hls = new Hls({
-                            enableWorker: true,
-                            maxBufferLength: 60,
-                            maxMaxBufferLength: 120,
-                            maxBufferSize: 60 * 1000 * 1000,
-                            maxBufferHole: 1.0,
-                            lowLatencyMode: false,
-                            backbufferLength: 60,
-                            liveBackBufferLength: 60,
-                            progressive: true,
-                            fragLoadingMaxRetry: 8,
-                            fragLoadingRetryDelay: 500,
-                            fragLoadingMaxRetryTimeout: 180000,
-                            manifestLoadingMaxRetry: 6,
-                            manifestLoadingRetryDelay: 500,
-                            levelLoadingMaxRetry: 6,
-                            levelLoadingRetryDelay: 500,
-                            startFragPrefetch: true,
-                            testBandwidth: false,
-                            abrEwmaFastLive: 0.1,
-                            abrEwmaSlowLive: 1,
-                            abrEwmaFastVoD: 0.1,
-                            abrEwmaSlowVoD: 1,
-                            abrEwmaDefaultEstimate: 5e6,
-                            abrBandWidthFactor: 0.7,
-                            abrBandWidthUpFactor: 0.95,
-                            xhrSetup: function(xhr, xhrUrl) {
-                                try {
-                                    const urlObj = new URL(xhrUrl);
-                                    xhr.setRequestHeader('Referer', urlObj.origin + '/');
-                                    xhr.setRequestHeader('Origin', urlObj.origin);
-                                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
-                                } catch (e) {}
-                            }
-                        });
-                        state.hlsInstance = hls;
-                        hls.loadSource(getPlaybackUrl(m3u8Url));
-                        hls.attachMedia(dom.player);
-                        
-                        hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                            dom.playerLoading.classList.add('hidden');
-                            setTimeout(function() {
-                                dom.playerLoading.classList.remove('show');
-                            }, 400);
+                        dom.player.play().catch(function() {});
+                        console.log('✅ 爱奇艺源 HLS.js 播放成功');
+                    });
+                    
+                    hls.on(Hls.Events.ERROR, function(e, data) {
+                        dom.playerLoading.classList.add('hidden');
+                        console.warn('⚠️ HLS 错误:', data.details);
+                        if (data.fatal) {
+                            toast('HLS 播放失败，尝试直连', 'error');
+                            dom.player.src = m3u8Url;
                             dom.player.play().catch(function() {});
-                            console.log('✅ 爱奇艺源 HLS.js 播放成功');
-                        });
-                        
-                        hls.on(Hls.Events.ERROR, function(e, data) {
-                            dom.playerLoading.classList.add('hidden');
-                            console.warn('⚠️ HLS 错误:', data.details);
-                            if (data.fatal) {
-                                toast('HLS 播放失败，尝试直连', 'error');
-                                dom.player.src = m3u8Url;
-                                dom.player.play().catch(function() {});
-                            }
-                        });
-                    }
+                        }
+                    });
                 } else {
                     dom.player.src = m3u8Url;
                     dom.player.play().catch(function() {});
@@ -2074,14 +1955,11 @@ async function playMovie(vod, source) {
             state.currentEpisodes = episodes;
             const firstEp = episodes[0];
             const fullUrl = normalizeUrl(firstEp.url);
-            // 🆕 使用 getPlaybackUrl 统一处理
-            const finalUrl = getPlaybackUrl(fullUrl);
-            startPlayer(finalUrl, vod.vod_name + ' ' + firstEp.name);
+            startPlayer(fullUrl, vod.vod_name + ' ' + firstEp.name);
             renderEpisodesPanel(episodes);
         } else {
             const fullUrl = normalizeUrl(firstUrl);
-            const finalUrl = getPlaybackUrl(fullUrl);
-            startPlayer(finalUrl, vod.vod_name);
+            startPlayer(fullUrl, vod.vod_name);
             renderEpisodesPanel([]);
         }
 
@@ -2182,9 +2060,7 @@ function renderEpisodesPanel(episodes) {
         el.onclick = () => {
             document.querySelectorAll('#episodes-list .ep').forEach(e => e.classList.remove('active'));
             el.classList.add('active');
-            // 🆕 使用 getPlaybackUrl 统一处理
-            const finalUrl = getPlaybackUrl(episodes[0].url);
-            startPlayer(finalUrl, state.currentVod?.vod_name || '播放');
+            startPlayer(episodes[0].url, state.currentVod?.vod_name || '播放');
             dom.episodesPanel.classList.remove('open');
             if (state.currentVod && state.currentSource) {
                 addHistory(state.currentVod, state.currentSource, '播放');
@@ -2226,74 +2102,69 @@ function renderEpisodesPanel(episodes) {
                     dom.playerLoading.classList.add('show');
                     
                     if (window.Hls && Hls.isSupported()) {
-                        // 🆕 复用现有实例
-                        if (state.hlsInstance) {
-                            console.log('🔄 复用 HLS 实例 (选集)');
-                            state.hlsInstance.loadSource(getPlaybackUrl(m3u8Url));
-                            dom.player.play().catch(function() {});
+                        if (window._iqiyiHls) {
+                            window._iqiyiHls.destroy();
+                            window._iqiyiHls = null;
+                        }
+                        
+                        const hls = new Hls({
+                            enableWorker: true,
+                            maxBufferLength: 60,
+                            maxMaxBufferLength: 120,
+                            maxBufferSize: 60 * 1000 * 1000,
+                            maxBufferHole: 1.0,
+                            lowLatencyMode: false,
+                            backbufferLength: 60,
+                            liveBackBufferLength: 60,
+                            progressive: true,
+                            fragLoadingMaxRetry: 8,
+                            fragLoadingRetryDelay: 500,
+                            fragLoadingMaxRetryTimeout: 180000,
+                            manifestLoadingMaxRetry: 6,
+                            manifestLoadingRetryDelay: 500,
+                            levelLoadingMaxRetry: 6,
+                            levelLoadingRetryDelay: 500,
+                            startFragPrefetch: true,
+                            testBandwidth: false,
+                            abrEwmaFastLive: 0.1,
+                            abrEwmaSlowLive: 1,
+                            abrEwmaFastVoD: 0.1,
+                            abrEwmaSlowVoD: 1,
+                            abrEwmaDefaultEstimate: 5e6,
+                            abrBandWidthFactor: 0.7,
+                            abrBandWidthUpFactor: 0.95,
+                            xhrSetup: function(xhr, xhrUrl) {
+                                try {
+                                    const urlObj = new URL(xhrUrl);
+                                    xhr.setRequestHeader('Referer', urlObj.origin + '/');
+                                    xhr.setRequestHeader('Origin', urlObj.origin);
+                                    xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+                                } catch (e) {}
+                            }
+                        });
+                        window._iqiyiHls = hls;
+                        
+                        hls.loadSource(PLAY_PROXY(m3u8Url));
+                        hls.attachMedia(dom.player);
+                        
+                        hls.on(Hls.Events.MANIFEST_PARSED, function() {
                             dom.playerLoading.classList.add('hidden');
                             setTimeout(function() {
                                 dom.playerLoading.classList.remove('show');
                             }, 400);
-                        } else {
-                            const hls = new Hls({
-                                enableWorker: true,
-                                maxBufferLength: 60,
-                                maxMaxBufferLength: 120,
-                                maxBufferSize: 60 * 1000 * 1000,
-                                maxBufferHole: 1.0,
-                                lowLatencyMode: false,
-                                backbufferLength: 60,
-                                liveBackBufferLength: 60,
-                                progressive: true,
-                                fragLoadingMaxRetry: 8,
-                                fragLoadingRetryDelay: 500,
-                                fragLoadingMaxRetryTimeout: 180000,
-                                manifestLoadingMaxRetry: 6,
-                                manifestLoadingRetryDelay: 500,
-                                levelLoadingMaxRetry: 6,
-                                levelLoadingRetryDelay: 500,
-                                startFragPrefetch: true,
-                                testBandwidth: false,
-                                abrEwmaFastLive: 0.1,
-                                abrEwmaSlowLive: 1,
-                                abrEwmaFastVoD: 0.1,
-                                abrEwmaSlowVoD: 1,
-                                abrEwmaDefaultEstimate: 5e6,
-                                abrBandWidthFactor: 0.7,
-                                abrBandWidthUpFactor: 0.95,
-                                xhrSetup: function(xhr, xhrUrl) {
-                                    try {
-                                        const urlObj = new URL(xhrUrl);
-                                        xhr.setRequestHeader('Referer', urlObj.origin + '/');
-                                        xhr.setRequestHeader('Origin', urlObj.origin);
-                                        xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
-                                    } catch (e) {}
-                                }
-                            });
-                            state.hlsInstance = hls;
-                            hls.loadSource(getPlaybackUrl(m3u8Url));
-                            hls.attachMedia(dom.player);
-                            
-                            hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                                dom.playerLoading.classList.add('hidden');
-                                setTimeout(function() {
-                                    dom.playerLoading.classList.remove('show');
-                                }, 400);
+                            dom.player.play().catch(function() {});
+                            console.log('✅ 选集 HLS.js 播放成功');
+                        });
+                        
+                        hls.on(Hls.Events.ERROR, function(e, data) {
+                            dom.playerLoading.classList.add('hidden');
+                            console.warn('⚠️ HLS 错误:', data.details);
+                            if (data.fatal) {
+                                toast('HLS 播放失败，尝试直连', 'error');
+                                dom.player.src = m3u8Url;
                                 dom.player.play().catch(function() {});
-                                console.log('✅ 选集 HLS.js 播放成功');
-                            });
-                            
-                            hls.on(Hls.Events.ERROR, function(e, data) {
-                                dom.playerLoading.classList.add('hidden');
-                                console.warn('⚠️ HLS 错误:', data.details);
-                                if (data.fatal) {
-                                    toast('HLS 播放失败，尝试直连', 'error');
-                                    dom.player.src = m3u8Url;
-                                    dom.player.play().catch(function() {});
-                                }
-                            });
-                        }
+                            }
+                        });
                     } else {
                         dom.player.src = m3u8Url;
                         dom.player.play().catch(function() {});
@@ -2313,9 +2184,7 @@ function renderEpisodesPanel(episodes) {
                 }
                 return;
             }
-            // 🆕 使用 getPlaybackUrl 统一处理
-            const finalUrl = getPlaybackUrl(ep.url);
-            startPlayer(finalUrl, (state.currentVod?.vod_name || '') + ' ' + ep.name);
+            startPlayer(ep.url, (state.currentVod?.vod_name || '') + ' ' + ep.name);
             dom.episodesPanel.classList.remove('open');
             if (state.currentVod && state.currentSource) {
                 addHistory(state.currentVod, state.currentSource, ep.name);
@@ -2326,7 +2195,7 @@ function renderEpisodesPanel(episodes) {
 }
 
 // ============================================================
-//  🆕 增强的 startPlayer - 使用代理播放 + 复用 HLS 实例 + 首帧截图
+//  🆕 增强的 startPlayer - 使用代理播放
 // ============================================================
 function startPlayer(url, title) {
     if (!url || !url.trim()) {
@@ -2344,7 +2213,6 @@ function startPlayer(url, title) {
         }
     }
 
-    url = getPlaybackUrl(url);
     state.currentUrl = url;
 
     dom.nowPlaying.textContent = title || '正在播放';
@@ -2372,6 +2240,10 @@ function startPlayer(url, title) {
             dom.playerLoading.classList.remove('show');
         }, 400);
         
+        if (window._hls) {
+            window._hls.destroy();
+            window._hls = null;
+        }
         if (state.hlsInstance) {
             state.hlsInstance.destroy();
             state.hlsInstance = null;
@@ -2452,6 +2324,11 @@ function startPlayer(url, title) {
         video.style.minHeight = currentHeight + 'px';
     }
 
+    if (state.hlsInstance) {
+        state.hlsInstance.destroy();
+        state.hlsInstance = null;
+    }
+
     const isMedia = /\.(m3u8|mp4|ts|flv|mkv|mp3|aac|webm|m4s)(\?[^#]*)?(#.*)?$/i.test(url);
     const isHtml = !isMedia && (url.includes('.html') || url.includes('/play/') || url.includes('/vod/') || url.includes('/show/') || url.includes('/detail/'));
 
@@ -2461,28 +2338,10 @@ function startPlayer(url, title) {
     }
 
     // ============================================================
-    //  🚀 统一使用代理播放 m3u8 + 复用 HLS 实例 + 首帧截图
+    //  🚀 统一使用代理播放 m3u8（核心改动）
     // ============================================================
     if (url.includes('.m3u8') || url.includes('.m3u8?')) {
         if (window.Hls && Hls.isSupported()) {
-            const finalUrl = getPlaybackUrl(url);
-            
-            // 🆕 如果有现有实例，直接复用
-            if (state.hlsInstance) {
-                console.log('🔄 复用 HLS 实例，切换源:', finalUrl);
-                state.hlsInstance.loadSource(finalUrl);
-                // 切换源后自动继续播放
-                dom.playerLoading.classList.add('hidden');
-                setTimeout(() => {
-                    dom.playerLoading.classList.remove('show');
-                }, 400);
-                video.play().catch(function() {});
-                dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                return;
-            }
-            
-            // 首次创建
-            console.log('🆕 创建新的 HLS 实例');
             const hls = new Hls({
                 enableWorker: true,
                 maxBufferLength: 60,
@@ -2520,7 +2379,9 @@ function startPlayer(url, title) {
                 }
             });
             state.hlsInstance = hls;
-            hls.loadSource(finalUrl);
+            
+            // 使用代理地址
+            hls.loadSource(PLAY_PROXY(url));
             hls.attachMedia(video);
 
             hls.on(Hls.Events.MANIFEST_PARSED, function() {
@@ -2541,34 +2402,8 @@ function startPlayer(url, title) {
                     startPlayerInIframe(url, title);
                 }
             });
-            
-            // ============================================================
-            //  🆕 首帧截图 - 在播放成功时自动保存
-            // ============================================================
-            const vodId = state.currentVod?.vod_id;
-            if (vodId) {
-                // 使用 once 确保只执行一次
-                video.addEventListener('loadeddata', function captureFirstFrame() {
-                    try {
-                        const canvas = document.createElement('canvas');
-                        const ratio = Math.min(320 / video.videoWidth, 180 / video.videoHeight);
-                        canvas.width = Math.round(video.videoWidth * ratio) || 320;
-                        canvas.height = Math.round(video.videoHeight * ratio) || 180;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-                        saveThumbnail(vodId, dataUrl);
-                    } catch(e) {
-                        console.warn('首帧截图失败:', e.message);
-                    }
-                    video.removeEventListener('loadeddata', captureFirstFrame);
-                });
-            }
-            
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            const finalUrl = getPlaybackUrl(url);
-            video.src = finalUrl;
+            video.src = PLAY_PROXY(url);
             video.play().catch(function() {});
         } else {
             startPlayerInIframe(url, title);
@@ -2705,16 +2540,9 @@ function startPlayerWithProxy(url, title) {
                 const blob = new Blob([modifiedM3u8], { type: 'application/vnd.apple.mpegurl' });
                 const blobUrl = URL.createObjectURL(blob);
                 
-                // 🆕 复用现有实例
                 if (state.hlsInstance) {
-                    console.log('🔄 复用 HLS 实例 (代理)');
-                    state.hlsInstance.loadSource(blobUrl);
-                    dom.playerLoading.classList.add('hidden');
-                    setTimeout(function() {
-                        dom.playerLoading.classList.remove('show');
-                    }, 400);
-                    video.play().catch(function() {});
-                    return;
+                    state.hlsInstance.destroy();
+                    state.hlsInstance = null;
                 }
                 
                 const hls = new Hls({
