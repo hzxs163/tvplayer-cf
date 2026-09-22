@@ -1,0 +1,132 @@
+[
+  {
+    "key": "demo",
+    "name": "演示源 · 公开测试流",
+    "api": "/api/demo",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "stable"
+  },
+  {
+    "key": "feifan_1",
+    "name": "非凡资源(type=1)",
+    "api": "http://ffzy5.tv/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "stable"
+  },
+  {
+    "key": "feifancj_1",
+    "name": "非凡采集(type=1)",
+    "api": "http://cj.ffzyapi.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "stable"
+  },
+  {
+    "key": "feifan_2",
+    "name": "非凡资源(type=2)",
+    "api": "http://ffzy5.tv/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "stable"
+  },
+  {
+    "key": "dytt_2",
+    "name": "电影天堂(type=2)",
+    "api": "http://caiji.dyttzyapi.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "stable"
+  },
+  {
+    "key": "zuida_2",
+    "name": "最大资源(type=2)",
+    "api": "https://api.zuidapi.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "stable"
+  },
+  {
+    "key": "zuidame_2",
+    "name": "最大点播(type=2)",
+    "api": "http://zuidazy.me/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "stable"
+  },
+  {
+    "key": "量子资源",
+    "name": "量子资源(切)",
+    "api": "http://cj.lziapi.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "stable"
+  },
+  {
+    "key": "zuidame_1",
+    "name": "最大点播(type=1)",
+    "api": "http://zuidazy.me/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "stable"
+  },
+  {
+    "key": "feifanapi_2",
+    "name": "非凡API(type=2)",
+    "api": "https://api.ffzyapi.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "stable"
+  },
+  {
+    "key": "baofeng_1",
+    "name": "暴风资源(type=1)",
+    "api": "https://bfzyapi.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "stable"
+  },
+  {
+    "key": "feifancj_2",
+    "name": "非凡采集(type=2)",
+    "api": "http://cj.ffzyapi.com/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "stable"
+  },
+  {
+    "key": "maoyanzy_2",
+    "name": "🎬猫眼资源(type=2)",
+    "api": "https://api.maoyanapi.top/api.php/provide/vod",
+    "type": 0,
+    "searchable": 1,
+    "filterable": 1,
+    "playerType": 1,
+    "group": "stable"
+  }
+]
