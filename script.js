@@ -86,6 +86,27 @@ async function canPlayDirect(url) {
 }
 
 // ============================================================
+//  续播定位：清单刚解析时 video.duration 常常还是 NaN，
+//  此时直接赋 currentTime 会被夹回 0（表现为"声音从头播"），
+//  所以等 duration 就绪再跳
+// ============================================================
+function seekWhenReady(video, at) {
+    const apply = function () {
+        if (video.duration > at + 1) {
+            cleanup();
+            try { video.currentTime = at; } catch (e) {}
+        }
+    };
+    const cleanup = function () {
+        video.removeEventListener('durationchange', apply);
+        clearTimeout(giveUp);
+    };
+    const giveUp = setTimeout(cleanup, 10000);
+    video.addEventListener('durationchange', apply);
+    apply();
+}
+
+// ============================================================
 //  挂载 HLS：useDirect 为 true 时清单与分片全部浏览器直连
 //  出错按「原地恢复 -> 换路重来 -> 提示换线路」三级处理，
 //  已经能播的片子不会因为一次拉取失败就被拆掉
@@ -107,9 +128,7 @@ function attachHls(url, title, video, useDirect, allowSwitch, resumeAt) {
         started = true;
         video.style.minHeight = '';
         hidePlayerLoading();
-        if (resumeAt > 1) {
-            video.currentTime = resumeAt;
-        }
+        if (resumeAt > 1) seekWhenReady(video, resumeAt);
         video.play().catch(function () {});
         console.log(useDirect ? '✅ 直连 HLS 播放成功' : '✅ 代理 HLS 播放成功');
     });

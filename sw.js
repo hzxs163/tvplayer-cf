@@ -1,4 +1,7 @@
-const CACHE_NAME = 'tvplayer-v2';
+const CACHE_NAME = 'tvplayer-v3';
+// 代码类文件走「网络优先」：改了 script.js 后用户下一次打开就是新版，
+// 不必先看到旧版再刷新一次（大文件 hls.min.js 仍走缓存优先）
+const NETWORK_FIRST = ['/index.html', '/script.js', '/style.css'];
 const urlsToCache = [
   '/',
   '/index.html',
@@ -53,6 +56,22 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => caches.match(request).then((r) => r || caches.match('/index.html')))
+    );
+    return;
+  }
+
+  // ============ 代码类文件：Network-First（改动立即生效） ============
+  if (NETWORK_FIRST.indexOf(url.pathname) !== -1) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
