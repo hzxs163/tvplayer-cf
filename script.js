@@ -86,10 +86,11 @@ async function canPlayDirect(url) {
 }
 
 // ============================================================
-//  挂载 HLS：useDirect 为 true 时清单与分片全部浏览器直连，
-//  直连失败自动回退代理（只回退一次），两边都失败才切嵌入
+//  挂载 HLS：useDirect 为 true 时清单与分片全部浏览器直连
+//  出错按「原地恢复 -> 换路重来 -> 提示换线路」三级处理，
+//  已经能播的片子不会因为一次拉取失败就被拆掉
 // ============================================================
-function attachHls(url, title, video, useDirect, allowSwitch) {
+function attachHls(url, title, video, useDirect, allowSwitch, resumeAt) {
     if (state.hlsInstance) {
         state.hlsInstance.destroy();
         state.hlsInstance = null;
@@ -98,25 +99,53 @@ function attachHls(url, title, video, useDirect, allowSwitch) {
     const hls = createHls();
     state.hlsInstance = hls;
 
+    let started = false;   // 清单是否解析成功过（解析过说明这条路本身走得通）
+    let netRetry = 0;
+    let mediaRetry = 0;
+
     hls.on(Hls.Events.MANIFEST_PARSED, function () {
+        started = true;
         video.style.minHeight = '';
         hidePlayerLoading();
+        if (resumeAt > 1) {
+            video.currentTime = resumeAt;
+        }
         video.play().catch(function () {});
         console.log(useDirect ? '✅ 直连 HLS 播放成功' : '✅ 代理 HLS 播放成功');
     });
 
     hls.on(Hls.Events.ERROR, function (e, data) {
         video.style.minHeight = '';
-        console.warn('⚠️ HLS 错误:', data.details);
+        console.warn('⚠️ HLS 错误:', data.details, data.type);
         if (!data.fatal) return;
-        if (allowSwitch) {
-            toast(useDirect ? '直连不可用，改用代理重试' : '代理不可用，改回直连重试', 'info');
-            hls.destroy();
-            if (state.hlsInstance === hls) state.hlsInstance = null;
-            attachHls(url, title, video, !useDirect, false);
+
+        // 1) 解码/缓冲类错误：hls.js 自带恢复，不打断播放进度
+        if (data.type === Hls.ErrorTypes.MEDIA_ERROR && mediaRetry < 3) {
+            mediaRetry++;
+            console.warn('恢复媒体错误', mediaRetry);
+            hls.recoverMediaError();
             return;
         }
-        toast('播放失败，已切换为嵌入方式', 'error');
+
+        // 2) 网络类错误但已经播过：先原地重拉，别急着换路（拖动进度时最常见的就是单次超时）
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR && started && netRetry < 2) {
+            netRetry++;
+            console.warn('重拉分片', netRetry);
+            hls.startLoad();
+            return;
+        }
+
+        // 3) 这条路确实走不通：换另一条，并接着刚才的进度继续
+        if (allowSwitch) {
+            const at = video.currentTime || 0;
+            toast(useDirect ? '直连取片失败，改用代理续播' : '代理失败，改回直连续播', 'info');
+            hls.destroy();
+            if (state.hlsInstance === hls) state.hlsInstance = null;
+            attachHls(url, title, video, !useDirect, false, at);
+            return;
+        }
+
+        toast('这条路走不通（' + data.details + '），请换一条线路', 'error');
         startPlayerInIframe(url, title);
     });
 
