@@ -828,7 +828,7 @@ function editSource(key) {
     renderSourceList();
     dom.importTextarea.focus();
     dom.importTextarea.scrollTop = 0;
-    toast('已加载到编辑区，修改后点击「导入」保存', 'info');
+    toast('已加载到编辑区，修改后点击「保存」', 'info');
 }
 
 // ============================================================
@@ -885,9 +885,11 @@ function importSources() {
     if (!raw) { toast('请粘贴 JSON 内容', 'error'); return; }
 
     try {
-        const data = JSON.parse(raw);
+        let data = JSON.parse(raw);
+        // 编辑单个源时 textarea 里是一个对象而非数组，两种都要能保存
+        if (data && !Array.isArray(data) && typeof data === 'object') data = [data];
         if (!Array.isArray(data) || !data.length) {
-            throw new Error('格式错误：需要非空数组');
+            throw new Error('格式错误：需要非空数组或单个源对象');
         }
         for (const item of data) {
             if (!item.key || !item.name || !item.api) {
@@ -909,20 +911,24 @@ function importSources() {
             toast('✅ 更新成功', 'success');
         } else {
             let addedCount = 0;
+            let updatedCount = 0;
             let skippedCount = 0;
-            
+
             data.forEach(newItem => {
-                const exists = currentSources.some(ex => ex.key === newItem.key);
-                if (!exists) {
+                const idx = currentSources.findIndex(ex => ex.key === newItem.key);
+                if (idx === -1) {
                     currentSources.push(newItem);
                     addedCount++;
+                } else if (JSON.stringify(currentSources[idx]) !== JSON.stringify(newItem)) {
+                    currentSources[idx] = newItem;
+                    updatedCount++;
                 } else {
                     skippedCount++;
                 }
             });
-            
+
             setStoredSources(currentSources);
-            toast(`✅ 导入完成：新增 ${addedCount} 个，跳过 ${skippedCount} 个重复源`, 'success');
+            toast(`✅ 导入完成：新增 ${addedCount} 个，更新 ${updatedCount} 个，跳过 ${skippedCount} 个相同源`, 'success');
         }
 
         state.sources = getStoredSources() || [];
