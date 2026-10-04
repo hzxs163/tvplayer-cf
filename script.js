@@ -15,12 +15,14 @@ const STORAGE_RATE_KEY = 'tv_playback_rate';
 // 共享 HLS 配置（消除重复，统一调优）
 const HLS_CONFIG = {
     enableWorker: true,
-    maxBufferLength: 60,
-    maxMaxBufferLength: 120,
-    maxBufferSize: 60 * 1000 * 1000,
+    // 缓冲目标：原来要攒够 60 秒才稳，分片又都是串行取，起播与缓冲条涨得慢。
+    // 降到 15 秒（上限 30 秒）先能播能拖，后续按需要再调大。
+    maxBufferLength: 15,
+    maxMaxBufferLength: 30,
+    maxBufferSize: 20 * 1000 * 1000,
     maxBufferHole: 1.0,
     lowLatencyMode: false,
-    backbufferLength: 60,
+    backbufferLength: 30,
     liveBackBufferLength: 60,
     progressive: true,
     fragLoadingMaxRetry: 8,
@@ -36,7 +38,8 @@ const HLS_CONFIG = {
     abrEwmaSlowLive: 1,
     abrEwmaFastVoD: 0.1,
     abrEwmaSlowVoD: 1,
-    abrEwmaDefaultEstimate: 5e6,
+    // 起播时的带宽猜测：5 Mbps 对经 CF 绕行的链路偏乐观，容易一上来挑高码率线路导致边播边掉缓冲
+    abrEwmaDefaultEstimate: 2.5e6,
     abrBandWidthFactor: 0.7,
     abrBandWidthUpFactor: 0.95,
     xhrSetup: function(xhr, xhrUrl) {

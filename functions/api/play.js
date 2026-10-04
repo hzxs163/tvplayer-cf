@@ -22,23 +22,29 @@ export async function onRequest(context) {
         return new Response('无效的 URL 格式', { status: 400 });
     }
 
+    // 客户端的请求范围（拖动进度条时浏览器只想要那一小段）。
+    // 清单要整体重写地址，带 Range 请求清单会让重写结果与字节区间不符，故只给分片/媒体透传。
+    const rangeHeader = request.headers.get('Range');
+    const looksLikePlaylist = targetUrl.includes('.m3u8') || targetUrl.includes('.m3u');
+    const forwardRange = rangeHeader && !looksLikePlaylist;
+
     // ============================================================
-    // 3. 尝试从缓存获取
+    // 3. 尝试从缓存获取（带 Range 的请求不走缓存，避免部分响应污染缓存）
     // ============================================================
     const cacheKey = new Request(targetUrl, { method: 'GET' });
     const cache = caches.default;
-    let response = await cache.match(cacheKey);
+    let response = rangeHeader ? undefined : await cache.match(cacheKey);
 
     if (response) {
-        // 缓存命中，直接返回
+        // 缓存命中，直接返回（保留原响应的全部响应头，只补命中与 CORS 标记）
         console.log('✅ 缓存命中:', targetUrl);
+        const hitHeaders = new Headers(response.headers);
+        hitHeaders.set('X-Cache', 'HIT');
+        hitHeaders.set('Access-Control-Allow-Origin', '*');
         return new Response(response.body, {
             status: response.status,
-            headers: {
-                ...response.headers,
-                'X-Cache': 'HIT',
-                'Access-Control-Allow-Origin': '*',
-            },
+            statusText: response.statusText,
+            headers: hitHeaders,
         });
     }
 
@@ -59,6 +65,8 @@ export async function onRequest(context) {
                 'Origin': parsed.origin,
                 'Cache-Control': 'no-cache',
                 'Pragma': 'no-cache',
+                // 透传请求区间：源站据此返回 206，拖动进度条不必重下整片
+                ...(forwardRange ? { Range: rangeHeader } : {}),
             },
             // 跟随重定向
             redirect: 'follow',
