@@ -2845,6 +2845,20 @@ function closePlayer() {
     setStatus('就绪');
 }
 
+function openLink() {
+    const url = state.currentUrl || (dom.m3u8Link && dom.m3u8Link.value.trim());
+    if (!url) {
+        toast('没有可打开的链接', 'error');
+        return;
+    }
+    const win = window.open(url, '_blank', 'noopener');
+    if (!win) {
+        // 浏览器拦了弹窗：退化成复制，让他能交给外部播放器
+        copyLink();
+        toast('弹窗被拦截，已改为复制地址', 'info');
+    }
+}
+
 function copyLink() {
     const input = dom.m3u8Link;
     if (!input || !input.value) {

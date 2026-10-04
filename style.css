@@ -431,7 +431,8 @@ main {
 .player-controls .link-input:focus {
     border-color: var(--primary);
 }
-.player-controls .btn-copy {
+.player-controls .btn-copy,
+.player-controls .btn-open {
     padding: 4px 14px;
     font-size: 13px;
     border-radius: 4px;
@@ -447,7 +448,11 @@ main {
     align-items: center;
     justify-content: center;
 }
-.player-controls .btn-copy:hover {
+.player-controls .btn-open {
+    background: var(--green);
+}
+.player-controls .btn-copy:hover,
+.player-controls .btn-open:hover {
     opacity: 0.85;
 }
 
@@ -1356,7 +1361,8 @@ footer span {
         padding: 3px 6px;
         min-width: 40px;
     }
-    .player-controls .btn-copy {
+    .player-controls .btn-copy,
+    .player-controls .btn-open {
         font-size: 11px;
         padding: 3px 10px;
     }
