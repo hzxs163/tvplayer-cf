@@ -22,9 +22,10 @@ const HLS_CONFIG = {
     maxBufferSize: 20 * 1000 * 1000,
     maxBufferHole: 1.0,
     lowLatencyMode: false,
-    backbufferLength: 30,
     liveBackBufferLength: 60,
-    progressive: true,
+    // 不要开 progressive：它让 hls.js 用 fetch 流式喂解复用器且分片之间不 flush，
+    // 拖动进度时被打断的那一半数据会留在缓冲区里拼到下一片前面，
+    // 表现为画面卡住、声音却从头播（浏览器原生播放器没这问题，实测拖动顺滑）
     fragLoadingMaxRetry: 8,
     fragLoadingRetryDelay: 500,
     fragLoadingMaxRetryTimeout: 180000,
