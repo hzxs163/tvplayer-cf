@@ -589,20 +589,22 @@ async function loadSources() {
     if (stored) {
         return stored;
     }
-    // 回退：首次访问时加载内置默认源（sources.json），部署后开箱即用
-    try {
-        const resp = await fetch('/sources.json', { cache: 'no-cache' });
-        if (!resp.ok) return [];
-        const data = await resp.json();
-        if (Array.isArray(data) && data.length) {
-            const normalized = normalizeSource(data);
+    // 回退：首次访问时加载内置源。优先「内置合集」（TVBox + TXT 实测探活后的采集站），
+    // 取不到再退回 sources.json 的演示源，保证部署后开箱可用
+    for (const file of ['/sources-builtin.json', '/sources.json']) {
+        try {
+            const resp = await fetch(file, { cache: 'no-cache' });
+            if (!resp.ok) continue;
+            const data = await resp.json();
+            const list = Array.isArray(data) ? data : (data && Array.isArray(data.sources) ? data.sources : []);
+            const normalized = normalizeSource(list);
             if (normalized.length) {
                 // 仅在用户从未配置过源时写入，避免覆盖用户后续的修改
                 if (!getStoredSources()) setStoredSources(normalized);
                 return normalized;
             }
-        }
-    } catch (e) { /* 静默失败 */ }
+        } catch (e) { /* 试下一个 */ }
+    }
     return [];
 }
 
@@ -656,18 +658,31 @@ function renderSourceList() {
     // 有效源分组
     if (validSources.length) {
         html += `<div class="group-label"><span class="dot stable"></span> 🟢 有效 (${validSources.length})</div>`;
+function sourceBadge(s) {
+    const parts = [];
+    const chip = (color, bg, text) => `<span style="font-size:11px;color:${color};background:${bg};padding:1px 6px;border-radius:4px;">${text}</span>`;
+    if (s.enabled === false) parts.push(chip('#8a6d3b', 'rgba(138,109,59,.12)', '🙈已隐藏'));
+    if (s.group === 'boxonly') parts.push(chip('#5c6bc0', 'rgba(92,107,192,.12)', '📦仅盒子'));
+    if (s.group === 'adult') parts.push(chip('#ad1457', 'rgba(173,20,87,.12)', '🔞成人内容'));
+    if (s.group === 'subs') parts.push(chip('#00838f', 'rgba(0,131,143,.12)', '🗂多仓子接口'));
+    if (s.origin) parts.push(chip('var(--text3)', 'transparent', '←' + esc(String(s.origin).slice(0, 14))));
+    if (s.note) parts.push(chip('var(--text3)', 'transparent', esc(String(s.note).slice(0, 40))));
+    return parts.length ? `<span style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">${parts.join('')}</span>` : '';
+}
+
         validSources.forEach((s, index) => {
             const isEditing = state.editingKey === s.key;
             html += `
-                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''} display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-radius:8px; background:var(--bg); margin-bottom:4px; border:1px solid transparent;" 
-                     draggable="true" 
+                <div class="source-item" style="${isEditing ? 'border-color:var(--primary);' : ''} display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-radius:8px; background:var(--bg); margin-bottom:4px; border:1px solid transparent;"
+                     draggable="true"
                      data-index="${index}"
                      data-key="${esc(s.key)}">
-                    <div style="display:flex; align-items:center; gap:14px; flex:1;">
+                    <div style="display:flex; align-items:center; gap:14px; flex:1; flex-wrap:wrap;">
                         <span style="cursor:grab; color:var(--text3); font-size:16px;">☰</span>
                         <span style="font-weight:500; color:var(--text);">${esc(s.name)}</span>
                         <span style="color:var(--text3); font-size:12px;">${esc(s.key)}</span>
                         <span style="font-size:12px; color:#2e7d32;">🟢有效</span>
+                        ${sourceBadge(s)}
                     </div>
                     <div style="display:flex; gap:6px; flex-shrink:0;">
                         <button class="edit-btn" onclick="editSource('${esc(s.key)}')" style="padding:3px 12px; font-size:12px; border-radius:4px; border:none; cursor:pointer; color:var(--primary); background:var(--primary-dim);">编辑</button>
@@ -689,11 +704,12 @@ function renderSourceList() {
                      draggable="true" 
                      data-index="${realIndex}"
                      data-key="${esc(s.key)}">
-                    <div style="display:flex; align-items:center; gap:14px; flex:1;">
+                    <div style="display:flex; align-items:center; gap:14px; flex:1; flex-wrap:wrap;">
                         <span style="cursor:grab; color:var(--text3); font-size:16px;">☰</span>
                         <span style="font-weight:500; color:var(--text3);">${esc(s.name)}</span>
                         <span style="color:var(--text3); font-size:12px;">${esc(s.key)}</span>
                         <span style="font-size:12px; color:#c62828;">🔴失效</span>
+                        ${sourceBadge(s)}
                     </div>
                     <div style="display:flex; gap:6px; flex-shrink:0;">
                         <button class="edit-btn" onclick="editSource('${esc(s.key)}')" style="padding:3px 12px; font-size:12px; border-radius:4px; border:none; cursor:pointer; color:var(--primary); background:var(--primary-dim);">编辑</button>
@@ -880,72 +896,167 @@ function closeImportModal() {
     document.body.style.overflow = '';
 }
 
+// ============================================================
+//  统一导入：JSON 源数组 / TVBox 配置 / TXT 清单
+//  只做识别和标注，不改源里的接口地址（除尾部 ?ac=... 这类拼接残留）
+// ============================================================
+const normApi = (a) => String(a || '').trim().replace(/[?#].*$/, '').replace(/\/+$/, '').toLowerCase();
+
+function decodeSourceText(buffer) {
+    try {
+        return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+    } catch (e) {
+        // 国内导出的 TXT 常见 GBK/GB18030，UTF-8 严格解码会抛错
+        try { return new TextDecoder('gb18030').decode(buffer); } catch (e2) { return new TextDecoder('utf-8').decode(buffer); }
+    }
+}
+
+function mergeImportedSources(entries, existing) {
+    const apiSet = new Set(existing.map(s => normApi(s.api)).filter(Boolean));
+    const keySet = new Set(existing.map(s => s.key));
+    let added = 0, dupApi = 0, seq = 0;
+    for (const raw of entries) {
+        const item = Object.assign({}, raw);
+        const a = normApi(item.api);
+        if (!a) continue;
+        if (apiSet.has(a)) { dupApi++; continue; }
+        let key = item.key || 'src';
+        while (keySet.has(key)) key = `${item.key}_x${++seq}`;
+        item.key = key;
+        apiSet.add(a); keySet.add(key);
+        existing.push(item);
+        added++;
+    }
+    return { added, dupApi };
+}
+
+function describeIngest(res) {
+    const bits = [`识别为${res.format === 'tvbox' ? ' TVBox 配置' : res.format === 'tvbox-multi' ? ' TVBox 多仓' : res.format === 'txt' ? ' TXT 清单' : ' JSON 源列表'}`];
+    const m = res.meta || {};
+    if (res.format === 'tvbox') {
+        bits.push(`可播 ${m.playable || 0}`);
+        if (m.boxOnly) bits.push(`盒子专用 ${m.boxOnly}`);
+        if (m.adult) bits.push(`成人隐藏 ${m.adult}`);
+        if (m.xml) bits.push(`XML ${m.xml}`);
+        if (m.lives) bits.push(`直播 ${m.lives} 组未导入`);
+    } else if (res.format === 'txt') {
+        bits.push(`有效行 ${m.lines || 0}`);
+        if (m.adult) bits.push(`成人隐藏 ${m.adult}`);
+    } else if (res.format === 'tvbox-multi') {
+        bits.push(`子接口 ${m.subs || 0} 个（仅登记，需单独导入其内容）`);
+    }
+    return bits.join(' · ');
+}
+
+function applyIngest(text, opts) {
+    const o = opts || {};
+    if (typeof TVB === 'undefined') throw new Error('兼容层 tvbox-compat.js 未加载');
+    const res = TVB.ingest(text, { label: o.label || '', url: o.url || '', from: o.from || 'imported' });
+    if (res.error) throw new Error(res.error);
+    if (!res.entries.length) throw new Error('没解析出任何源条目');
+    const existing = getStoredSources() || [];
+    const { added, dupApi } = mergeImportedSources(res.entries, existing);
+    setStoredSources(existing);
+    state.sources = existing;
+    renderSourceList();
+    populateSelect();
+    if (!dom.sourceSelect.value) {
+        const first = existing.find(s => s.group === 'stable' && s.enabled !== false && s.disabled !== true)
+            || existing.find(s => s.enabled !== false && s.disabled !== true)
+            || existing[0];
+        if (first) { dom.sourceSelect.value = first.key; loadBrowse(first); }
+    }
+    toast(`✅ ${describeIngest(res)} → 新增 ${added} 个${dupApi ? `，跳过重名接口 ${dupApi} 个` : ''}，共 ${existing.length} 个源`, 'success');
+    return res;
+}
+
+// 判断是否「原有 JSON 源数组/单源对象」格式：是的话必须走原始导入逻辑，字段一律不改
+function legacySourceList(raw) {
+    let data;
+    try {
+        data = JSON.parse(raw);
+    } catch (e) {
+        return null;
+    }
+    if (data && !Array.isArray(data) && typeof data === 'object') data = [data];
+    if (!Array.isArray(data) || !data.length) return null;
+    const looksLikeSources = data.every(it => it && typeof it === 'object' && (it.api || it.baseUrl || it.url) && (it.name || it.key || it.title));
+    if (!looksLikeSources) return null;
+    if (data.some(it => Array.isArray(it.sites) || Array.isArray(it.urls) || Array.isArray(it.storeHouse) || Array.isArray(it.lives))) return null;
+    return data;
+}
+
 function importSources() {
     const raw = dom.importTextarea.value.trim();
-    if (!raw) { toast('请粘贴 JSON 内容', 'error'); return; }
+    if (!raw) { toast('请粘贴源内容（JSON / TVBox 配置 / TXT 清单）', 'error'); return; }
+
+    const legacy = legacySourceList(raw);
+    if (legacy) {
+        try {
+            for (const item of legacy) {
+                if (!item.key || !item.name || !item.api) {
+                    throw new Error('每个源必须包含 key, name, api 字段');
+                }
+            }
+
+            let currentSources = getStoredSources() || [];
+
+            if (state.editingKey) {
+                const idx = currentSources.findIndex(s => s.key === state.editingKey);
+                if (idx > -1) {
+                    currentSources[idx] = legacy[0];
+                } else {
+                    currentSources.push(legacy[0]);
+                }
+                state.editingKey = null;
+                setStoredSources(currentSources);
+                toast('✅ 更新成功', 'success');
+            } else {
+                let addedCount = 0;
+                let updatedCount = 0;
+                let skippedCount = 0;
+
+                legacy.forEach(newItem => {
+                    const idx = currentSources.findIndex(ex => ex.key === newItem.key);
+                    if (idx === -1) {
+                        currentSources.push(newItem);
+                        addedCount++;
+                    } else if (JSON.stringify(currentSources[idx]) !== JSON.stringify(newItem)) {
+                        currentSources[idx] = newItem;
+                        updatedCount++;
+                    } else {
+                        skippedCount++;
+                    }
+                });
+
+                setStoredSources(currentSources);
+                toast(`✅ 导入完成：新增 ${addedCount} 个，更新 ${updatedCount} 个，跳过 ${skippedCount} 个相同源`, 'success');
+            }
+
+            state.sources = getStoredSources() || [];
+            closeImportModal();
+            populateSelect();
+
+            if (state.sources.length) {
+                const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
+                if (first) {
+                    dom.sourceSelect.value = first.key;
+                    loadBrowse(first);
+                }
+            } else {
+                renderEmptyState();
+            }
+        } catch (e) {
+            toast('JSON 格式错误: ' + e.message, 'error');
+        }
+        return;
+    }
 
     try {
-        let data = JSON.parse(raw);
-        // 编辑单个源时 textarea 里是一个对象而非数组，两种都要能保存
-        if (data && !Array.isArray(data) && typeof data === 'object') data = [data];
-        if (!Array.isArray(data) || !data.length) {
-            throw new Error('格式错误：需要非空数组或单个源对象');
-        }
-        for (const item of data) {
-            if (!item.key || !item.name || !item.api) {
-                throw new Error('每个源必须包含 key, name, api 字段');
-            }
-        }
-
-        let currentSources = getStoredSources() || [];
-        
-        if (state.editingKey) {
-            const idx = currentSources.findIndex(s => s.key === state.editingKey);
-            if (idx > -1) {
-                currentSources[idx] = data[0];
-            } else {
-                currentSources.push(data[0]);
-            }
-            state.editingKey = null;
-            setStoredSources(currentSources);
-            toast('✅ 更新成功', 'success');
-        } else {
-            let addedCount = 0;
-            let updatedCount = 0;
-            let skippedCount = 0;
-
-            data.forEach(newItem => {
-                const idx = currentSources.findIndex(ex => ex.key === newItem.key);
-                if (idx === -1) {
-                    currentSources.push(newItem);
-                    addedCount++;
-                } else if (JSON.stringify(currentSources[idx]) !== JSON.stringify(newItem)) {
-                    currentSources[idx] = newItem;
-                    updatedCount++;
-                } else {
-                    skippedCount++;
-                }
-            });
-
-            setStoredSources(currentSources);
-            toast(`✅ 导入完成：新增 ${addedCount} 个，更新 ${updatedCount} 个，跳过 ${skippedCount} 个相同源`, 'success');
-        }
-
-        state.sources = getStoredSources() || [];
+        applyIngest(raw, { label: '粘贴内容', from: 'imported' });
         closeImportModal();
-        populateSelect();
-        
-        if (state.sources.length) {
-            const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
-            if (first) {
-                dom.sourceSelect.value = first.key;
-                loadBrowse(first);
-            }
-        } else {
-            renderEmptyState();
-        }
     } catch (e) {
-        toast('JSON 格式错误: ' + e.message, 'error');
+        toast('解析失败: ' + e.message, 'error');
     }
 }
 
@@ -954,50 +1065,86 @@ function importFromFile(event) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
+        let text;
         try {
-            const data = JSON.parse(e.target.result);
-            if (!Array.isArray(data) || !data.length) {
-                throw new Error('格式错误：需要非空数组');
-            }
-            for (const item of data) {
-                if (!item.key || !item.name || !item.api) {
-                    throw new Error('每个源必须包含 key, name, api 字段');
+            text = decodeSourceText(e.target.result);
+        } catch (err) {
+            toast('文件读取失败: ' + err.message, 'error');
+            return;
+        }
+        const legacy = legacySourceList(text);
+        if (legacy) {
+            try {
+                for (const item of legacy) {
+                    if (!item.key || !item.name || !item.api) throw new Error('每个源必须包含 key, name, api 字段');
                 }
-            }
-            
-            let currentSources = getStoredSources() || [];
-            let addedCount = 0;
-            let skippedCount = 0;
-            
-            data.forEach(newItem => {
-                const exists = currentSources.some(ex => ex.key === newItem.key);
-                if (!exists) {
-                    currentSources.push(newItem);
-                    addedCount++;
+                const currentSources = getStoredSources() || [];
+                let addedCount = 0;
+                let skippedCount = 0;
+                legacy.forEach(newItem => {
+                    if (!currentSources.some(ex => ex.key === newItem.key)) {
+                        currentSources.push(newItem);
+                        addedCount++;
+                    } else {
+                        skippedCount++;
+                    }
+                });
+                setStoredSources(currentSources);
+                state.sources = currentSources;
+                toast(`✅ 导入完成：新增 ${addedCount} 个，跳过 ${skippedCount} 个重复源`, 'success');
+                closeImportModal();
+                populateSelect();
+                const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
+                if (first) {
+                    dom.sourceSelect.value = first.key;
+                    loadBrowse(first);
                 } else {
-                    skippedCount++;
+                    renderEmptyState();
                 }
-            });
-            
-            setStoredSources(currentSources);
-            state.sources = currentSources;
-            toast(`✅ 导入完成：新增 ${addedCount} 个，跳过 ${skippedCount} 个重复源`, 'success');
-            closeImportModal();
-            populateSelect();
-            const first = state.sources.find(s => s.group === 'stable') || state.sources[0];
-            if (first) {
-                dom.sourceSelect.value = first.key;
-                loadBrowse(first);
-            } else {
-                renderEmptyState();
+            } catch (err) {
+                toast('文件解析失败: ' + err.message, 'error');
             }
+            event.target.value = '';
+            return;
+        }
+        try {
+            applyIngest(text, { label: file.name, from: 'file' });
+            closeImportModal();
         } catch (err) {
             toast('文件解析失败: ' + err.message, 'error');
         }
+        event.target.value = '';
     };
-    reader.readAsText(file);
+    reader.onerror = () => toast('文件读取失败', 'error');
+    reader.readAsArrayBuffer(file);
     event.target.value = '';
 }
+
+
+async function loadBuiltinSources() {
+    toast('⏳ 正在载入内置源合集...', 'info');
+    try {
+        const resp = await fetch('/sources-builtin.json', { cache: 'no-cache' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        const list = Array.isArray(data) ? data : (data.sources || []);
+        if (!list.length) throw new Error('内置合集是空的');
+        const existing = getStoredSources() || [];
+        const { added, dupApi } = mergeImportedSources(list, existing);
+        setStoredSources(existing);
+        state.sources = existing;
+        renderSourceList();
+        populateSelect();
+        const first = existing.find(s => s.enabled !== false && s.disabled !== true);
+        if (first && !dom.sourceSelect.value) { dom.sourceSelect.value = first.key; loadBrowse(first); }
+        const hidden = list.filter(s => s.enabled === false).length;
+        toast(`✅ 内置合集：新增 ${added} 个${dupApi ? `，跳过重复 ${dupApi} 个` : ''}，其中 ${hidden} 个默认隐藏（成人/未探活/源过多），可在「显示隐藏源」里手动开启`, 'success');
+    } catch (e) {
+        toast('内置合集载入失败: ' + e.message, 'error');
+    }
+}
+window.loadBuiltinSources = loadBuiltinSources;
+
 
 function loadExample() {
     const example = [
@@ -1043,6 +1190,11 @@ function normalizeSource(source) {
                 disabled: item.disabled !== undefined ? item.disabled : false,
                 group: item.group || 'stable',
             };
+
+            // TVBox/TXT 导入带来的附加信息原样保留（标注用途，不参与取数）
+            for (const extra of ['origin', 'originUrl', 'from', 'note', 'tvboxType', 'aliases', 'classes', 'lastCheck', 'hasExt']) {
+                if (item[extra] !== undefined) normalized[extra] = item[extra];
+            }
             
             if (!normalized.key) {
                 normalized.key = normalized.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
@@ -1084,63 +1236,46 @@ async function fetchRemoteSources() {
     
     try {
         const response = await fetch('/api/proxy?url=' + encodeURIComponent(url));
-        
+
         if (!response.ok) {
             throw new Error('HTTP ' + response.status + ': ' + response.statusText);
         }
-        
-        let data;
-        try {
-            data = await response.json();
-        } catch (e) {
-            const text = await response.text();
-            try {
-                data = JSON.parse(text);
-            } catch (e2) {
-                throw new Error('远程数据不是有效的 JSON 格式');
+
+        const buf = await response.arrayBuffer();
+        const text = decodeSourceText(buf);
+        const legacy = legacySourceList(text);
+
+        if (legacy) {
+            const normalized = normalizeSource(legacy);
+            if (!normalized.length) throw new Error('未找到有效的源数据，请检查格式');
+            const existing = getStoredSources() || [];
+            let addedCount = 0;
+            let skippedCount = 0;
+            normalized.forEach(newItem => {
+                if (!existing.some(ex => ex.key === newItem.key)) {
+                    existing.push(newItem);
+                    addedCount++;
+                } else {
+                    skippedCount++;
+                }
+            });
+            setStoredSources(existing);
+            state.sources = existing;
+            renderSourceList();
+            populateSelect();
+            input.value = '';
+            toast(`✅ 远程导入成功：新增 ${addedCount} 个，跳过 ${skippedCount} 个重复源，共 ${existing.length} 个`, 'success');
+            if (existing.length && !dom.sourceSelect.value) {
+                const first = existing.find(s => s.group === 'stable') || existing[0];
+                if (first) { dom.sourceSelect.value = first.key; loadBrowse(first); }
             }
+            return;
         }
-        
-        const normalized = normalizeSource(data);
-        
-        if (!normalized.length) {
-            throw new Error('未找到有效的源数据，请检查格式');
-        }
-        
-        const existing = getStoredSources() || [];
-        let addedCount = 0;
-        let skippedCount = 0;
-        
-        normalized.forEach(newItem => {
-            const exists = existing.some(ex => ex.key === newItem.key);
-            if (!exists) {
-                existing.push(newItem);
-                addedCount++;
-            } else {
-                skippedCount++;
-            }
-        });
-        
-        setStoredSources(existing);
-        state.sources = existing;
-        
-        renderSourceList();
-        populateSelect();
+
+        applyIngest(text, { label: new URL(url).hostname, url, from: 'remote' });
         input.value = '';
-        
-        toast(`✅ 远程导入成功：新增 ${addedCount} 个，跳过 ${skippedCount} 个重复源，共 ${existing.length} 个`, 'success');
-        
-        if (existing.length && !dom.sourceSelect.value) {
-            const first = existing.find(s => s.group === 'stable') || existing[0];
-            if (first) {
-                dom.sourceSelect.value = first.key;
-                loadBrowse(first);
-            }
-        }
-        
-    } catch (error) {
-        console.error('远程导入失败:', error);
-        toast('❌ 远程导入失败: ' + error.message, 'error');
+    } catch (e) {
+        toast('远程导入失败: ' + e.message, 'error');
     } finally {
         input.disabled = false;
     }
@@ -1702,6 +1837,11 @@ async function loadCategoriesInBackground(source) {
 // ============================================================
 async function loadBrowse(source) {
     if (!source || state.isLoading) return;
+    // TVBox 导入的爬虫站点（csp_X / py_X）没有 http 接口，浏览器里取不到数据
+    if (!/^https?:\/\//i.test(String(source.api || ''))) {
+        toast(`「${source.name}」是 TVBox 爬虫站点（接口写法：${String(source.api).slice(0, 24)}），需要在安卓盒子里配合 jar 使用，浏览器播不了`, 'error');
+        return;
+    }
     state.isLoading = true;
     state.source = source;
     state.category = null;

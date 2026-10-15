@@ -136,16 +136,16 @@
             <h3>✦ 源管理</h3>
             <button class="close-modal" onclick="closeImportModal()">✕</button>
         </div>
-        <div class="sub">管理你的影视源列表 · 支持 JSON 导入与在线编辑</div>
+        <div class="sub">管理你的影视源列表 · 支持 JSON / TVBox 配置 / TXT 清单导入与在线编辑</div>
 
         <!-- 导入区域 -->
         <div class="import-section">
-            <div class="section-label">📄 导入 JSON</div>
-            <textarea id="importTextarea" placeholder='请粘贴 JSON 格式的源列表，点击「加载示例」查看格式'></textarea>
+            <div class="section-label">📄 导入源（JSON · TVBox 配置 · TXT 清单）</div>
+            <textarea id="importTextarea" placeholder='三种格式都能直接粘：&#10;1) JSON 源数组 [{"key":"..","name":"..","api":".."}]&#10;2) TVBox 配置（含 sites/lives/parses 的整份 JSON，爬虫站点会标为「盒子专用」并隐藏）&#10;3) TXT 清单，每行「名称 接口地址」，# 开头是注释&#10;点击「加载示例」查看格式'></textarea>
             
             <!-- 🆕 远程导入 -->
             <div class="remote-import-row">
-                <input type="text" id="remoteUrlInput" placeholder="输入远程源地址，如 https://example.com/sources.json" />
+                <input type="text" id="remoteUrlInput" placeholder="远程源地址：JSON 数组、TVBox 配置或 TXT 清单皆可，如 https://example.com/tvbox.json" />
                 
                 <button class="btn btn-ghost" onclick="fetchRemoteSources()" style="display:flex;align-items:center;gap:4px;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -174,7 +174,8 @@
                     </svg>
                     本地导入
                 </button>
-                <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importFromFile(event)" />
+                <input type="file" id="fileInput" accept=".json,.txt,.js,text/*" style="display:none" onchange="importFromFile(event)" />
+                <button class="btn btn-ghost" onclick="loadBuiltinSources()" title="载入内置源合集（TVBox + TXT 清单实测探活后的采集站）">📦 内置源合集</button>
             </div>
         </div>
 
@@ -221,6 +222,7 @@
     </script>
     <!-- ===== Service Worker 结束 ===== -->
 
+    <script src="/tvbox-compat.js"></script>
     <script src="/script.js"></script>
 </body>
 </html>

@@ -1,15 +1,17 @@
-const CACHE_NAME = 'tvplayer-v3';
+const CACHE_NAME = 'tvplayer-v4';
 // 代码类文件走「网络优先」：改了 script.js 后用户下一次打开就是新版，
 // 不必先看到旧版再刷新一次（大文件 hls.min.js 仍走缓存优先）
-const NETWORK_FIRST = ['/index.html', '/script.js', '/style.css'];
+const NETWORK_FIRST = ['/index.html', '/script.js', '/style.css', '/tvbox-compat.js', '/sources-builtin.json'];
 const urlsToCache = [
   '/',
   '/index.html',
   '/style.css',
   '/script.js',
+  '/tvbox-compat.js',
   '/hls.min.js',
   '/manifest.json',
-  '/sources.json'
+  '/sources.json',
+  '/sources-builtin.json'
 ];
 
 // 安装 Service Worker：预缓存静态资源
