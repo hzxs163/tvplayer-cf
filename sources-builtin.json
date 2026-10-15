@@ -18,6 +18,12 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 73,
+   "encrypted": false
   }
  },
  {
@@ -28,7 +34,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "神秘大佬",
@@ -39,7 +45,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏"
  },
  {
   "key": "索尼资源2",
@@ -49,7 +56,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -60,7 +67,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "s_api_huosuapi_cc",
@@ -70,7 +78,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -81,7 +89,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 122B)），默认隐藏"
  },
  {
   "key": "s_api_xinlangapi_com",
@@ -91,7 +100,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "雷蒙",
@@ -102,7 +111,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1587B)），默认隐藏"
  },
  {
   "key": "s_iqiyizyapi_com",
@@ -112,7 +122,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -123,7 +133,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏"
  },
  {
   "key": "s_jyzyapi_com",
@@ -133,7 +144,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -144,7 +155,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1593B)），默认隐藏"
  },
  {
   "key": "155资源",
@@ -165,6 +177,12 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 891,
+   "encrypted": false
   }
  },
  {
@@ -175,7 +193,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "小哥哥",
@@ -186,7 +204,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1593B)），默认隐藏"
  },
  {
   "key": "s_jyzyapi_com_2",
@@ -196,7 +215,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -207,7 +226,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（分片取失败 The operation was aborted due ），默认隐藏"
  },
  {
   "key": "s_caiji_kuaichezy_org",
@@ -217,7 +237,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -228,7 +248,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "s_api_ffzyapi_com",
@@ -238,7 +259,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -249,7 +270,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "s_api_wujinapi_cc",
@@ -259,7 +281,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "雷蒙",
@@ -270,7 +292,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "s_m_u_apiyhzy_com",
@@ -291,6 +314,12 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 220,
+   "encrypted": false
   }
  },
  {
@@ -312,6 +341,12 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 1316,
+   "encrypted": true
   }
  },
  {
@@ -322,7 +357,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -333,7 +368,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1587B)），默认隐藏"
  },
  {
   "key": "c_k_资源",
@@ -343,7 +379,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "小哥哥",
@@ -354,7 +390,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1587B)），默认隐藏"
  },
  {
   "key": "s_api_wujinapi_me",
@@ -364,7 +401,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "小哥哥",
@@ -375,7 +412,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "s_tyyszy_com",
@@ -385,7 +423,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "神秘大佬",
@@ -396,7 +434,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 520, 30B)），默认隐藏"
  },
  {
   "key": "s_sdzyapi_com",
@@ -406,7 +445,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "影视仓Box",
@@ -417,7 +456,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "s_suoniapi_com",
@@ -427,7 +467,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "金鹰",
@@ -438,7 +478,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "s_api_wsyzy_net",
@@ -459,6 +500,12 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 224,
+   "encrypted": false
   }
  },
  {
@@ -469,7 +516,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "小哥哥",
@@ -480,7 +527,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 520, 30B)），默认隐藏"
  },
  {
   "key": "s_api_maoyanapi_top",
@@ -501,6 +549,12 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 137,
+   "encrypted": false
   }
  },
  {
@@ -511,7 +565,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "小哥哥",
@@ -522,7 +576,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "无尽资源2",
@@ -532,7 +587,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -543,7 +598,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "s_suoniapi_com_2",
@@ -553,7 +609,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "小盒子4K",
@@ -564,7 +620,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "速播资源2",
@@ -574,7 +631,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -585,7 +642,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1587B)），默认隐藏"
  },
  {
   "key": "s_tyyszyapi_com",
@@ -595,7 +653,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -606,7 +664,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 520, 30B)），默认隐藏"
  },
  {
   "key": "豪华资源2",
@@ -616,7 +675,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -627,7 +686,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1589B)），默认隐藏"
  },
  {
   "key": "豪华资源2_2",
@@ -637,7 +697,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -648,7 +708,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1589B)），默认隐藏"
  },
  {
   "key": "s_api_guangsuapi_com_2",
@@ -658,7 +719,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -669,7 +730,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1591B)），默认隐藏"
  },
  {
   "key": "60资源_采集",
@@ -690,6 +752,12 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 77,
+   "encrypted": false
   }
  },
  {
@@ -711,6 +779,12 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 738,
+   "encrypted": false
   }
  },
  {
@@ -721,7 +795,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -732,7 +806,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1592B)），默认隐藏"
  },
  {
   "key": "s_api_zuidapi_com",
@@ -742,7 +817,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "小哥哥",
@@ -753,7 +828,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "s_api_ffzyapi_com_2",
@@ -763,7 +839,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -774,7 +850,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "s_haohuazy_com",
@@ -784,7 +861,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -795,7 +872,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1589B)），默认隐藏"
  },
  {
   "key": "s_maoyanzy_com",
@@ -816,6 +894,12 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 137,
+   "encrypted": false
   }
  },
  {
@@ -837,6 +921,12 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 77,
+   "encrypted": false
   }
  },
  {
@@ -847,7 +937,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -858,7 +948,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "s_api_apibdzy_com",
@@ -879,6 +970,12 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 141,
+   "encrypted": false
   }
  },
  {
@@ -889,7 +986,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -900,7 +997,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "s_p2100_net",
@@ -910,7 +1008,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
@@ -921,7 +1019,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏"
  },
  {
   "key": "s_caiji_maotaizy_cc",
@@ -931,7 +1030,7 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
   "group": "tvbox",
   "origin": "雷蒙",
@@ -942,7 +1041,8 @@
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
-  }
+  },
+  "note": "2026-10-15 07:42 播放链路未跑通（分片取失败 The operation was aborted due ），默认隐藏"
  },
  {
   "key": "s_hhzyapi_com",
@@ -957,7 +1057,7 @@
   "group": "tvbox",
   "origin": "小盒子4K",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1589B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1599,
@@ -979,7 +1079,7 @@
   "group": "tvbox",
   "origin": "金鹰",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1593B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1613,
@@ -1001,7 +1101,7 @@
   "group": "tvbox",
   "origin": "神秘大佬",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（有列表但无播放地址），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1641,
@@ -1023,7 +1123,7 @@
   "group": "tvbox",
   "origin": "小盒子4K",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1591B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1659,
@@ -1040,18 +1140,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
   "lastCheck": {
    "http": 200,
    "ms": 1700,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 55,
+   "encrypted": false
   }
  },
  {
@@ -1062,18 +1167,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
   "lastCheck": {
    "http": 200,
    "ms": 1818,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 110,
+   "encrypted": false
   }
  },
  {
@@ -1089,7 +1199,7 @@
   "group": "tvbox",
   "origin": "二月红接口",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1852,
@@ -1111,7 +1221,7 @@
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1593B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1861,
@@ -1133,7 +1243,7 @@
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（有列表但无播放地址），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1916,
@@ -1155,7 +1265,7 @@
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1926,
@@ -1177,7 +1287,7 @@
   "group": "tvbox",
   "origin": "小盒子4K",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 404, 33B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1951,
@@ -1194,18 +1304,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "tvbox",
   "origin": "小哥哥",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
   "lastCheck": {
    "http": 200,
    "ms": 2010,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 55,
+   "encrypted": false
   }
  },
  {
@@ -1216,18 +1331,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
   "lastCheck": {
    "http": 200,
    "ms": 2062,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 144,
+   "encrypted": false
   }
  },
  {
@@ -1243,7 +1363,7 @@
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 404, 33B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2314,
@@ -1265,7 +1385,7 @@
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 530, 30B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2329,
@@ -1287,7 +1407,7 @@
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（分片取失败 The operation was aborted due ），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2397,
@@ -1309,7 +1429,7 @@
   "group": "tvbox",
   "origin": "ok线路1",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 2420B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2422,
@@ -1326,18 +1446,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
   "lastCheck": {
    "http": 200,
    "ms": 2424,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 151,
+   "encrypted": false
   }
  },
  {
@@ -1353,7 +1478,7 @@
   "group": "tvbox",
   "origin": "金鹰",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 404, 33B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2515,
@@ -1370,18 +1495,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "tvbox",
   "origin": "小哥哥",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
   "lastCheck": {
    "http": 200,
    "ms": 2575,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 144,
+   "encrypted": false
   }
  },
  {
@@ -1392,18 +1522,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
   "lastCheck": {
    "http": 200,
    "ms": 2655,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 55,
+   "encrypted": false
   }
  },
  {
@@ -1419,7 +1554,7 @@
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2657,
@@ -1441,7 +1576,7 @@
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2685,
@@ -1458,18 +1593,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
   "lastCheck": {
    "http": 200,
    "ms": 2719,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 113,
+   "encrypted": false
   }
  },
  {
@@ -1485,7 +1625,7 @@
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2789,
@@ -1507,7 +1647,7 @@
   "group": "tvbox",
   "origin": "小盒子4K",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1592B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2791,
@@ -1524,18 +1664,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "tvbox",
   "origin": "荐片",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
   "lastCheck": {
    "http": 200,
    "ms": 2853,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 77,
+   "encrypted": false
   }
  },
  {
@@ -1551,7 +1696,7 @@
   "group": "tvbox",
   "origin": "菜妮丝",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2854,
@@ -1573,7 +1718,7 @@
   "group": "tvbox",
   "origin": "蜗牛影视",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1591B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 3089,
@@ -1595,7 +1740,7 @@
   "group": "tvbox",
   "origin": "小哥哥",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 3486,
@@ -1617,7 +1762,7 @@
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1587B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 3659,
@@ -1639,7 +1784,7 @@
   "group": "tvbox",
   "origin": "神秘大佬",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 530, 30B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 3935,
@@ -1656,18 +1801,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "tvbox",
   "origin": "荐片",
   "from": "tvbox",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
   "lastCheck": {
    "http": 200,
    "ms": 4831,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 9,
+   "encrypted": false
   }
  },
  {
@@ -1678,18 +1828,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "未默认启用（源太多会拖慢聚合搜索），可在源管理里手动开启",
   "lastCheck": {
    "http": 200,
    "ms": 12041,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 20,
+   "encrypted": false
   }
  },
  {
@@ -1705,7 +1860,7 @@
   "group": "tvbox",
   "origin": "小盒子4K",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 73,
@@ -1727,7 +1882,7 @@
   "group": "tvbox",
   "origin": "小盒子4K",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2393,
@@ -1749,7 +1904,7 @@
   "group": "tvbox",
   "origin": "小盒子4K",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 91,
@@ -1766,18 +1921,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "tvbox",
   "origin": "小盒子4K",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 325,
    "alive": false,
    "hasList": false,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 94,
+   "encrypted": false
   }
  },
  {
@@ -1788,18 +1948,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "tvbox",
   "origin": "二月红接口",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 208,
    "alive": false,
    "hasList": false,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 5,
+   "encrypted": false
   }
  },
  {
@@ -1815,7 +1980,7 @@
   "group": "tvbox",
   "origin": "ok线路1",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 35,
@@ -1837,7 +2002,7 @@
   "group": "tvbox",
   "origin": "ok线路1",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 1638,
@@ -1859,7 +2024,7 @@
   "group": "tvbox",
   "origin": "ok线路1",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 10249,
@@ -1881,7 +2046,7 @@
   "group": "tvbox",
   "origin": "ok线路1",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 45,
@@ -1903,7 +2068,7 @@
   "group": "tvbox",
   "origin": "ok线路1",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 4924,
@@ -1925,7 +2090,7 @@
   "group": "tvbox",
   "origin": "ok线路1",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 49,
@@ -1947,7 +2112,7 @@
   "group": "tvbox",
   "origin": "ok线路1",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 29,
@@ -1969,7 +2134,7 @@
   "group": "tvbox",
   "origin": "ok线路1",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 404,
    "ms": 2668,
@@ -1991,7 +2156,7 @@
   "group": "tvbox",
   "origin": "ok线路1",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 3764,
@@ -2013,7 +2178,7 @@
   "group": "tvbox",
   "origin": "神秘大佬",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 228,
@@ -2035,7 +2200,7 @@
   "group": "tvbox",
   "origin": "神秘大佬",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2270,
@@ -2057,7 +2222,7 @@
   "group": "tvbox",
   "origin": "神秘大佬",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 291,
@@ -2079,7 +2244,7 @@
   "group": "tvbox",
   "origin": "神秘大佬",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 30,
@@ -2101,7 +2266,7 @@
   "group": "tvbox",
   "origin": "神秘大佬",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 404,
    "ms": 753,
@@ -2118,18 +2283,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "tvbox",
   "origin": "金鹰",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 244,
    "alive": false,
    "hasList": false,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 194,
+   "encrypted": false
   }
  },
  {
@@ -2140,18 +2310,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "tvbox",
   "origin": "金鹰",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 252,
    "alive": false,
    "hasList": false,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 94,
+   "encrypted": false
   }
  },
  {
@@ -2167,7 +2342,7 @@
   "group": "tvbox",
   "origin": "金鹰",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1126,
@@ -2189,7 +2364,7 @@
   "group": "tvbox",
   "origin": "金鹰",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 785,
@@ -2211,7 +2386,7 @@
   "group": "tvbox",
   "origin": "金鹰",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 10363,
@@ -2233,7 +2408,7 @@
   "group": "tvbox",
   "origin": "dxawi",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 291,
@@ -2255,7 +2430,7 @@
   "group": "tvbox",
   "origin": "真心",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 32,
@@ -2277,7 +2452,7 @@
   "group": "tvbox",
   "origin": "夏夏",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "classes": "精彩 电影 电视剧 短剧 少儿 动漫 综艺 音乐 其他 纪录片 电子书 广播剧/有声书 学习教育 运动健身 壁纸头像 软件/游戏",
   "lastCheck": {
    "http": 200,
@@ -2300,7 +2475,7 @@
   "group": "tvbox",
   "origin": "夏夏",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "classes": "排行榜 歌手 歌单",
   "lastCheck": {
    "http": 200,
@@ -2323,7 +2498,7 @@
   "group": "tvbox",
   "origin": "夏夏",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "classes": "歌单广场 排行榜 歌手",
   "lastCheck": {
    "http": 200,
@@ -2346,7 +2521,7 @@
   "group": "tvbox",
   "origin": "夏夏",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "classes": "番剧 短片·手书·配音 MAD·AMV MMD·3D 虚拟偶像 COSPLAY·声优 特摄 次元衍生 搞笑 鬼畜 明星 萌宠 美食 旅行 手工·绘画 美妆·造型 治愈系 原创·翻唱 演奏·乐器 Vocaloid 宅舞 综合舞蹈 偶像 中国舞",
   "lastCheck": {
    "http": 200,
@@ -2369,7 +2544,7 @@
   "group": "tvbox",
   "origin": "夏夏",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "classes": "电影 电视剧 动漫 少儿 综艺 纪录片",
   "lastCheck": {
    "http": 200,
@@ -2392,7 +2567,7 @@
   "group": "tvbox",
   "origin": "夏夏",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "classes": "电影 电视剧 短剧 动漫 综艺",
   "lastCheck": {
    "http": 200,
@@ -2415,7 +2590,7 @@
   "group": "tvbox",
   "origin": "高天",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 42,
@@ -2437,7 +2612,7 @@
   "group": "tvbox",
   "origin": "高天",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 32,
@@ -2459,7 +2634,7 @@
   "group": "tvbox",
   "origin": "鸟叔",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 3305,
@@ -2481,7 +2656,7 @@
   "group": "tvbox",
   "origin": "优质",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 28,
@@ -2503,7 +2678,7 @@
   "group": "tvbox",
   "origin": "小哥哥",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 10378,
@@ -2525,7 +2700,7 @@
   "group": "tvbox",
   "origin": "蜗牛影视",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 849,
@@ -2547,7 +2722,7 @@
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 599,
@@ -2569,7 +2744,7 @@
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 274,
@@ -2586,18 +2761,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 240,
    "alive": false,
    "hasList": false,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 171,
+   "encrypted": false
   }
  },
  {
@@ -2613,7 +2793,7 @@
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "看起来不是片库接口，默认隐藏",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 1587B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1209,
@@ -2635,7 +2815,7 @@
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 10431,
@@ -2657,7 +2837,7 @@
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "看起来不是片库接口，默认隐藏",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1151,
@@ -2679,7 +2859,7 @@
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 2968,
@@ -2701,13 +2881,19 @@
   "group": "adult",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "成人/伦理内容，默认隐藏",
+  "note": "成人/伦理内容，默认隐藏（实测可播，需要时手动开）",
   "lastCheck": {
    "http": 200,
    "ms": 1188,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 242,
+   "encrypted": true
   }
  },
  {
@@ -2723,7 +2909,7 @@
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 221,
@@ -2745,7 +2931,7 @@
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 37,
@@ -2767,7 +2953,7 @@
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "看起来不是片库接口，默认隐藏",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 3128,
@@ -2789,7 +2975,7 @@
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "看起来不是片库接口，默认隐藏",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1203,
@@ -2811,7 +2997,7 @@
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 739,
@@ -2833,7 +3019,7 @@
   "group": "tvbox",
   "origin": "龙门",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 403,
    "ms": 787,
@@ -2855,7 +3041,7 @@
   "group": "tvbox",
   "origin": "黄金",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 2977,
@@ -2877,7 +3063,7 @@
   "group": "tvbox",
   "origin": "雷蒙",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 3586,
@@ -2899,7 +3085,7 @@
   "group": "tvbox",
   "origin": "雷蒙",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 491,
@@ -2921,7 +3107,7 @@
   "group": "tvbox",
   "origin": "雷蒙",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 10120,
@@ -2943,7 +3129,7 @@
   "group": "tvbox",
   "origin": "雷蒙",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 403, 33B)），默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 740,
@@ -2965,7 +3151,7 @@
   "group": "tvbox",
   "origin": "雷蒙",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 10569,
@@ -2982,18 +3168,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "tvbox",
   "origin": "雷蒙",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 203,
    "alive": false,
    "hasList": false,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 144,
+   "encrypted": false
   }
  },
  {
@@ -3009,7 +3200,7 @@
   "group": "tvbox",
   "origin": "雷蒙",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 42,
@@ -3031,7 +3222,7 @@
   "group": "tvbox",
   "origin": "雷蒙",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 4288,
@@ -3053,7 +3244,7 @@
   "group": "tvbox",
   "origin": "雷蒙",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 34,
@@ -3075,7 +3266,7 @@
   "group": "tvbox",
   "origin": "影视仓Box",
   "from": "tvbox",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 543,
@@ -3097,7 +3288,7 @@
   "group": "tvbox",
   "origin": "多仓线路",
   "from": "tvbox",
-  "note": "看起来不是片库接口，默认隐藏",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 389274B)），默认隐藏",
   "classes": "QQ群:1124665051",
   "lastCheck": {
    "http": 200,
@@ -3186,7 +3377,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 92,
@@ -3208,7 +3399,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 18,
@@ -3230,7 +3421,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2495,
@@ -3252,7 +3443,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 404,
    "ms": 499,
@@ -3274,7 +3465,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1171,
@@ -3296,7 +3487,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1543,
@@ -3318,7 +3509,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 977,
@@ -3340,7 +3531,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2363,
@@ -3362,7 +3553,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 3655,
@@ -3384,7 +3575,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 964,
@@ -3406,7 +3597,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2477,
@@ -3428,7 +3619,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 767,
@@ -3450,7 +3641,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1014,
@@ -3472,7 +3663,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 435,
@@ -3494,7 +3685,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 860,
@@ -3516,7 +3707,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1561,
@@ -3538,7 +3729,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 778,
@@ -3560,7 +3751,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 269,
@@ -3582,7 +3773,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 403,
    "ms": 592,
@@ -3604,7 +3795,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 500,
    "ms": 1079,
@@ -3626,7 +3817,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 403,
    "ms": 875,
@@ -3648,7 +3839,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 500,
    "ms": 1884,
@@ -3670,7 +3861,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 403,
    "ms": 594,
@@ -3692,7 +3883,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1546,
@@ -3714,7 +3905,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 403,
    "ms": 728,
@@ -3736,7 +3927,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 403,
    "ms": 617,
@@ -3758,7 +3949,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 403,
    "ms": 781,
@@ -3780,7 +3971,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 403,
    "ms": 879,
@@ -3802,7 +3993,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 743,
@@ -3824,7 +4015,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 5274,
@@ -3846,7 +4037,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 403,
    "ms": 906,
@@ -3868,7 +4059,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1413,
@@ -3890,7 +4081,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2220,
@@ -3912,7 +4103,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 403,
    "ms": 915,
@@ -3934,7 +4125,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 2148,
@@ -3956,7 +4147,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1623,
@@ -3978,7 +4169,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 404,
    "ms": 1294,
@@ -3995,18 +4186,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": false,
+  "enabled": true,
   "disabled": false,
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 19,
    "alive": false,
    "hasList": false,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 336,
+   "encrypted": true
   }
  },
  {
@@ -4088,7 +4284,7 @@
   "group": "cms",
   "origin": "djj",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 403,
    "ms": 1496,
@@ -4110,13 +4306,19 @@
   "group": "adult",
   "origin": "简单影视",
   "from": "txt",
-  "note": "成人/伦理内容，默认隐藏",
+  "note": "成人/伦理内容，默认隐藏（实测可播，需要时手动开）",
   "lastCheck": {
    "http": 200,
    "ms": 1701,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 195,
+   "encrypted": false
   }
  },
  {
@@ -4132,7 +4334,7 @@
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 536,
@@ -4154,13 +4356,19 @@
   "group": "adult",
   "origin": "简单影视",
   "from": "txt",
-  "note": "成人/伦理内容，默认隐藏",
+  "note": "成人/伦理内容，默认隐藏（实测可播，需要时手动开）",
   "lastCheck": {
    "http": 200,
    "ms": 2275,
    "alive": true,
    "hasList": true,
    "at": "2026-10-15"
+  },
+  "playCheck": {
+   "at": "2026-10-15 07:42",
+   "result": "能播",
+   "segKb": 263,
+   "encrypted": false
   }
  },
  {
@@ -4176,7 +4384,7 @@
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 播放链路未跑通（取到的不是播放表(HTTP 200, 122B)），默认隐藏",
   "lastCheck": {
    "http": 0,
    "ms": 16,
@@ -4198,7 +4406,7 @@
   "group": "cms",
   "origin": "简单影视",
   "from": "txt",
-  "note": "上次探测无有效数据，默认隐藏",
+  "note": "2026-10-15 07:42 列表都拿不到，默认隐藏",
   "lastCheck": {
    "http": 200,
    "ms": 1886,
