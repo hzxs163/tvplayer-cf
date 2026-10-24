@@ -28,11 +28,6 @@ export async function onRequest(context) {
     const looksLikePlaylist = targetUrl.includes('.m3u8') || targetUrl.includes('.m3u');
     const forwardRange = rangeHeader && !looksLikePlaylist;
 
-    // 可选 referer：部分源的 CDN 认来源站防盗链，必须带指定 Referer 才给流。
-    // 子请求（分片 / 加密 KEY）会沿用同一个 referer，否则清单能取、分片取不到。
-    let referer = url.searchParams.get('referer') || '';
-    if (!/^https?:\/\//i.test(referer)) referer = '';
-
     // ============================================================
     // 3. 尝试从缓存获取（带 Range 的请求不走缓存，避免部分响应污染缓存）
     // ============================================================
@@ -66,8 +61,8 @@ export async function onRequest(context) {
                 'User-Agent': UA,
                 'Accept': '*/*',
                 'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-                'Referer': referer || parsed.origin + '/',
-                'Origin': referer ? new URL(referer).origin : parsed.origin,
+                'Referer': parsed.origin + '/',
+                'Origin': parsed.origin,
                 'Cache-Control': 'no-cache',
                 'Pragma': 'no-cache',
                 // 透传请求区间：源站据此返回 206，拖动进度条不必重下整片
@@ -99,7 +94,7 @@ export async function onRequest(context) {
             let content = await response.text();
 
             if (content.trim().startsWith('#EXTM3U')) {
-                content = rewriteM3u8(content, targetUrl, referer);
+                content = rewriteM3u8(content, targetUrl);
             }
 
             const headers = new Headers(response.headers);
@@ -145,9 +140,7 @@ export async function onRequest(context) {
 // ============================================================
 // 重写 m3u8 内部地址 - 所有分片与加密 KEY 都走代理
 // ============================================================
-function rewriteM3u8(content, baseUrl, referer) {
-    const suffix = referer ? '&referer=' + encodeURIComponent(referer) : '';
-    const prox = (abs) => '/api/play?url=' + encodeURIComponent(abs) + suffix;
+function rewriteM3u8(content, baseUrl) {
     const lines = content.split('\n');
     const rewritten = [];
 
@@ -165,7 +158,7 @@ function rewriteM3u8(content, baseUrl, referer) {
             rewritten.push(line.replace(/URI="([^"]+)"/g, (match, uri) => {
                 const absoluteUri = resolveUrl(uri, baseUrl);
                 if (!absoluteUri) return match;
-                return 'URI="' + prox(absoluteUri) + '"';
+                return 'URI="/api/play?url=' + encodeURIComponent(absoluteUri) + '"';
             }));
             continue;
         }
@@ -176,14 +169,20 @@ function rewriteM3u8(content, baseUrl, referer) {
             continue;
         }
 
-        // 子清单（media playlist）也要继承 referer，否则下一层又 403
+        // 如果行已经是完整 URL，直接代理
         if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-            rewritten.push(prox(trimmed));
+            rewritten.push('/api/play?url=' + encodeURIComponent(trimmed));
             continue;
         }
 
+        // 处理相对路径（包括以 / 开头的绝对路径）
         const absoluteUrl = resolveUrl(trimmed, baseUrl);
-        rewritten.push(absoluteUrl ? prox(absoluteUrl) : line);
+        if (absoluteUrl) {
+            rewritten.push('/api/play?url=' + encodeURIComponent(absoluteUrl));
+        } else {
+            // 如果拼接失败，保持原样
+            rewritten.push(line);
+        }
     }
 
     return rewritten.join('\n');
