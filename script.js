@@ -1430,6 +1430,11 @@ async function fetchProxy(url, timeout = FETCH_TIMEOUT, asText = false) {
     
     const timer = setTimeout(() => controller.abort(), timeout);
     try {
+        // XPTV/TVBox 的 csp_* 爬虫源：交给浏览器端运行时执行
+        if (url.startsWith('spider://')) {
+            if (typeof XPTJS === 'undefined') throw new Error('spider-runtime.js 未加载');
+            return await XPTJS.handle(url);
+        }
         // 相对路径（同源 API 如 /api/demo）直接请求，不走代理
         const requestUrl = url.startsWith('/') ? url : PROXY(url);
         const resp = await fetch(requestUrl, { signal: controller.signal });
@@ -1838,7 +1843,8 @@ async function loadCategoriesInBackground(source) {
 async function loadBrowse(source) {
     if (!source || state.isLoading) return;
     // TVBox 导入的爬虫站点（csp_X / py_X）没有 http 接口，浏览器里取不到数据
-    if (!/^https?:\/\//i.test(String(source.api || ''))) {
+    // 以 / 开头的是本站自建接口（如 /api/avdb），同样可取数，不算爬虫
+    if (!/^(https?:\/\/|\/|spider:\/\/)/i.test(String(source.api || ''))) {
         toast(`「${source.name}」是 TVBox 爬虫站点（接口写法：${String(source.api).slice(0, 24)}），需要在安卓盒子里配合 jar 使用，浏览器播不了`, 'error');
         return;
     }
