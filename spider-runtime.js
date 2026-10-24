@@ -176,18 +176,27 @@ window.XPTJS = (function () {
         const resolved = await pool(flat, 6, async (item) => {
             const t = item.t;
             let play = t.url || t.pan || '';
+            let referer = '';
             if (!/^(https?:)?\/\//.test(String(play)) && canPlayinfo) {
                 const cacheKey = jsUrl + '|' + JSON.stringify(t.ext || cardExt);
                 if (playCache.has(cacheKey)) {
-                    play = playCache.get(cacheKey);
+                    ({ play, referer } = playCache.get(cacheKey));
                 } else {
                     try {
                         const info = argsify(await api.getPlayinfo(jsonify(t.ext || cardExt)));
                         const u = info && info.urls && info.urls[0];
                         play = typeof u === 'string' ? u : '';
+                        // 爬虫会回 headers 指明取流要带的 Referer/UA；XPTV App 会应用它，
+                        // 这里也照做：交给 /api/play 代取并转成同源地址，顺带绕开 CDN 的 CORS。
+                        const h = Array.isArray(info && info.headers) ? (info.headers[0] || {}) : ((info && info.headers) || {});
+                        referer = String(h.Referer || h.referer || '');
+                        if (!/^https?:\/\//i.test(referer)) referer = '';
                     } catch (e) { play = ''; }
-                    playCache.set(cacheKey, play);
+                    playCache.set(cacheKey, { play, referer });
                 }
+            }
+            if (play && referer && /\.(m3u8|mp4|ts|flv|mkv)([?#]|$)/i.test(String(play))) {
+                play = '/api/play?url=' + encodeURIComponent(play) + '&referer=' + encodeURIComponent(referer);
             }
             return { gi: item.g, name: String(t.name || '第' + (item.ti + 1) + '集').slice(0, 24), play };
         });
