@@ -1,5 +1,18 @@
 [
  {
+  "key": "ys_91_vod_xptv_rcnfh",
+  "name": "91Porn",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/91_vod_xptv.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "这批 vod_xptv 源用了另一套宿主 API，运行时未覆盖"
+ },
+ {
   "key": "ys_4kav_y3o4s",
   "name": "4k-av",
   "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/4kav.js",
@@ -7,21 +20,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_7sefun_6rk55",
-  "name": "七色番",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/7sefun.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "缺宿主全局 $cache，待补"
  },
  {
   "key": "ys_91jav_1xtjg",
@@ -31,21 +33,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_91_vod_xptv_rcnfh",
-  "name": "91Porn",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/91_vod_xptv.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（jdkir.triutpw.cc → HT）"
  },
  {
   "key": "ys_alist_tvbox_6gp2j",
@@ -55,9 +46,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "缺宿主全局 $cache，待补"
  },
  {
   "key": "ys_alist_xiaoya_1amm1",
@@ -69,8 +61,21 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-off",
+  "note": "缺宿主全局 $cache，待补"
+ },
+ {
+  "key": "ys_7sefun_6rk55",
+  "name": "七色番",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/7sefun.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "列表能出，但第一取不到播放地址（结构变了或需额外一步）"
  },
  {
   "key": "ys_anfuns_1dhb7",
@@ -80,22 +85,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_anime1_iiwq6",
-  "name": "anime1",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/anime1.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（www.anfuns.org → HTTP）"
  },
  {
   "key": "ys_aowu_1ljrq",
@@ -107,32 +100,8 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
- },
- {
-  "key": "ys_apple_ji5a3",
-  "name": "小蘋果",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/apple.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_avdb_1okav",
-  "name": "avdb",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/avdb.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（www.aowu.tv → HTTP 59）"
  },
  {
   "key": "ys_avtoday_16kkt",
@@ -142,9 +111,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "线上实测未通过：-"
+ },
+ {
+  "key": "ys_avdb_1okav",
+  "name": "avdb",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/avdb.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "列表能出，但第一取不到播放地址（结构变了或需额外一步）"
  },
  {
   "key": "ys_bililive_rznz7",
@@ -154,9 +137,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（api.live.bilibili.com）"
+ },
+ {
+  "key": "ys_anime1_iiwq6",
+  "name": "anime1",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/anime1.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "列表能出，但第一取不到播放地址（结构变了或需额外一步）"
  },
  {
   "key": "ys_bttwo_122ng",
@@ -166,21 +163,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_catflix_12eb3",
-  "name": "catflix",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/catflix.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（? → HTTP 400（无效的 URL）"
  },
  {
   "key": "ys_cupfox_1b0xq",
@@ -192,8 +178,34 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-off",
+  "note": "线上实测未通过：-"
+ },
+ {
+  "key": "ys_catflix_12eb3",
+  "name": "catflix",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/catflix.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "该源脚本自身解析失败：Unexpected token '<', \"<!-"
+ },
+ {
+  "key": "ys_apple_ji5a3",
+  "name": "小蘋果",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/apple.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（c.xpgtv.net → HTTP 40）"
  },
  {
   "key": "ys_czzy_l4o18",
@@ -205,8 +217,73 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（www.czzymovie.com → H）"
+ },
+ {
+  "key": "ys_gzys_8shhm",
+  "name": "gzys",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/gzys.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "需要 JSEncrypt（RSA）库，待补"
+ },
+ {
+  "key": "ys_duanjutt_nmnsn",
+  "name": "短劇天堂",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/duanjutt.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（? → HTTP 400（无效的 URL）"
+ },
+ {
+  "key": "ys_hanime_3fxaa",
+  "name": "hanime",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/hanime.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（hanime1.me → HTTP 403）"
+ },
+ {
+  "key": "ys_hdmoli_712v0",
+  "name": "hdmoli",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/hdmoli.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（hdmoli.pro → HTTP 530）"
+ },
+ {
+  "key": "ys_hdys_d1w36",
+  "name": "花都",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/hdys.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "该源脚本自身解析失败：Cannot read properties of"
  },
  {
   "key": "ys_douyu_mu60k",
@@ -218,92 +295,8 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
- },
- {
-  "key": "ys_duanjutt_nmnsn",
-  "name": "短劇天堂",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/duanjutt.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_fmovies_17b83",
-  "name": "fmovies",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/fmovies.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_gzys_8shhm",
-  "name": "gzys",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/gzys.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_hanime_3fxaa",
-  "name": "hanime",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/hanime.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_hdmoli_712v0",
-  "name": "hdmoli",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/hdmoli.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_hdys_d1w36",
-  "name": "花都",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/hdys.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_hjkk_foblc",
-  "name": "韓劇看看",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/hjkk.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "列表能出，但第一取不到播放地址（结构变了或需额外一步）"
  },
  {
   "key": "ys_hkdoll_5nthe",
@@ -313,9 +306,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "列表能出，但第一取不到播放地址（结构变了或需额外一步）"
  },
  {
   "key": "ys_hohoj_1os9s",
@@ -325,9 +319,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（hohoj.tv → HTTP 500）"
  },
  {
   "key": "ys_huangguo_1v77d",
@@ -337,21 +332,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_huya_l3c64",
-  "name": "huya",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/huya.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "列表能出但线上取流未通过：NO:403 Forbidden"
  },
  {
   "key": "ys_iyftv_mfeca",
@@ -361,9 +345,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（www.iyf.tv → HTTP 403）"
  },
  {
   "key": "ys_jable_1g46k",
@@ -373,9 +358,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "列表能出但线上取流未通过：NO:html"
  },
  {
   "key": "ys_javdb_vod_xptv_irqte",
@@ -385,9 +371,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "该源脚本自身解析失败：Cannot read properties of"
  },
  {
   "key": "ys_jcy_1frdu",
@@ -397,9 +384,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "需要 JSEncrypt（RSA）库，待补"
  },
  {
   "key": "ys_jdys_16eon",
@@ -409,9 +397,75 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "线上实测未通过：-"
+ },
+ {
+  "key": "ys_fmovies_17b83",
+  "name": "fmovies",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/fmovies.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（fmovies.llc → HTTP 52）"
+ },
+ {
+  "key": "ys_hjkk_foblc",
+  "name": "韓劇看看",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/hjkk.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（www.hanjukankan.com →）"
+ },
+ {
+  "key": "ys_jpyy_1c3by",
+  "name": "金牌影视",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/jpyy.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（www.jiabaide.cn → HTT）"
+ },
+ {
+  "key": "ys_jtapp_1agmb",
+  "name": "加藤視頻",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/jtapp.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "线上实测未通过：-"
+ },
+ {
+  "key": "ys_kbjfan_oca0m",
+  "name": "kbjfan",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/kbjfan.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（www.kbjfan.com → HTTP）"
  },
  {
   "key": "ys_jianpian_11fwc",
@@ -423,56 +477,8 @@
   "playerType": 1,
   "enabled": true,
   "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_jpyy_1c3by",
-  "name": "金牌影视",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/jpyy.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_jtapp_1agmb",
-  "name": "加藤視頻",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/jtapp.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_kbjfan_oca0m",
-  "name": "kbjfan",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/kbjfan.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_kuaikaw_1aur1",
-  "name": "河马剧场",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/kuaikaw.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": false,
-  "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-ok",
+  "note": "2026-10-24 线上实测：能取到播放列表"
  },
  {
   "key": "ys_laodifang_1ortt",
@@ -482,34 +488,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（? → HTTP 400（无效的 URL）"
  },
  {
-  "key": "ys_lmm85_65sls",
-  "name": "路漫漫動漫",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/lmm85.js",
+  "key": "ys_huya_l3c64",
+  "name": "huya",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/huya.js",
   "type": 0,
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
- },
- {
-  "key": "ys_madou_1wjys",
-  "name": "麻豆社",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/madou.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（超时）"
  },
  {
   "key": "ys_mihdr_19mzs",
@@ -521,8 +516,8 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（mihdr.top → HTTP 530）"
  },
  {
   "key": "ys_nanfdj_zmlhw",
@@ -532,9 +527,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（www.nanf.cc → HTTP 53）"
+ },
+ {
+  "key": "ys_lmm85_65sls",
+  "name": "路漫漫動漫",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/lmm85.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "列表能出，但第一取不到播放地址（结构变了或需额外一步）"
  },
  {
   "key": "ys_nmlive_1xpsd",
@@ -544,21 +553,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_novipnoad_fh9w2",
-  "name": "NO視頻",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/novipnoad.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（lemonlive.deno.dev →）"
  },
  {
   "key": "ys_one_1iaax",
@@ -568,9 +566,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "该源脚本自身解析失败：Cannot read properties of"
  },
  {
   "key": "ys_ph_vod_gay_11wh0",
@@ -580,9 +579,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "该源脚本自身解析失败：Cannot read properties of"
  },
  {
   "key": "ys_ph_vod_xptv_axbch",
@@ -592,21 +592,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "这批 vod_xptv 源用了另一套宿主 API，运行时未覆盖"
  },
  {
-  "key": "ys_pornhub_1pwdv",
-  "name": "pornhub",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/pornhub.js",
+  "key": "ys_madou_1wjys",
+  "name": "麻豆社",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/madou.js",
   "type": 0,
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
   "enabled": true,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-ok",
+  "note": "2026-10-24 线上实测：能取到播放列表"
  },
  {
   "key": "ys_ppnix_oofkc",
@@ -618,7 +620,8 @@
   "playerType": 1,
   "enabled": true,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-ok",
+  "note": "2026-10-24 线上实测：能取到播放列表"
  },
  {
   "key": "ys_ppxys_tnlau",
@@ -628,9 +631,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（ppxys.vip → HTTP 503）"
+ },
+ {
+  "key": "ys_pornhub_1pwdv",
+  "name": "pornhub",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/pornhub.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "列表能出但线上取流未通过：NO:request incorrect"
  },
  {
   "key": "ys_rrmj_o7i8z",
@@ -642,8 +659,21 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-off",
+  "note": "线上实测未通过：-"
+ },
+ {
+  "key": "ys_subaibai_1o0hs",
+  "name": "素白白",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/subaibai.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（www.subaibai.com → HT）"
  },
  {
   "key": "ys_saohuo_1846p",
@@ -655,32 +685,8 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
- },
- {
-  "key": "ys_subaibai_1o0hs",
-  "name": "素白白",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/subaibai.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_symx_167gt",
-  "name": "symx",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/symx.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "列表能出，但第一取不到播放地址（结构变了或需额外一步）"
  },
  {
   "key": "ys_taohuazu_q5q96",
@@ -690,9 +696,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "线上实测未通过：-"
  },
  {
   "key": "ys_tiantian_c28lo",
@@ -704,8 +711,8 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（op.ysdqjs.cn → HTTP 5）"
  },
  {
   "key": "ys_twivideo_7cbfm",
@@ -717,8 +724,8 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（twivideo.net → HTTP 4）"
  },
  {
   "key": "ys_wobg_oz53g",
@@ -728,9 +735,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（jnczyl.top → HTTP 521）"
  },
  {
   "key": "ys_wwgz_sul6b",
@@ -742,20 +750,8 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
- },
- {
-  "key": "ys_xhamster_9rvm5",
-  "name": "xhamster",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/xhamster.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "线上实测未通过：-"
  },
  {
   "key": "ys_xh_vod_xptv_f2ge7",
@@ -765,9 +761,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "这批 vod_xptv 源用了另一套宿主 API，运行时未覆盖"
+ },
+ {
+  "key": "ys_xhamster_9rvm5",
+  "name": "xhamster",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/xhamster.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（zh.xhamster.com → HTT）"
  },
  {
   "key": "ys_xiaohys_o4sr8",
@@ -779,8 +789,8 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（www.xiaohys.com → HTT）"
  },
  {
   "key": "ys_xingya_1340o",
@@ -792,8 +802,8 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-off",
+  "note": "缺宿主全局 $cache，待补"
  },
  {
   "key": "ys_yiys_1fuiv",
@@ -805,8 +815,8 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（aleig4ah.yiys05.com →）"
  },
  {
   "key": "ys_ylys_1h9nq",
@@ -816,9 +826,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "线上实测未通过：-"
  },
  {
   "key": "ys_yunpan8_1c1k7",
@@ -828,9 +839,23 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "该源脚本自身解析失败：Unexpected end of JSON inp"
+ },
+ {
+  "key": "ys_kuaikaw_1aur1",
+  "name": "河马剧场",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/kuaikaw.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 2,
   "enabled": true,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-ok",
+  "note": "线上实测：给的是 MP4 直链（非 m3u8），播放器直接当媒体处理"
  },
  {
   "key": "ys_yunpanres_rw6ra",
@@ -840,22 +865,10 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
-  "disabled": false,
-  "group": "spider"
- },
- {
-  "key": "ys_yydsys_196c4",
-  "name": "多多影音",
-  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/yydsys.js",
-  "type": 0,
-  "searchable": 1,
-  "filterable": 1,
-  "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（res.yunpan.win → HTTP）"
  },
  {
   "key": "ys_zero_1sitj",
@@ -867,8 +880,21 @@
   "playerType": 1,
   "enabled": false,
   "disabled": false,
-  "group": "spider-post",
-  "note": "这个源要 POST 取数，本站 /api/proxy 目前只放 GET，已默认关闭"
+  "group": "spider-off",
+  "note": "缺宿主全局 $cache，待补"
+ },
+ {
+  "key": "ys_yydsys_196c4",
+  "name": "多多影音",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/yydsys.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（tv.yydsys.top → HTTP）"
  },
  {
   "key": "ys_zxzj_2lvgw",
@@ -878,8 +904,35 @@
   "searchable": 1,
   "filterable": 1,
   "playerType": 1,
-  "enabled": true,
+  "enabled": false,
   "disabled": false,
-  "group": "spider"
+  "group": "spider-off",
+  "note": "列表能出但线上取流未通过：NO:html"
+ },
+ {
+  "key": "ys_symx_167gt",
+  "name": "symx",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/symx.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "该源脚本自身解析失败：Unexpected end of JSON inp"
+ },
+ {
+  "key": "ys_novipnoad_fh9w2",
+  "name": "NO視頻",
+  "api": "spider://https://ghp.xptvhelper.link/https://raw.githubusercontent.com/Yswag/xptv-extensions/refs/heads/main/js/novipnoad.js",
+  "type": 0,
+  "searchable": 1,
+  "filterable": 1,
+  "playerType": 1,
+  "enabled": false,
+  "disabled": false,
+  "group": "spider-off",
+  "note": "Cloudflare 出口取不到该站（超时）"
  }
 ]
