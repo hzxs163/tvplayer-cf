@@ -3,6 +3,8 @@
 // ============================================================
 const PROXY = (url) => '/api/proxy?url=' + encodeURIComponent(url);
 const PLAY_PROXY = (url) => '/api/play?url=' + encodeURIComponent(url);
+// 混合模式：清单仍走 Worker 重写，分片地址原样留给浏览器直连
+const PLAY_SEG_DIRECT = (url) => '/api/play?url=' + encodeURIComponent(url) + '&seg=direct';
 const CONCURRENCY = 6;
 const FETCH_TIMEOUT = 15000;
 const STORAGE_KEY = 'tv_data';
@@ -87,6 +89,36 @@ async function canPlayDirect(url) {
 }
 
 // ============================================================
+//  选播放模式：直连（清单+分片都不过代理）> 混合（清单过代理、分片直连）> 全代理
+//  混合模式让服务端探一次 CDN 的跨域头，响应头 X-Seg-Mode 告诉我们分片到底能不能直连
+// ============================================================
+async function resolvePlayMode(url) {
+    if (await canPlayDirect(url)) return 'direct';
+    try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 6000);
+        const resp = await fetch(PLAY_SEG_DIRECT(url), { signal: ctrl.signal });
+        clearTimeout(timer);
+        if (resp.ok && resp.headers.get('X-Seg-Mode') === 'direct') return 'hybrid';
+    } catch (e) {}
+    return 'proxy';
+}
+
+// 取流方式的退路：直连挂了换混合，混合挂了换全代理，全代理挂了才算这条线路不行
+const HLS_MODE_CHAIN = { direct: 'hybrid', hybrid: 'proxy', proxy: '' };
+const HLS_MODE_HINT = {
+    direct: '直连取片失败，改成分片直连续播',
+    hybrid: '分片直连失败，改用全代理续播',
+    proxy: '代理也取不到片',
+};
+
+function hlsSourceUrl(url, mode) {
+    if (mode === 'direct') return url;
+    if (mode === 'hybrid') return PLAY_SEG_DIRECT(url);
+    return PLAY_PROXY(url);
+}
+
+// ============================================================
 //  续播定位：清单刚解析时 video.duration 常常还是 NaN，
 //  此时直接赋 currentTime 会被夹回 0（表现为"声音从头播"），
 //  所以等 duration 就绪再跳
@@ -112,7 +144,7 @@ function seekWhenReady(video, at) {
 //  出错按「原地恢复 -> 换路重来 -> 提示换线路」三级处理，
 //  已经能播的片子不会因为一次拉取失败就被拆掉
 // ============================================================
-function attachHls(url, title, video, useDirect, allowSwitch, resumeAt) {
+function attachHls(url, title, video, mode, allowSwitch, resumeAt) {
     if (state.hlsInstance) {
         state.hlsInstance.destroy();
         state.hlsInstance = null;
@@ -131,13 +163,15 @@ function attachHls(url, title, video, useDirect, allowSwitch, resumeAt) {
         hidePlayerLoading();
         if (resumeAt > 1) seekWhenReady(video, resumeAt);
         video.play().catch(function () {});
-        console.log(useDirect ? '✅ 直连 HLS 播放成功' : '✅ 代理 HLS 播放成功');
+        console.log('✅ HLS 播放成功（' + mode + '）');
     });
 
     hls.on(Hls.Events.ERROR, function (e, data) {
         video.style.minHeight = '';
         console.warn('⚠️ HLS 错误:', data.details, data.type);
         if (!data.fatal) return;
+        // 用户已经开了另一条流：这条的失败与当前播放无关，别去接管
+        if (state.hlsInstance && state.hlsInstance !== hls) return;
 
         // 1) 解码/缓冲类错误：hls.js 自带恢复，不打断播放进度
         if (data.type === Hls.ErrorTypes.MEDIA_ERROR && mediaRetry < 3) {
@@ -155,21 +189,25 @@ function attachHls(url, title, video, useDirect, allowSwitch, resumeAt) {
             return;
         }
 
-        // 3) 这条路确实走不通：换另一条，并接着刚才的进度继续
+        // 3) 这条路走不通：先换取流方式（直连 -> 混合 -> 全代理），全都失败再自动换线路
         if (allowSwitch) {
             const at = video.currentTime || 0;
-            toast(useDirect ? '直连取片失败，改用代理续播' : '代理失败，改回直连续播', 'info');
+            const next = HLS_MODE_CHAIN[mode] || '';
             hls.destroy();
             if (state.hlsInstance === hls) state.hlsInstance = null;
-            attachHls(url, title, video, !useDirect, false, at);
-            return;
+            if (next) {
+                toast(HLS_MODE_HINT[mode] || '换一种取流方式续播', 'info');
+                attachHls(url, title, video, next, true, at);
+                return;
+            }
+            if (autoSwitchLine('这条线路播不出来')) return;
         }
 
         toast('这条路走不通（' + data.details + '），请换一条线路', 'error');
         startPlayerInIframe(url, title);
     });
 
-    hls.loadSource(useDirect ? url : PLAY_PROXY(url));
+    hls.loadSource(hlsSourceUrl(url, mode));
     hls.attachMedia(video);
 }
 
@@ -433,6 +471,8 @@ const state = {
     editingKey: null,
     hlsInstance: null,
     currentController: null,
+    lineTried: {},
+    lineHealth: [],
 };
 
 // ============================================================
@@ -1570,6 +1610,73 @@ function switchPlayerLine(index) {
 }
 
 // ============================================================
+//  单条线路探活：优先浏览器直连，直连被跨域挡住就走代理，
+//  只看「能不能拿到一份正常的 m3u8」和耗时，不下载分片
+// ============================================================
+async function probeOneLine(line, index) {
+    const eps = parseEpisodes(line.url);
+    const first = eps[0] && eps[0].url;
+    if (!first || !/\.m3u8(\?|$)/i.test(first)) return { i: index, ok: null, ms: Infinity };
+
+    const t0 = performance.now();
+    const attempts = [first, PLAY_PROXY(first)];
+    for (const target of attempts) {
+        try {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 5000);
+            const resp = await fetch(target, { signal: ctrl.signal, credentials: 'omit' });
+            clearTimeout(timer);
+            if (!resp.ok) continue;
+            const text = await resp.text();
+            if (text.trimStart().startsWith('#EXTM3U')) {
+                return { i: index, ok: true, ms: performance.now() - t0 };
+            }
+        } catch (e) {}
+    }
+    return { i: index, ok: false, ms: Infinity };
+}
+
+// 并发探测所有线路；budget 毫秒内没探完就放弃（不拖慢起播），结果只用于选线
+async function probeLines(lines, budget) {
+    const all = Promise.all(lines.map((l, i) => probeOneLine(l, i)));
+    return Promise.race([
+        all,
+        new Promise(resolve => setTimeout(() => resolve(null), budget)),
+    ]);
+}
+
+// ============================================================
+//  自动换线：当前线路「直连 -> 混合 -> 全代理」都不通时，
+//  按顺序试剩下没试过的线路，尽量接同一集继续播
+// ============================================================
+function autoSwitchLine(reason) {
+    const lines = state.currentLines || [];
+    if (lines.length <= 1) return false;
+    state.lineTried = state.lineTried || {};
+    state.lineTried[state.currentLineIndex] = true;
+
+    for (let i = 0; i < lines.length; i++) {
+        if (state.lineTried[i]) continue;
+        const eps = parseEpisodes(lines[i].url);
+        state.lineTried[i] = true;
+        if (!eps.length) continue;
+
+        state.currentLineIndex = i;
+        state.currentEpisodes = eps;
+        renderEpisodesPanel(eps);
+        renderPlayerLines(lines);
+
+        const want = state.currentEpisodeName;
+        const ep = eps.find(e => e.name === want) || eps[0];
+        state.currentEpisodeName = ep.name;
+        toast(reason + '，自动切到「' + lines[i].name + '」', 'info');
+        startPlayer(ep.url, (state.currentVod?.vod_name || '') + ' ' + ep.name);
+        return true;
+    }
+    return false;
+}
+
+// ============================================================
 //  INIT
 // ============================================================
 // 事件绑定（与是否有源无关，必须始终执行，否则导入源后无法操作）
@@ -2216,10 +2323,24 @@ async function playMovie(vod, source) {
 
         state.currentLines = lines;
         state.currentLineIndex = 0;
+        state.lineTried = {};
 
         showPlayer();
 
-        const firstUrl = lines[0].url;
+        // 多线路：并发探一遍，主线路不通就换最快的可用线路（最多等 1.8 秒，不拖慢起播）
+        if (lines.length > 1) {
+            const health = await probeLines(lines, 1500);
+            if (health) {
+                state.lineHealth = health;
+                const best = health.filter(h => h.ok === true).sort((a, b) => a.ms - b.ms)[0];
+                if (best && health[0].ok === false) {
+                    state.currentLineIndex = best.i;
+                    toast('主线路不通，已选「' + lines[best.i].name + '」', 'info');
+                }
+            }
+        }
+
+        const firstUrl = lines[state.currentLineIndex].url;
 
         if (source.key === 'dbm3u8' || source.name.includes('百度') || firstUrl.includes('b3.bdzybf22.com')) {
             console.log('🔵 检测到百度源，使用 iframe 播放');
@@ -2271,8 +2392,8 @@ async function playMovie(vod, source) {
                         window._iqiyiHls.destroy();
                         window._iqiyiHls = null;
                     }
-                    canPlayDirect(m3u8Url).then(function (useDirect) {
-                        attachHls(m3u8Url, '', dom.player, useDirect, true);
+                    resolvePlayMode(m3u8Url).then(function (mode) {
+                        attachHls(m3u8Url, '', dom.player, mode, true);
                     });
                 } else {
                     dom.player.src = m3u8Url;
@@ -2482,8 +2603,8 @@ function renderEpisodesPanel(episodes) {
                             window._iqiyiHls.destroy();
                             window._iqiyiHls = null;
                         }
-                        canPlayDirect(m3u8Url).then(function (useDirect) {
-                            attachHls(m3u8Url, '', dom.player, useDirect, true);
+                        resolvePlayMode(m3u8Url).then(function (mode) {
+                            attachHls(m3u8Url, '', dom.player, mode, true);
                         });
                     } else {
                         dom.player.src = m3u8Url;
@@ -2669,8 +2790,8 @@ function startPlayer(url, title) {
         dom.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         if (window.Hls && Hls.isSupported()) {
-            canPlayDirect(url).then(function (useDirect) {
-                attachHls(url, title, video, useDirect, true);
+            resolvePlayMode(url).then(function (mode) {
+                attachHls(url, title, video, mode, true);
             });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             canPlayDirect(url).then(function (useDirect) {
@@ -2984,6 +3105,8 @@ function closePlayer() {
     state.currentLines = [];
     state.currentEpisodes = [];
     state.currentEpisodeName = '';
+    state.lineTried = {};
+    state.lineHealth = [];
 
     dom.lineSelect.style.display = 'none';
 
