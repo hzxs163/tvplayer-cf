@@ -937,6 +937,48 @@ function closeImportModal() {
 }
 
 // ============================================================
+//  导出已导入的源
+//  原样导出（含启用/隐藏标记），导出的文件可以再导入或直接发给别人
+// ============================================================
+function downloadText(filename, text, mime) {
+    const blob = new Blob([text], { type: mime || 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+}
+
+const EXPORT_FIELDS = ['key', 'name', 'api', 'type', 'searchable', 'filterable', 'playerType',
+    'enabled', 'disabled', 'group', 'origin', 'originUrl', 'from', 'note',
+    'tvboxType', 'aliases', 'classes', 'lastCheck', 'hasExt'];
+
+function exportSources() {
+    const list = getStoredSources() || state.sources || [];
+    if (!list.length) {
+        toast('还没有可导出的源', 'error');
+        return;
+    }
+
+    const out = list.map(function (s) {
+        const o = {};
+        EXPORT_FIELDS.forEach(function (k) {
+            if (s[k] !== undefined) o[k] = s[k];
+        });
+        return o;
+    });
+
+    const d = new Date();
+    const p = function (n) { return String(n).padStart(2, '0'); };
+    const stamp = '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes());
+    downloadText('tvplayer-sources-' + stamp + '.json', JSON.stringify(out, null, 2));
+    toast('已导出 ' + out.length + ' 个源', 'success');
+}
+
+// ============================================================
 //  统一导入：JSON 源数组 / TVBox 配置 / TXT 清单
 //  只做识别和标注，不改源里的接口地址（除尾部 ?ac=... 这类拼接残留）
 // ============================================================
